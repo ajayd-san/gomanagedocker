@@ -62,10 +62,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "right", "l", "n", "tab":
-			m.activeTab = min(m.activeTab+1, len(m.Tabs)-1)
+			m.nextTab()
 			return m, nil
 		case "left", "h", "p", "shift+tab":
-			m.activeTab = max(m.activeTab-1, 0)
+			m.prevTab()
 			return m, nil
 		}
 	}
@@ -130,6 +130,22 @@ func (m Model) View() string {
 }
 
 //Util
+
+func (m *Model) nextTab() {
+	if m.activeTab == int(volumes) {
+		m.activeTab = int(images)
+	} else {
+		m.activeTab += 1
+	}
+}
+
+func (m *Model) prevTab() {
+	if m.activeTab == int(images) {
+		m.activeTab = int(volumes)
+	} else {
+		m.activeTab -= 1
+	}
+}
 
 func (m Model) getActiveTab() listModel {
 	return m.TabContent[m.activeTab]
