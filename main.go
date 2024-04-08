@@ -1,26 +1,28 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"fmt"
+	"os"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	"github.com/ajayd-san/gomanagedocker/tui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		panic(err)
+	debug := flag.Bool("debug", false, "bolean value to toggle debug")
+	flag.Parse()
+
+	if *debug {
+		f, _ := tea.LogToFile("debug.log", "debug")
+		defer f.Close()
 	}
 
-	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
-	if err != nil {
-		panic(err)
-	}
-
-	for _, ctr := range containers {
-		fmt.Printf("%s %s\n", ctr.ID, ctr.Image)
+	tabs := []string{"Images", "Containers", "Volumes"}
+	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab"}
+	m := tui.Model{Tabs: tabs, TabContent: tabContent}
+	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
 	}
 }
-
