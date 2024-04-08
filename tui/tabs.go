@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,6 +25,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		windowStyle = windowStyle.
+			Width(m.width - docStyle.GetHorizontalFrameSize() - 2).
+			Height(m.height - docStyle.GetVerticalFrameSize() - 3)
+
 		return m, nil
 
 	case tea.KeyMsg:
@@ -57,6 +62,7 @@ var (
 	highlightColor    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
 	inactiveTabStyle  = lipgloss.NewStyle().Border(inactiveTabBorder, true).BorderForeground(highlightColor).Padding(0, 1)
 	activeTabStyle    = inactiveTabStyle.Copy().Border(activeTabBorder, true)
+	fillerStyle       = lipgloss.NewStyle().Foreground(highlightColor)
 	windowStyle       = lipgloss.NewStyle().
 				BorderForeground(highlightColor).
 				Padding(2, 0).
@@ -84,25 +90,31 @@ func (m Model) View() string {
 		} else if isFirst && !isActive {
 			border.BottomLeft = "├"
 		} else if isLast && isActive {
-			border.BottomRight = "│"
+			border.BottomRight = "└"
 		} else if isLast && !isActive {
-			border.BottomRight = "┤"
+			border.BottomRight = "┴"
 		}
 
 		style = style.Border(border)
 		renderedTabs = append(renderedTabs, style.Render(t))
 	}
 
-	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
+	var row string
+	row = lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
+	fillerStringLen := windowStyle.GetWidth() - lipgloss.Width(row)
+	if fillerStringLen > 0 {
+		fillerString := strings.Repeat("─", fillerStringLen+1)
+		fillerString += "┐"
+		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, fillerStyle.Render(fillerString))
+	}
+
+	log.Println(fillerStringLen)
 
 	body := windowStyle.
-		Width(m.width - docStyle.GetHorizontalFrameSize() - 2).
-		Height(m.height - docStyle.GetVerticalFrameSize() - 3).
 		Render(m.TabContent[m.activeTab])
 	doc.WriteString(row)
 	doc.WriteString("\n")
 
-	// doc.WriteString(windowStyle.Width((lipgloss.Width(row) - windowStyle.GetHorizontalFrameSize())).Render(m.TabContent[m.activeTab]))
 	doc.WriteString(body)
 	return docStyle.Render(doc.String())
 }
