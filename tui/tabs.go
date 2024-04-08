@@ -33,7 +33,7 @@ func NewModel(tabs []string) Model {
 	contents := make([]listModel, 3)
 
 	for i := range contents {
-		contents[i] = InitList(fmt.Sprintf("title %d", i), 100, 30)
+		contents[i] = InitList()
 	}
 	return Model{
 		Tabs:       tabs,
@@ -52,8 +52,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		//change list dimentions when window size changes
 		//TODO: change width
-		m.getActiveList().SetWidth(msg.Width)
-		m.getActiveList().SetHeight(msg.Height - 7)
+		for index := range m.TabContent {
+			m.getList(index).SetWidth(msg.Width)
+			m.getList(index).SetHeight(msg.Height - 7)
+		}
 
 		return m, nil
 
@@ -153,4 +155,11 @@ func (m Model) getActiveTab() listModel {
 
 func (m Model) getActiveList() *list.Model {
 	return &m.TabContent[m.activeTab].list
+}
+
+func (m Model) getList(index int) *list.Model {
+	if index >= len(m.TabContent) {
+		panic(fmt.Sprintf("Index %d out of bounds", index))
+	}
+	return &m.TabContent[index].list
 }
