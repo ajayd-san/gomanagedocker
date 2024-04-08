@@ -19,8 +19,7 @@ func main() {
 	}
 
 	tabs := []string{"Images", "Containers", "Volumes"}
-	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab"}
-	m := tui.Model{Tabs: tabs, TabContent: tabContent}
+	m := tui.NewModel(tabs)
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

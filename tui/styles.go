@@ -12,8 +12,7 @@ var (
 	fillerStyle       = lipgloss.NewStyle().Foreground(highlightColor)
 	windowStyle       = lipgloss.NewStyle().
 				BorderForeground(highlightColor).
-				Padding(2, 0).
-				Align(lipgloss.Center).
 				Border(lipgloss.NormalBorder()).
 				UnsetBorderTop()
+	listDocStyle = lipgloss.NewStyle().Margin(1, 2)
 )

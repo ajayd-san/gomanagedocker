@@ -1,16 +1,25 @@
 package tui
 
 import (
-	"log"
+	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
+type tab int
+
+const (
+	images tab = iota
+	containers
+	volumes
+)
+
 type Model struct {
 	Tabs       []string
-	TabContent []string
+	TabContent []listModel
 	activeTab  int
 	width      int
 	height     int
@@ -20,14 +29,31 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+func NewModel(tabs []string) Model {
+	contents := make([]listModel, 3)
+
+	for i := range contents {
+		contents[i] = InitList(fmt.Sprintf("title %d", i), 100, 30)
+	}
+	return Model{
+		Tabs:       tabs,
+		TabContent: contents,
+	}
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		windowStyle = windowStyle.
-			Width(m.width - docStyle.GetHorizontalFrameSize() - 2).
-			Height(m.height - docStyle.GetVerticalFrameSize() - 3)
+			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
+			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
+
+		//change list dimentions when window size changes
+		//TODO: change width
+		m.getActiveList().SetWidth(msg.Width)
+		m.getActiveList().SetHeight(msg.Height - 7)
 
 		return m, nil
 
@@ -44,7 +70,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m, nil
+	var cmd tea.Cmd
+	m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
+
+	return m, cmd
 }
 
 func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
@@ -92,13 +121,20 @@ func (m Model) View() string {
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, fillerStyle.Render(fillerString))
 	}
 
-	log.Println(fillerStringLen)
-
-	body := windowStyle.
-		Render(m.TabContent[m.activeTab])
+	body := windowStyle.Render(m.TabContent[m.activeTab].View())
 	doc.WriteString(row)
 	doc.WriteString("\n")
 
 	doc.WriteString(body)
 	return docStyle.Render(doc.String())
+}
+
+//Util
+
+func (m Model) getActiveTab() listModel {
+	return m.TabContent[m.activeTab]
+}
+
+func (m Model) getActiveList() *list.Model {
+	return &m.TabContent[m.activeTab].list
 }
