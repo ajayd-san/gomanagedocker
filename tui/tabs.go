@@ -3,7 +3,9 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,15 +20,23 @@ const (
 )
 
 type Model struct {
-	Tabs       []string
-	TabContent []listModel
-	activeTab  int
-	width      int
-	height     int
+	dockerClient dockercmd.DockerClient
+	Tabs         []string
+	TabContent   []listModel
+	activeTab    int
+	width        int
+	height       int
+}
+
+type TickMsg time.Time
+
+func doTick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+
+	return doTick()
 }
 
 func NewModel(tabs []string) Model {
@@ -36,8 +46,9 @@ func NewModel(tabs []string) Model {
 		contents[i] = InitList()
 	}
 	return Model{
-		Tabs:       tabs,
-		TabContent: contents,
+		dockerClient: dockercmd.NewDockerClient(),
+		Tabs:         tabs,
+		TabContent:   contents,
 	}
 }
 
@@ -58,6 +69,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, nil
+
+	case TickMsg:
+		switch m.activeTab {
+		case int(images):
+
+			m.updateImages()
+			// // imgs := m.dockerClient.ListImages()
+			// m.TabContent[images].list
+
+		case int(containers):
+			// conts := m.dockerClient.ListContainers()
+		}
+
+		return m, doTick()
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -129,6 +154,13 @@ func (m Model) View() string {
 
 	doc.WriteString(body)
 	return docStyle.Render(doc.String())
+}
+
+// helpers
+
+func (m Model) updateImages() {
+	newImages := m.dockerClient.ListImages()
+	m.TabContent[0].updateContent(newImages)
 }
 
 //Util

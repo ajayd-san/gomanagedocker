@@ -1,16 +1,25 @@
 package tui
 
 import (
+	"log"
+	"strconv"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/docker/docker/api/types/image"
 )
 
 type item struct {
-	title, desc, info string
+	title string
+	desc  float64
+}
+
+func makeItem(title string, desc float64) item {
+	return item{title, desc}
 }
 
 func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
+func (i item) Description() string { return strconv.FormatFloat(i.desc, 'f', 2, 64) }
 func (i item) FilterValue() string { return i.title }
 
 type listModel struct {
@@ -44,18 +53,9 @@ func (m listModel) View() string {
 
 func InitList() listModel {
 	items := []list.Item{
-		item{title: "1", desc: "I have ’em all over my house"},
-		item{title: "2", desc: "It's good on toast"},
-		item{title: "3", desc: "It cools you down"},
-		item{title: "4", desc: "And by that I mean socks without holes"},
-		item{title: "5", desc: "I had this once"},
-		item{title: "6", desc: "I had this once"},
-		item{title: "7", desc: "Usually"},
-		item{title: "8", desc: "I had this once"},
-		item{title: "9", desc: "Usually"},
-		item{title: "10", desc: "Usually"},
-		item{title: "11 hours of sleep", desc: "I had this once"},
-		item{title: "12", desc: "Usually"},
+		item{title: "1", desc: 1},
+		item{title: "2", desc: 2},
+		item{title: "3", desc: 3},
 	}
 
 	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 100, 36)}
@@ -63,3 +63,20 @@ func InitList() listModel {
 	return m
 }
 
+func makeItems(raw []image.Summary) []list.Item {
+	listItems := make([]list.Item, len(raw))
+	log.Println(raw[0])
+
+	//INFO: only converting to gb (might want to change later to accomidate mb)
+	for i, data := range raw {
+		listItems[i] = makeItem(data.ID, float64(data.Size)/float64(1e+9))
+	}
+
+	return listItems
+}
+
+// Util
+
+func (m *listModel) updateContent(content []image.Summary) {
+	m.list.SetItems(makeItems(content))
+}

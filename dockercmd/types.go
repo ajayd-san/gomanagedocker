@@ -1,14 +1,11 @@
 package dockercmd
 
 import (
-	"context"
-
 	"github.com/docker/docker/client"
 )
 
 type DockerClient struct {
 	cli *client.Client
-	ctx context.Context
 }
 
 func NewDockerClient() DockerClient {
@@ -19,6 +16,5 @@ func NewDockerClient() DockerClient {
 
 	return DockerClient{
 		cli: cli,
-		ctx: context.Background(),
 	}
 }
