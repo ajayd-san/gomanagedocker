@@ -11,10 +11,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type tab int
+type tabId int
 
 const (
-	images tab = iota
+	images tabId = iota
 	containers
 	volumes
 )
@@ -31,7 +31,7 @@ type Model struct {
 type TickMsg time.Time
 
 func doTick() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return TickMsg(t) })
+	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m Model) Init() tea.Cmd {
@@ -45,6 +45,7 @@ func NewModel(tabs []string) Model {
 	for i := range contents {
 		contents[i] = InitList()
 	}
+
 	return Model{
 		dockerClient: dockercmd.NewDockerClient(),
 		Tabs:         tabs,
@@ -71,16 +72,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case TickMsg:
-		switch m.activeTab {
-		case int(images):
-
-			m.updateImages()
-			// // imgs := m.dockerClient.ListImages()
-			// m.TabContent[images].list
-
-		case int(containers):
-			// conts := m.dockerClient.ListContainers()
-		}
+		m = m.updateContent()
 
 		return m, doTick()
 
@@ -148,7 +140,8 @@ func (m Model) View() string {
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, fillerStyle.Render(fillerString))
 	}
 
-	body := windowStyle.Render(m.TabContent[m.activeTab].View())
+	// body := windowStyle.Render(m.TabContent[m.activeTab].View())
+	body := m.TabContent[m.activeTab].View()
 	doc.WriteString(row)
 	doc.WriteString("\n")
 
@@ -158,9 +151,9 @@ func (m Model) View() string {
 
 // helpers
 
-func (m Model) updateImages() {
-	newImages := m.dockerClient.ListImages()
-	m.TabContent[0].updateContent(newImages)
+func (m Model) updateContent() Model {
+	m.TabContent[m.activeTab] = m.TabContent[m.activeTab].updateTab(m.dockerClient, tabId(m.activeTab))
+	return m
 }
 
 //Util

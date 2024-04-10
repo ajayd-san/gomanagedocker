@@ -1,26 +1,10 @@
 package tui
 
 import (
-	"log"
-	"strconv"
-
+	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/docker/docker/api/types/image"
 )
-
-type item struct {
-	title string
-	desc  float64
-}
-
-func makeItem(title string, desc float64) item {
-	return item{title, desc}
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return strconv.FormatFloat(i.desc, 'f', 2, 64) }
-func (i item) FilterValue() string { return i.title }
 
 type listModel struct {
 	list list.Model
@@ -52,24 +36,21 @@ func (m listModel) View() string {
 }
 
 func InitList() listModel {
-	items := []list.Item{
-		item{title: "1", desc: 1},
-		item{title: "2", desc: 2},
-		item{title: "3", desc: 3},
-	}
 
+	items := make([]list.Item, 0)
 	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 100, 36)}
+
 	m.list.SetShowTitle(false)
 	return m
 }
 
-func makeItems(raw []image.Summary) []list.Item {
-	listItems := make([]list.Item, len(raw))
-	log.Println(raw[0])
+func makeItems(raw []dockerRes) []list.Item {
 
-	//INFO: only converting to gb (might want to change later to accomidate mb)
+	listItems := make([]list.Item, len(raw))
+
+	//TODO: only converting to gb (might want to change later to accomidate mb)
 	for i, data := range raw {
-		listItems[i] = makeItem(data.ID, float64(data.Size)/float64(1e+9))
+		listItems[i] = list.Item(data)
 	}
 
 	return listItems
@@ -77,6 +58,17 @@ func makeItems(raw []image.Summary) []list.Item {
 
 // Util
 
-func (m *listModel) updateContent(content []image.Summary) {
-	m.list.SetItems(makeItems(content))
+func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) listModel {
+	var newlist []dockerRes
+	switch id {
+	case images:
+		newImgs := dockerClient.ListImages()
+		newlist = makeImageItems(newImgs)
+	case containers:
+		newContainers := dockerClient.ListContainers()
+		newlist = makeContainerItems(newContainers)
+	}
+
+	m.list.SetItems(makeItems(newlist))
+	return m
 }
