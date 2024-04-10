@@ -2,6 +2,7 @@ package tui
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/docker/docker/api/types"
@@ -13,6 +14,7 @@ type dockerRes interface {
 	getId() string
 	getSize() float64
 	getLabel() string
+	getName() string
 }
 
 type imageItem struct {
@@ -38,14 +40,19 @@ func (i imageItem) getSize() float64 {
 	return float64(i.Size) / float64(1e+9)
 }
 
+// TODO: either use this or omit this
 func (i imageItem) getLabel() string {
 	return "image labels here"
 }
 
+func (i imageItem) getName() string {
+	return strings.Join(i.RepoTags, ", ")
+}
+
 // INFO: impl list.Item Interface
-func (i imageItem) Title() string       { return i.getId() }
+func (i imageItem) Title() string       { return i.getName() }
 func (i imageItem) Description() string { return strconv.FormatFloat(i.getSize(), 'f', 2, 64) }
-func (i imageItem) FilterValue() string { return i.getLabel() }
+func (i imageItem) FilterValue() string { return i.getName() }
 
 type containerItem struct {
 	types.Container
@@ -74,7 +81,11 @@ func (c containerItem) getLabel() string {
 	return "labels here"
 }
 
+func (c containerItem) getName() string {
+	return strings.Join(c.Names, ", ")
+}
+
 // INFO: impl list.Item Interface
-func (i containerItem) Title() string       { return i.getId() }
+func (i containerItem) Title() string       { return i.getName() }
 func (i containerItem) Description() string { return strconv.FormatFloat(i.getSize(), 'f', 2, 64) }
 func (i containerItem) FilterValue() string { return i.getLabel() }
