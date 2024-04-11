@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -77,13 +78,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "ctrl+c", "q":
+		switch {
+		case key.Matches(msg, Keymap.Quit):
 			return m, tea.Quit
-		case "right", "l", "n", "tab":
+		case key.Matches(msg, Keymap.Next):
 			m.nextTab()
 			return m, nil
-		case "left", "h", "p", "shift+tab":
+		case key.Matches(msg, Keymap.Prev):
 			m.prevTab()
 			return m, nil
 		}
