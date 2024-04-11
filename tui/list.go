@@ -73,6 +73,9 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 		newlist = makeVolumeItem(newVolumes)
 	}
 
-	m.list.SetItems(makeItems(newlist))
+	if len(m.list.Items()) != len(newlist) {
+		m.list.SetItems(makeItems(newlist))
+	}
+
 	return m
 }
