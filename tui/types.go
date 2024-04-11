@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
@@ -129,6 +130,10 @@ func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
 	for i, volume := range dockerlist {
 		res[i] = VolumeItem{Volume: *volume}
 	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].getName() < res[j].getName()
+	})
 
 	return res
 }
