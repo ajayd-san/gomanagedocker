@@ -140,8 +140,8 @@ func (m Model) View() string {
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, fillerStyle.Render(fillerString))
 	}
 
-	// body := windowStyle.Render(m.TabContent[m.activeTab].View())
-	body := m.TabContent[m.activeTab].View()
+	body := windowStyle.Render(m.TabContent[m.activeTab].View())
+	// body := m.TabContent[m.activeTab].View()
 	doc.WriteString(row)
 	doc.WriteString("\n")
 
