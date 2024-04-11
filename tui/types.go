@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/volume"
 )
 
 type dockerRes interface {
@@ -89,3 +90,45 @@ func (c containerItem) getName() string {
 func (i containerItem) Title() string       { return i.getName() }
 func (i containerItem) Description() string { return strconv.FormatFloat(i.getSize(), 'f', 2, 64) }
 func (i containerItem) FilterValue() string { return i.getLabel() }
+
+type VolumeItem struct {
+	volume.Volume
+}
+
+// FilterValue implements dockerRes.
+func (v VolumeItem) FilterValue() string {
+	panic("unimplemented")
+}
+
+// getId implements dockerRes.
+func (v VolumeItem) getId() string {
+	panic("unimplemented")
+}
+
+// getLabel implements dockerRes.
+func (v VolumeItem) getLabel() string {
+	panic("unimplemented")
+}
+
+// getName implements dockerRes.
+func (v VolumeItem) getName() string {
+	return v.Name
+}
+
+// getSize implements dockerRes.
+func (v VolumeItem) getSize() float64 {
+	panic("unimplemented")
+}
+
+func (i VolumeItem) Title() string       { return i.getName() }
+func (i VolumeItem) Description() string { return "" }
+
+func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
+	res := make([]dockerRes, len(dockerlist))
+
+	for i, volume := range dockerlist {
+		res[i] = VolumeItem{Volume: *volume}
+	}
+
+	return res
+}
