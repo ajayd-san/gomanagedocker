@@ -38,14 +38,12 @@ func (m listModel) View() string {
 func InitList() listModel {
 
 	items := make([]list.Item, 0)
-	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 100, 36)}
-
+	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.SetShowTitle(false)
 	return m
 }
 
 func makeItems(raw []dockerRes) []list.Item {
-
 	listItems := make([]list.Item, len(raw))
 
 	//TODO: only converting to gb (might want to change later to accomidate mb)
@@ -57,7 +55,6 @@ func makeItems(raw []dockerRes) []list.Item {
 }
 
 // Util
-
 func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) listModel {
 	var newlist []dockerRes
 	switch id {

@@ -141,12 +141,15 @@ func (m Model) View() string {
 		row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, fillerStyle.Render(fillerString))
 	}
 
-	body := windowStyle.Render(m.TabContent[m.activeTab].View())
+	list := m.TabContent[m.activeTab].View()
+	body_with_info := lipgloss.JoinHorizontal(lipgloss.Right, list, moreInfoStyle.Render(""))
+	body_with_info = windowStyle.Render(body_with_info)
+
 	// body := m.TabContent[m.activeTab].View()
 	doc.WriteString(row)
 	doc.WriteString("\n")
 
-	doc.WriteString(body)
+	doc.WriteString(body_with_info)
 	return docStyle.Render(doc.String())
 }
 
