@@ -52,8 +52,18 @@ func (i imageItem) getName() string {
 }
 
 // INFO: impl list.Item Interface
-func (i imageItem) Title() string       { return i.getName() }
-func (i imageItem) Description() string { return strconv.FormatFloat(i.getSize(), 'f', 2, 64) }
+func (i imageItem) Title() string { return i.getName() }
+
+func (i imageItem) Description() string {
+	id := i.getId()
+	id = strings.TrimPrefix(id, "sha256:")
+	shortId := id[:15]
+
+	sizeStr := strconv.FormatFloat(i.getSize(), 'f', 2, 64) + "GB"
+
+	return shortId + "\t\t\t\t\t\t\t" + sizeStr
+}
+
 func (i imageItem) FilterValue() string { return i.getName() }
 
 type containerItem struct {
@@ -88,35 +98,39 @@ func (c containerItem) getName() string {
 }
 
 // INFO: impl list.Item Interface
-func (i containerItem) Title() string       { return i.getName() }
-func (i containerItem) Description() string { return strconv.FormatFloat(i.getSize(), 'f', 2, 64) }
+func (i containerItem) Title() string { return i.getName() }
+func (i containerItem) Description() string {
+
+	id := i.getId()
+	id = strings.TrimPrefix(id, "sha256:")
+	shortId := id[:15]
+
+	sizeStr := strconv.FormatFloat(i.getSize(), 'f', 2, 64) + "GB"
+
+	return shortId + "\t\t\t\t\t\t\t" + sizeStr
+}
 func (i containerItem) FilterValue() string { return i.getLabel() }
 
 type VolumeItem struct {
 	volume.Volume
 }
 
-// FilterValue implements dockerRes.
 func (v VolumeItem) FilterValue() string {
 	panic("unimplemented")
 }
 
-// getId implements dockerRes.
 func (v VolumeItem) getId() string {
 	panic("unimplemented")
 }
 
-// getLabel implements dockerRes.
 func (v VolumeItem) getLabel() string {
 	panic("unimplemented")
 }
 
-// getName implements dockerRes.
 func (v VolumeItem) getName() string {
 	return v.Name
 }
 
-// getSize implements dockerRes.
 func (v VolumeItem) getSize() float64 {
 	panic("unimplemented")
 }
