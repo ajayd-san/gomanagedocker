@@ -142,7 +142,10 @@ func (m Model) View() string {
 	}
 
 	list := m.TabContent[m.activeTab].View()
-	body_with_info := lipgloss.JoinHorizontal(lipgloss.Right, list, moreInfoStyle.Render(""))
+	//TODO: align info box to right edge of the window
+	curItem := m.getSelectedItem()
+	infobox := PopulateInfoBox(tabId(m.activeTab), curItem)
+	body_with_info := lipgloss.JoinHorizontal(lipgloss.Right, list, lipgloss.PlaceHorizontal(125, lipgloss.Right, moreInfoStyle.Render(infobox)))
 	body_with_info = windowStyle.Render(body_with_info)
 
 	// body := m.TabContent[m.activeTab].View()
@@ -191,4 +194,8 @@ func (m Model) getList(index int) *list.Model {
 		panic(fmt.Sprintf("Index %d out of bounds", index))
 	}
 	return &m.TabContent[index].list
+}
+
+func (m Model) getSelectedItem() list.Item {
+	return m.TabContent[m.activeTab].list.SelectedItem()
 }

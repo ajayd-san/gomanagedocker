@@ -128,11 +128,14 @@ func (v VolumeItem) getLabel() string {
 }
 
 func (v VolumeItem) getName() string {
-	return v.Name
+	return v.Name[:min(30, len(v.Name))]
 }
 
 func (v VolumeItem) getSize() float64 {
-	panic("unimplemented")
+	if v.UsageData == nil {
+		return -1
+	}
+	return float64(v.UsageData.Size)
 }
 
 func (i VolumeItem) Title() string       { return i.getName() }
