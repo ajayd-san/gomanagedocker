@@ -16,3 +16,7 @@ func (dc *DockerClient) ListContainers() []types.Container {
 
 	return containers
 }
+
+func (dc *DockerClient) StopContainer(id string) error {
+	return dc.cli.ContainerStop(context.Background(), id, container.StopOptions{})
+}
