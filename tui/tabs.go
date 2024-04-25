@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -43,8 +44,8 @@ func (m Model) Init() tea.Cmd {
 func NewModel(tabs []string) Model {
 	contents := make([]listModel, 3)
 
-	for i := range contents {
-		contents[i] = InitList()
+	for i, tabKind := range []tabId{images, containers, volumes} {
+		contents[i] = InitList(tabKind)
 	}
 
 	return Model{
@@ -63,8 +64,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
 
-		//change list dimentions when window size changes
-		//TODO: change width
+			//change list dimentions when window size changes
+			// TODO: change width
 		for index := range m.TabContent {
 			m.getList(index).SetWidth(msg.Width)
 			m.getList(index).SetHeight(msg.Height - 7)
@@ -79,14 +80,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, Keymap.Quit):
+		case key.Matches(msg, NavKeymap.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, Keymap.Next):
+		case key.Matches(msg, NavKeymap.Next):
 			m.nextTab()
 			return m, nil
-		case key.Matches(msg, Keymap.Prev):
+		case key.Matches(msg, NavKeymap.Prev):
 			m.prevTab()
 			return m, nil
+		}
+
+		if m.activeTab == int(images) {
+
+		} else if m.activeTab == int(containers) {
+			switch {
+			case key.Matches(msg, ManageKeymap.ToggleStartStop):
+				log.Println("s pressed")
+				curItem := m.getSelectedItem()
+				containerId := curItem.(dockerRes).getId()
+				err := m.dockerClient.StopContainer(containerId)
+				if err != nil {
+					panic(err)
+				}
+			}
+
+		} else {
+
 		}
 	}
 
@@ -142,11 +161,12 @@ func (m Model) View() string {
 	}
 
 	list := m.TabContent[m.activeTab].View()
-	//TODO: align info box to right edge of the window
 	curItem := m.getSelectedItem()
 	infobox := PopulateInfoBox(tabId(m.activeTab), curItem)
-	body_with_info := lipgloss.JoinHorizontal(lipgloss.Right, list, lipgloss.PlaceHorizontal(125, lipgloss.Right, moreInfoStyle.Render(infobox)))
-	body_with_info = windowStyle.Render(body_with_info)
+
+	//TODO: align info box to right edge of the window
+	body_with_info := lipgloss.JoinHorizontal(lipgloss.Right, list, moreInfoStyle.Render(infobox))
+	// body_with_info = windowStyle.Render(body_with_info)
 
 	// body := m.TabContent[m.activeTab].View()
 	doc.WriteString(row)

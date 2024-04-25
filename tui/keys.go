@@ -11,12 +11,12 @@ type navigationKeymap struct {
 }
 
 type manageKeymap struct {
-	Create key.Binding
-	Rename key.Binding
-	Delete key.Binding
-	Start  key.Binding
-	Stop   key.Binding
-	Exec   key.Binding
+	Create          key.Binding
+	Rename          key.Binding
+	Delete          key.Binding
+	ToggleStartStop key.Binding
+	Exec            key.Binding
+	Pull            key.Binding
 }
 
 var ManageKeymap = manageKeymap{
@@ -32,15 +32,18 @@ var ManageKeymap = manageKeymap{
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
 	),
-	Start: key.NewBinding(
+	ToggleStartStop: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "start")),
-	Stop: key.NewBinding(
-		key.WithKeys("s"),
-		key.WithHelp("s", "stop")),
+		key.WithHelp("s", "start"),
+	),
 	Exec: key.NewBinding(
 		key.WithKeys("x"),
-		key.WithHelp("x", "exec")),
+		key.WithHelp("x", "exec"),
+	),
+	Pull: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "Pull new Image"),
+	),
 }
 
 var NavKeymap = navigationKeymap{
@@ -64,4 +67,27 @@ var NavKeymap = navigationKeymap{
 		key.WithKeys("left", "h", "shift+tab"),
 		key.WithHelp("<-/h/shift+tab", "prev"),
 	),
+}
+
+func volumeKeymap() []key.Binding {
+	return []key.Binding{
+		ManageKeymap.ToggleStartStop,
+		ManageKeymap.Delete,
+		ManageKeymap.Exec,
+	}
+}
+
+func imageKeymap() []key.Binding {
+	return []key.Binding{
+		ManageKeymap.Delete,
+		ManageKeymap.Pull,
+	}
+}
+
+func containerKeymap() []key.Binding {
+	return []key.Binding{
+		ManageKeymap.ToggleStartStop,
+		ManageKeymap.Delete,
+		ManageKeymap.Exec,
+	}
 }
