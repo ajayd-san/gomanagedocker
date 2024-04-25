@@ -23,6 +23,7 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		h, v := listDocStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v)
+		// m.list.SetSize(msg.Width, msg.Height)
 	}
 
 	var cmd tea.Cmd
@@ -35,11 +36,20 @@ func (m listModel) View() string {
 	return listDocStyle.Render(m.list.View())
 }
 
-func InitList() listModel {
+func InitList(tab tabId) listModel {
 
 	items := make([]list.Item, 0)
-	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
+	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 100, 30)}
 	m.list.SetShowTitle(false)
+
+	switch tab {
+	case images:
+		m.list.AdditionalShortHelpKeys = imageKeymap
+	case containers:
+		m.list.AdditionalShortHelpKeys = containerKeymap
+	case volumes:
+		m.list.AdditionalShortHelpKeys = volumeKeymap
+	}
 	return m
 }
 
@@ -70,6 +80,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 		newlist = makeVolumeItem(newVolumes)
 	}
 
+	//BUG: dont compare by lenght, compare by slice since slice can change without changing length
 	if len(m.list.Items()) != len(newlist) {
 		m.list.SetItems(makeItems(newlist))
 	}
