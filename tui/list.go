@@ -44,11 +44,11 @@ func InitList(tab tabId) listModel {
 
 	switch tab {
 	case images:
-		m.list.AdditionalShortHelpKeys = imageKeymap
+		m.list.AdditionalShortHelpKeys = getImageKeymap
 	case containers:
-		m.list.AdditionalShortHelpKeys = containerKeymap
+		m.list.AdditionalShortHelpKeys = getContainerKeymap
 	case volumes:
-		m.list.AdditionalShortHelpKeys = volumeKeymap
+		m.list.AdditionalShortHelpKeys = getVolumeKeymap
 	}
 	return m
 }

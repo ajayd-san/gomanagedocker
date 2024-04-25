@@ -10,16 +10,24 @@ type navigationKeymap struct {
 	Prev  key.Binding
 }
 
-type manageKeymap struct {
-	Create          key.Binding
-	Rename          key.Binding
-	Delete          key.Binding
-	ToggleStartStop key.Binding
-	Exec            key.Binding
-	Pull            key.Binding
+type imgKeymap struct {
+	Create key.Binding
+	Rename key.Binding
+	Pull   key.Binding
+	Delete key.Binding
 }
 
-var ManageKeymap = manageKeymap{
+type contKeymap struct {
+	ToggleStartStop key.Binding
+	Delete          key.Binding
+	Exec            key.Binding
+}
+
+type volKeymap struct {
+	Delete key.Binding
+}
+
+var ImageKeymapm = imgKeymap{
 	Create: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "create"),
@@ -32,17 +40,31 @@ var ManageKeymap = manageKeymap{
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
 	),
+	Pull: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "Pull new Image"),
+	),
+}
+
+var ContainerKeymap = contKeymap{
 	ToggleStartStop: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "start"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "delete"),
 	),
 	Exec: key.NewBinding(
 		key.WithKeys("x"),
 		key.WithHelp("x", "exec"),
 	),
-	Pull: key.NewBinding(
-		key.WithKeys("p"),
-		key.WithHelp("p", "Pull new Image"),
+}
+
+var VolumeKeymap = volKeymap{
+	Delete: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "delete"),
 	),
 }
 
@@ -69,25 +91,23 @@ var NavKeymap = navigationKeymap{
 	),
 }
 
-func volumeKeymap() []key.Binding {
+func getVolumeKeymap() []key.Binding {
 	return []key.Binding{
-		ManageKeymap.ToggleStartStop,
-		ManageKeymap.Delete,
-		ManageKeymap.Exec,
+		VolumeKeymap.Delete,
 	}
 }
 
-func imageKeymap() []key.Binding {
+func getImageKeymap() []key.Binding {
 	return []key.Binding{
-		ManageKeymap.Delete,
-		ManageKeymap.Pull,
+		ImageKeymapm.Delete,
+		ImageKeymapm.Pull,
 	}
 }
 
-func containerKeymap() []key.Binding {
+func getContainerKeymap() []key.Binding {
 	return []key.Binding{
-		ManageKeymap.ToggleStartStop,
-		ManageKeymap.Delete,
-		ManageKeymap.Exec,
+		ContainerKeymap.ToggleStartStop,
+		ContainerKeymap.Delete,
+		ContainerKeymap.Exec,
 	}
 }
