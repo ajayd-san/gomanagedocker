@@ -17,11 +17,12 @@ func (dc *DockerClient) ListContainers() []types.Container {
 	return containers
 }
 
+// Toggles listing of inactive containers
 func (dc *DockerClient) ToggleContainerListAll() {
 	dc.containerListArgs.All = !dc.containerListArgs.All
 }
 
+// Stops container
 func (dc *DockerClient) StopContainer(id string) error {
 	return dc.cli.ContainerStop(context.Background(), id, container.StopOptions{})
 }
-
