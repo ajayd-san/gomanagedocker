@@ -99,10 +99,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 				log.Println("s pressed")
 				curItem := m.getSelectedItem()
-				containerId := curItem.(dockerRes).getId()
-				err := m.dockerClient.StopContainer(containerId)
-				if err != nil {
-					panic(err)
+				if curItem != nil {
+					containerId := curItem.(dockerRes).getId()
+					err := m.dockerClient.StopContainer(containerId)
+					if err != nil {
+						panic(err)
+					}
 				}
 			}
 
