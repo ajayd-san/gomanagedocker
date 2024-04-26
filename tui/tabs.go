@@ -79,45 +79,48 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, NavKeymap.Quit):
-			return m, tea.Quit
-		case key.Matches(msg, NavKeymap.Next):
-			m.nextTab()
-			return m, nil
-		case key.Matches(msg, NavKeymap.Prev):
-			m.prevTab()
-			return m, nil
-		}
-
-		if m.activeTab == int(images) {
-
-		} else if m.activeTab == int(containers) {
+		if !m.getActiveList().SettingFilter() {
 			switch {
-			case key.Matches(msg, ContainerKeymap.ToggleListAll):
-				m.dockerClient.ToggleContainerListAll()
-			case key.Matches(msg, ContainerKeymap.ToggleStartStop):
-				log.Println("s pressed")
-				curItem := m.getSelectedItem()
-				if curItem != nil {
-					containerId := curItem.(dockerRes).getId()
-					err := m.dockerClient.ToggleStartStopContainer(containerId)
-					if err != nil {
-						panic(err)
-					}
-				}
-			case key.Matches(msg, ContainerKeymap.Delete):
-				curItem := m.getSelectedItem()
-				if curItem != nil {
-					containerId := curItem.(dockerRes).getId()
-					err := m.dockerClient.DeleteContainer(containerId)
-					if err != nil {
-						panic(err)
-					}
-				}
+			case key.Matches(msg, NavKeymap.Quit):
+				return m, tea.Quit
+			case key.Matches(msg, NavKeymap.Next):
+				m.nextTab()
+				return m, nil
+			case key.Matches(msg, NavKeymap.Prev):
+				m.prevTab()
+				return m, nil
 			}
 
-		} else {
+			if m.activeTab == int(images) {
+
+			} else if m.activeTab == int(containers) {
+				switch {
+				case key.Matches(msg, ContainerKeymap.ToggleListAll):
+					m.dockerClient.ToggleContainerListAll()
+				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
+					log.Println("s pressed")
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+						containerId := curItem.(dockerRes).getId()
+						err := m.dockerClient.ToggleStartStopContainer(containerId)
+						if err != nil {
+							panic(err)
+						}
+					}
+				case key.Matches(msg, ContainerKeymap.Delete):
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+						containerId := curItem.(dockerRes).getId()
+						err := m.dockerClient.DeleteContainer(containerId)
+						if err != nil {
+							panic(err)
+						}
+					}
+				}
+
+			} else {
+
+			}
 
 		}
 	}
