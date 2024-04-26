@@ -106,6 +106,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						panic(err)
 					}
 				}
+			case key.Matches(msg, ContainerKeymap.Delete):
+				curItem := m.getSelectedItem()
+				if curItem != nil {
+					containerId := curItem.(dockerRes).getId()
+					err := m.dockerClient.DeleteContainer(containerId)
+					if err != nil {
+						panic(err)
+					}
+				}
 			}
 
 		} else {

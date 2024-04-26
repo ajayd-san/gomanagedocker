@@ -35,3 +35,14 @@ func (dc *DockerClient) ToggleStartStopContainer(id string) error {
 		return dc.cli.ContainerStart(context.Background(), id, container.StartOptions{})
 	}
 }
+
+// Deletes the container
+func (dc *DockerClient) DeleteContainer(id string) error {
+	// stop the container first
+	err := dc.ToggleStartStopContainer(id)
+
+	if err != nil {
+		return err
+	}
+	return dc.cli.ContainerRemove(context.Background(), id, container.RemoveOptions{})
+}
