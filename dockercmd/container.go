@@ -22,7 +22,16 @@ func (dc *DockerClient) ToggleContainerListAll() {
 	dc.containerListArgs.All = !dc.containerListArgs.All
 }
 
-// Stops container
-func (dc *DockerClient) StopContainer(id string) error {
-	return dc.cli.ContainerStop(context.Background(), id, container.StopOptions{})
+// Toggles running state of container
+func (dc *DockerClient) ToggleStartStopContainer(id string) error {
+	info, err := dc.cli.ContainerInspect(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	if info.State.Running {
+		return dc.cli.ContainerStop(context.Background(), id, container.StopOptions{})
+	} else {
+		return dc.cli.ContainerStart(context.Background(), id, container.StartOptions{})
+	}
 }

@@ -54,7 +54,7 @@ var ContainerKeymap = contKeymap{
 	),
 	ToggleStartStop: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "start"),
+		key.WithHelp("s", "Toggle Start/Stop"),
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("d"),

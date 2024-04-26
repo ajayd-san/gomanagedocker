@@ -101,7 +101,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				curItem := m.getSelectedItem()
 				if curItem != nil {
 					containerId := curItem.(dockerRes).getId()
-					err := m.dockerClient.StopContainer(containerId)
+					err := m.dockerClient.ToggleStartStopContainer(containerId)
 					if err != nil {
 						panic(err)
 					}
