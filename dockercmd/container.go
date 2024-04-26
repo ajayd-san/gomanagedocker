@@ -8,7 +8,7 @@ import (
 )
 
 func (dc *DockerClient) ListContainers() []types.Container {
-	containers, err := dc.cli.ContainerList(context.Background(), container.ListOptions{})
+	containers, err := dc.cli.ContainerList(context.Background(), dc.containerListArgs)
 
 	if err != nil {
 		panic(err)
@@ -17,6 +17,11 @@ func (dc *DockerClient) ListContainers() []types.Container {
 	return containers
 }
 
+func (dc *DockerClient) ToggleContainerListAll() {
+	dc.containerListArgs.All = !dc.containerListArgs.All
+}
+
 func (dc *DockerClient) StopContainer(id string) error {
 	return dc.cli.ContainerStop(context.Background(), id, container.StopOptions{})
 }
+

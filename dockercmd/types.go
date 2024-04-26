@@ -1,11 +1,13 @@
 package dockercmd
 
 import (
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
 type DockerClient struct {
-	cli *client.Client
+	cli               *client.Client
+	containerListArgs container.ListOptions
 }
 
 func NewDockerClient() DockerClient {
@@ -15,6 +17,7 @@ func NewDockerClient() DockerClient {
 	}
 
 	return DockerClient{
-		cli: cli,
+		cli:               cli,
+		containerListArgs: container.ListOptions{},
 	}
 }

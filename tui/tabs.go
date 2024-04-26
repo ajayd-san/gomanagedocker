@@ -94,6 +94,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		} else if m.activeTab == int(containers) {
 			switch {
+			case key.Matches(msg, ContainerKeymap.ToggleListAll):
+				m.dockerClient.ToggleContainerListAll()
 			case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 				log.Println("s pressed")
 				curItem := m.getSelectedItem()
