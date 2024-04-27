@@ -32,14 +32,14 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m listModel) View() string {
-
 	return listDocStyle.Render(m.list.View())
 }
 
 func InitList(tab tabId) listModel {
 
 	items := make([]list.Item, 0)
-	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 100, 30)}
+	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 10, 30)}
+
 	m.list.SetShowTitle(false)
 
 	switch tab {

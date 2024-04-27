@@ -64,8 +64,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
 
-			//change list dimentions when window size changes
-			// TODO: change width
+		moreInfoStyle = moreInfoStyle.Height(m.getActiveList().Height())
+
+		//change list dimentions when window size changes
+		// TODO: change width
 		for index := range m.TabContent {
 			m.getList(index).SetWidth(msg.Width)
 			m.getList(index).SetHeight(msg.Height - 7)
@@ -179,12 +181,12 @@ func (m Model) View() string {
 	list := m.TabContent[m.activeTab].View()
 	curItem := m.getSelectedItem()
 	infobox := PopulateInfoBox(tabId(m.activeTab), curItem)
+	infobox = moreInfoStyle.Render(infobox)
 
 	//TODO: align info box to right edge of the window
-	body_with_info := lipgloss.JoinHorizontal(lipgloss.Right, list, moreInfoStyle.Render(infobox))
-	// body_with_info = windowStyle.Render(body_with_info)
+	body_with_info := lipgloss.JoinHorizontal(lipgloss.Top, list, infobox)
+	body_with_info = windowStyle.Render(body_with_info)
 
-	// body := m.TabContent[m.activeTab].View()
 	doc.WriteString(row)
 	doc.WriteString("\n")
 
