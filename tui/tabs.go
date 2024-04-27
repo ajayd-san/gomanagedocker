@@ -94,6 +94,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.activeTab == int(images) {
+				switch {
+				case key.Matches(msg, ImageKeymap.Delete):
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+						imageId := curItem.(dockerRes).getId()
+						err := m.dockerClient.DeleteImage(imageId)
+						if err != nil {
+							panic(err)
+						}
+					}
+				}
 
 			} else if m.activeTab == int(containers) {
 				switch {

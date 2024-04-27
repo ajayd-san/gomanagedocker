@@ -28,7 +28,7 @@ type volKeymap struct {
 	Delete key.Binding
 }
 
-var ImageKeymapm = imgKeymap{
+var ImageKeymap = imgKeymap{
 	Create: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "create"),
@@ -104,8 +104,8 @@ func getVolumeKeymap() []key.Binding {
 
 func getImageKeymap() []key.Binding {
 	return []key.Binding{
-		ImageKeymapm.Delete,
-		ImageKeymapm.Pull,
+		ImageKeymap.Delete,
+		ImageKeymap.Pull,
 	}
 }
 
