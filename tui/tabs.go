@@ -37,7 +37,6 @@ func doTick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
-
 	return doTick()
 }
 
