@@ -2,6 +2,7 @@ package dockercmd
 
 import (
 	"context"
+	"io"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -45,4 +46,15 @@ func (dc *DockerClient) DeleteContainer(id string) error {
 		return err
 	}
 	return dc.cli.ContainerRemove(context.Background(), id, container.RemoveOptions{})
+}
+
+// gets logs
+func (dc *DockerClient) GetContainerLogs(id string) (io.ReadCloser, error) {
+	rc, err := dc.cli.ContainerLogs(context.Background(), id, container.LogsOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rc, nil
 }
