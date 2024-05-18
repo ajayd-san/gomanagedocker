@@ -66,6 +66,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
 
+		dialogContainerStyle = dialogContainerStyle.Width(msg.Width).Height(msg.Height)
+
 		//change list dimentions when window size changes
 		// TODO: change width
 		for index := range m.TabContent {
@@ -191,7 +193,7 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 func (m Model) View() string {
 
 	if m.showDialog {
-		return m.activeDialog.View()
+		return dialogContainerStyle.Render(m.activeDialog.View())
 	}
 	doc := strings.Builder{}
 

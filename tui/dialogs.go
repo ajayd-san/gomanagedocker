@@ -13,5 +13,5 @@ func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
 		dialog.MakeTogglePrompt("force", "Force?"),
 	}
 
-	return dialog.InitDialogue("Remove Container Options", prompts, dialogRemoveContainer, storage)
+	return dialog.InitDialogue("Remove Container Options:", prompts, dialogRemoveContainer, storage)
 }

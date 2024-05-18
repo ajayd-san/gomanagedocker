@@ -27,4 +27,6 @@ var (
 			Bold(true)
 
 	infoEntry = lipgloss.NewStyle().Margin(1)
+
+	dialogContainerStyle = lipgloss.NewStyle().Align(lipgloss.Center, lipgloss.Center)
 )
