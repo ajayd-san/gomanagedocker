@@ -6,6 +6,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 )
 
 func (dc *DockerClient) ListContainers() []types.Container {
@@ -51,6 +52,16 @@ func (dc *DockerClient) DeleteContainer(id string, opts container.RemoveOptions)
 	}
 
 	return dc.cli.ContainerRemove(context.Background(), id, opts)
+}
+
+func (dc *DockerClient) PruneContainers() (types.ContainersPruneReport, error) {
+	report, err := dc.cli.ContainersPrune(context.Background(), filters.Args{})
+
+	if err != nil {
+		return types.ContainersPruneReport{}, err
+	}
+
+	return report, nil
 }
 
 // gets logs

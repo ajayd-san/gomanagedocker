@@ -177,6 +177,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, nil
 					}
 
+				case key.Matches(msg, ContainerKeymap.Prune):
+					m.activeDialog = getPruneContainersDialog(make(map[string]string))
+					m.showDialog = true
+					return m, m.activeDialog.Init()
 				}
 
 			} else {
@@ -204,6 +208,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					panic(err)
 				}
+			}
+
+		case dialogPruneContainers:
+			log.Println("prune containers called")
+			userChoice := dialogRes.UserChoices
+
+			if userChoice["confirm"] == "Yes" {
+				log.Println("prune containers confirmed")
+
+				m.dockerClient.PruneContainers()
 			}
 
 		case dialogRemoveImage:

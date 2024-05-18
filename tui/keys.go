@@ -24,6 +24,7 @@ type contKeymap struct {
 	Delete          key.Binding
 	DeleteForce     key.Binding
 	Exec            key.Binding
+	Prune           key.Binding
 }
 
 type volKeymap struct {
@@ -69,6 +70,10 @@ var ContainerKeymap = contKeymap{
 	DeleteForce: key.NewBinding(
 		key.WithKeys("D"),
 		key.WithHelp("D", "delete (force)"),
+	),
+	Prune: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "prune"),
 	),
 	Exec: key.NewBinding(
 		key.WithKeys("x"),
@@ -126,6 +131,7 @@ func getContainerKeymap() []key.Binding {
 		ContainerKeymap.ToggleStartStop,
 		ContainerKeymap.Delete,
 		ContainerKeymap.DeleteForce,
+		ContainerKeymap.Prune,
 		ContainerKeymap.Exec,
 	}
 }

@@ -1,9 +1,12 @@
 package tui
 
-import dialog "github.com/ajayd-san/teaDialog"
+import (
+	dialog "github.com/ajayd-san/teaDialog"
+)
 
 const (
 	dialogRemoveContainer dialog.DialogType = iota
+	dialogPruneContainers
 	dialogRemoveImage
 )
 
@@ -15,6 +18,14 @@ func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
 	}
 
 	return dialog.InitDialogue("Remove Container Options:", prompts, dialogRemoveContainer, storage)
+}
+
+func getPruneContainersDialog(storage map[string]string) dialog.Dialog {
+	prompts := []dialog.Prompt{
+		dialog.MakeOptionPrompt("confirm", "This will remove all stopped containers, are your sure?", []string{"Yes", "No"}),
+	}
+
+	return dialog.InitDialogue("Prune Containers: ", prompts, dialogPruneContainers, storage)
 }
 
 func getRemoveImageDialog(storage map[string]string) dialog.Dialog {
