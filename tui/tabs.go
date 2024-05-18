@@ -92,7 +92,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeDialog = d
 			}
 
-			if key.Matches(msg, NavKeymap.Enter) {
+			if key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
 				m.showDialog = false
 			}
 			return m, cmd
@@ -146,6 +146,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					dialog := getRemoveContainerDialog(map[string]string{"ID": containerId})
 					m.activeDialog = dialog
 					m.showDialog = true
+				case key.Matches(msg, ContainerKeymap.DeleteForce):
+					curItem := m.getSelectedItem()
+					containerId := curItem.(dockerRes).getId()
+					err := m.dockerClient.DeleteContainer(containerId, container.RemoveOptions{
+						RemoveVolumes: false,
+						RemoveLinks:   false,
+						Force:         true,
+					})
+
+					if err != nil {
+						m.activeDialog = teadialog.NewErrorDialog(err.Error())
+						m.showDialog = true
+						return m, nil
+					}
+
 				}
 
 			} else {
@@ -175,8 +190,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
-
-		// m.showDialog = false
 	}
 
 	var cmd tea.Cmd

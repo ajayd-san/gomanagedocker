@@ -21,6 +21,7 @@ type contKeymap struct {
 	ToggleListAll   key.Binding
 	ToggleStartStop key.Binding
 	Delete          key.Binding
+	DeleteForce     key.Binding
 	Exec            key.Binding
 }
 
@@ -59,6 +60,10 @@ var ContainerKeymap = contKeymap{
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
+	),
+	DeleteForce: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "delete (force)"),
 	),
 	Exec: key.NewBinding(
 		key.WithKeys("x"),
@@ -114,6 +119,7 @@ func getContainerKeymap() []key.Binding {
 		ContainerKeymap.ToggleListAll,
 		ContainerKeymap.ToggleStartStop,
 		ContainerKeymap.Delete,
+		ContainerKeymap.DeleteForce,
 		ContainerKeymap.Exec,
 	}
 }
