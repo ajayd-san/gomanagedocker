@@ -3,12 +3,12 @@ module github.com/ajayd-san/gomanagedocker
 go 1.22.2
 
 require (
+	github.com/ajayd-san/teaDialog v0.1.5-0.20240518091110-c049bf7e80ee
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/stretchr/testify v1.9.0
 )
 
 require (
-	github.com/ajayd-san/teaDialog v0.1.3 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect

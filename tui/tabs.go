@@ -7,13 +7,16 @@ import (
 	"time"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	dialog "github.com/ajayd-san/teaDialog"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/docker/docker/api/types/container"
 )
 
 type tabId int
+type TickMsg time.Time
 
 const (
 	images tabId = iota
@@ -28,9 +31,9 @@ type Model struct {
 	activeTab    int
 	width        int
 	height       int
+	showDialog   bool
+	activeDialog dialog.Dialog
 }
-
-type TickMsg time.Time
 
 func doTick() tea.Cmd {
 	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
@@ -78,6 +81,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case tea.KeyMsg:
+
+		//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
+		if m.showDialog {
+			update, cmd := m.activeDialog.Update(msg)
+			if d, ok := update.(dialog.Dialog); ok {
+				m.activeDialog = d
+			}
+
+			if key.Matches(msg, NavKeymap.Enter) {
+				m.showDialog = false
+			}
+			return m, cmd
+		}
 		if !m.getActiveList().SettingFilter() {
 			switch {
 			case key.Matches(msg, NavKeymap.Quit):
@@ -107,7 +123,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
+
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
+
 					log.Println("s pressed")
 					curItem := m.getSelectedItem()
 					if curItem != nil {
@@ -119,13 +137,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				case key.Matches(msg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
-					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.DeleteContainer(containerId)
-						if err != nil {
-							panic(err)
-						}
-					}
+					containerId := curItem.(dockerRes).getId()
+					dialog := getRemoveContainerDialog(map[string]string{"ID": containerId})
+					m.activeDialog = dialog
+					m.showDialog = true
 				}
 
 			} else {
@@ -133,6 +148,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		}
+	case dialog.DialogSelectionResult:
+		dialogRes := msg
+		switch dialogRes.Kind {
+		case dialogRemoveContainer:
+			log.Println("remove container instruction received")
+			userChoice := dialogRes.UserChoices
+
+			opts := container.RemoveOptions{
+				RemoveVolumes: userChoice["remVols"].(bool),
+				RemoveLinks:   userChoice["remLinks"].(bool),
+				Force:         userChoice["force"].(bool),
+			}
+
+			containerId := dialogRes.UserStorage["ID"]
+			if containerId != "" {
+				log.Println("removing container: ", dialogRes.UserStorage["ID"])
+				err := m.dockerClient.DeleteContainer(containerId, opts)
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+
+		m.showDialog = false
 	}
 
 	var cmd tea.Cmd
@@ -150,6 +189,10 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 }
 
 func (m Model) View() string {
+
+	if m.showDialog {
+		return m.activeDialog.View()
+	}
 	doc := strings.Builder{}
 
 	var renderedTabs []string
