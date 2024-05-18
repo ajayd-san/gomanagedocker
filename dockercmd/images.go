@@ -2,7 +2,6 @@ package dockercmd
 
 import (
 	"context"
-	"log"
 
 	"github.com/docker/docker/api/types/image"
 )
@@ -17,8 +16,7 @@ func (dc *DockerClient) ListImages() []image.Summary {
 	return images
 }
 
-func (dc *DockerClient) DeleteImage(id string) error {
-	res, err := dc.cli.ImageRemove(context.Background(), id, image.RemoveOptions{})
-	log.Println(res)
+func (dc *DockerClient) DeleteImage(id string, opts image.RemoveOptions) error {
+	_, err := dc.cli.ImageRemove(context.Background(), id, opts)
 	return err
 }

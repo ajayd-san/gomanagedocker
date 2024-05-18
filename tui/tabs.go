@@ -14,6 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 )
 
 type tabId int
@@ -115,12 +116,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						imageId := curItem.(dockerRes).getId()
-						err := m.dockerClient.DeleteImage(imageId)
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error())
-							m.showDialog = true
-							return m, nil
-						}
+						storage := map[string]string{"ID": imageId}
+						m.activeDialog = getRemoveImageDialog(storage)
+						m.showDialog = true
 					}
 				}
 
@@ -130,7 +128,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.dockerClient.ToggleContainerListAll()
 
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
-
 					log.Println("s pressed")
 					curItem := m.getSelectedItem()
 					if curItem != nil {
@@ -146,6 +143,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					dialog := getRemoveContainerDialog(map[string]string{"ID": containerId})
 					m.activeDialog = dialog
 					m.showDialog = true
+
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
 					containerId := curItem.(dockerRes).getId()
@@ -189,7 +187,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					panic(err)
 				}
 			}
+
+		case dialogRemoveImage:
+			log.Println("remove image instruction recieved")
+			userChoice := dialogRes.UserChoices
+
+			imageId := dialogRes.UserStorage["ID"]
+
+			if imageId != "" {
+				opts := image.RemoveOptions{
+					Force:         userChoice["force"].(bool),
+					PruneChildren: userChoice["pruneChildren"].(bool),
+				}
+
+				err := m.dockerClient.DeleteImage(imageId, opts)
+				if err != nil {
+					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.showDialog = true
+					return m, nil
+				}
+			}
 		}
+
 	}
 
 	var cmd tea.Cmd

@@ -4,6 +4,7 @@ import dialog "github.com/ajayd-san/teaDialog"
 
 const (
 	dialogRemoveContainer dialog.DialogType = iota
+	dialogRemoveImage
 )
 
 func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
@@ -14,4 +15,13 @@ func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
 	}
 
 	return dialog.InitDialogue("Remove Container Options:", prompts, dialogRemoveContainer, storage)
+}
+
+func getRemoveImageDialog(storage map[string]string) dialog.Dialog {
+	prompts := []dialog.Prompt{
+		dialog.MakeTogglePrompt("force", "Force"),
+		dialog.MakeTogglePrompt("pruneChildren", "Prune Children"),
+	}
+
+	return dialog.InitDialogue("Remove Image Options:", prompts, dialogRemoveImage, storage)
 }
