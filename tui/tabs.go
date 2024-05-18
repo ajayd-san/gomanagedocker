@@ -60,6 +60,20 @@ func NewModel(tabs []string) Model {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
+	//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
+	//BUG: the dialog box remains fixed after first call to dialog
+	if m.showDialog {
+		update, cmd := m.activeDialog.Update(msg)
+		if d, ok := update.(dialog.Dialog); ok {
+			m.activeDialog = d
+		}
+
+		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
+			m.showDialog = false
+		}
+		return m, cmd
+	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -85,27 +99,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case tea.KeyMsg:
-
 		//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
-		if m.showDialog {
-			update, cmd := m.activeDialog.Update(msg)
-			if d, ok := update.(dialog.Dialog); ok {
-				m.activeDialog = d
-			}
+		// if m.showDialog {
+		// 	update, cmd := m.activeDialog.Update(msg)
+		// 	if d, ok := update.(dialog.Dialog); ok {
+		// 		m.activeDialog = d
+		// 	}
 
-			if key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
-				m.showDialog = false
-			}
-			return m, cmd
-		}
+		// 	if key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
+		// 		m.showDialog = false
+		// 	}
+		// 	return m, cmd
+		// }
 		if !m.getActiveList().SettingFilter() {
 			switch {
 			case key.Matches(msg, NavKeymap.Quit):
 				return m, tea.Quit
 			case key.Matches(msg, NavKeymap.Next):
+				//OPTIM: return ticker as tea.Cmd to instantly render new list on tab change
 				m.nextTab()
 				return m, nil
 			case key.Matches(msg, NavKeymap.Prev):
+				//OPTIM: same here
 				m.prevTab()
 				return m, nil
 			}
@@ -119,6 +134,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						storage := map[string]string{"ID": imageId}
 						m.activeDialog = getRemoveImageDialog(storage)
 						m.showDialog = true
+
+						return m, m.activeDialog.Init()
 					}
 
 				case key.Matches(msg, ImageKeymap.DeleteForce):
@@ -134,7 +151,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error())
 							m.showDialog = true
-							return m, nil
+							return m, m.activeDialog.Init()
 						}
 					}
 
@@ -156,11 +173,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 				case key.Matches(msg, ContainerKeymap.Delete):
+					//BUG: check if any items are displayed, crashes otherwise
 					curItem := m.getSelectedItem()
 					containerId := curItem.(dockerRes).getId()
 					dialog := getRemoveContainerDialog(map[string]string{"ID": containerId})
 					m.activeDialog = dialog
 					m.showDialog = true
+					return m, m.activeDialog.Init()
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
