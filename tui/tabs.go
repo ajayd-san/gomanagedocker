@@ -120,6 +120,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.activeDialog = getRemoveImageDialog(storage)
 						m.showDialog = true
 					}
+
+				case key.Matches(msg, ImageKeymap.DeleteForce):
+					curItem := m.getSelectedItem()
+					containerId := curItem.(dockerRes).getId()
+
+					if containerId != "" {
+						err := m.dockerClient.DeleteImage(containerId, image.RemoveOptions{
+							Force:         true,
+							PruneChildren: false,
+						})
+
+						if err != nil {
+							m.activeDialog = teadialog.NewErrorDialog(err.Error())
+							m.showDialog = true
+							return m, nil
+						}
+					}
+
 				}
 
 			} else if m.activeTab == int(containers) {

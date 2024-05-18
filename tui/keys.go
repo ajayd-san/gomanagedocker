@@ -11,10 +11,11 @@ type navigationKeymap struct {
 }
 
 type imgKeymap struct {
-	Create key.Binding
-	Rename key.Binding
-	Pull   key.Binding
-	Delete key.Binding
+	Create      key.Binding
+	Rename      key.Binding
+	Pull        key.Binding
+	Delete      key.Binding
+	DeleteForce key.Binding
 }
 
 type contKeymap struct {
@@ -41,6 +42,10 @@ var ImageKeymap = imgKeymap{
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
+	),
+	DeleteForce: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "delete (force)"),
 	),
 	Pull: key.NewBinding(
 		key.WithKeys("p"),
@@ -110,6 +115,7 @@ func getVolumeKeymap() []key.Binding {
 func getImageKeymap() []key.Binding {
 	return []key.Binding{
 		ImageKeymap.Delete,
+		ImageKeymap.DeleteForce,
 		ImageKeymap.Pull,
 	}
 }
