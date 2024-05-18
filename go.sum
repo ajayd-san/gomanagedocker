@@ -12,6 +12,8 @@ github.com/ajayd-san/teaDialog v0.1.5-0.20240518040442-279ce611af8c h1:RiTD8QDRC
 github.com/ajayd-san/teaDialog v0.1.5-0.20240518040442-279ce611af8c/go.mod h1:kJTmdgCYrFo/L56uusKhxxFVO5h+cvjEiupFfIXSdE4=
 github.com/ajayd-san/teaDialog v0.1.5-0.20240518091110-c049bf7e80ee h1:BrqXMWgoqdgau3EHX7LCqZc0z6xhKt6ZPr1a3eegbow=
 github.com/ajayd-san/teaDialog v0.1.5-0.20240518091110-c049bf7e80ee/go.mod h1:kJTmdgCYrFo/L56uusKhxxFVO5h+cvjEiupFfIXSdE4=
+github.com/ajayd-san/teaDialog v0.1.5 h1:I5ILqEZXX1FoH8vbZqnF1m0GmdE7ovDMdui/JH8LC1M=
+github.com/ajayd-san/teaDialog v0.1.5/go.mod h1:kJTmdgCYrFo/L56uusKhxxFVO5h+cvjEiupFfIXSdE4=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
 github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=

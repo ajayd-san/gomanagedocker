@@ -8,6 +8,7 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	dialog "github.com/ajayd-san/teaDialog"
+	teadialog "github.com/ajayd-san/teaDialog"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -32,7 +33,7 @@ type Model struct {
 	width        int
 	height       int
 	showDialog   bool
-	activeDialog dialog.Dialog
+	activeDialog tea.Model
 }
 
 func doTick() tea.Cmd {
@@ -116,7 +117,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						imageId := curItem.(dockerRes).getId()
 						err := m.dockerClient.DeleteImage(imageId)
 						if err != nil {
-							panic(err)
+							m.activeDialog = teadialog.NewErrorDialog(err.Error())
+							m.showDialog = true
+							return m, nil
 						}
 					}
 				}
@@ -173,7 +176,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		m.showDialog = false
+		// m.showDialog = false
 	}
 
 	var cmd tea.Cmd
