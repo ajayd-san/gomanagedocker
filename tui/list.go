@@ -41,6 +41,7 @@ func InitList(tab tabId) listModel {
 	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 10, 30)}
 
 	m.list.SetShowTitle(false)
+	m.list.DisableQuitKeybindings()
 
 	switch tab {
 	case images:
