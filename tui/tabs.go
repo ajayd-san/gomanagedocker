@@ -19,6 +19,7 @@ import (
 
 type tabId int
 type TickMsg time.Time
+type preloadObjects int
 
 const (
 	images tabId = iota
@@ -42,7 +43,8 @@ func doUpdateObjectsTick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
-	return doUpdateObjectsTick()
+	preloadCmd := func() tea.Msg { return preloadObjects(0) }
+	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
 
 func NewModel(tabs []string) Model {
@@ -80,6 +82,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	//preloads all tabs, so no delay in displaying objects when first changing tabs
+	case preloadObjects:
+		m = m.updateContent(0)
+		m = m.updateContent(1)
+		m = m.updateContent(2)
+
+	case TickMsg:
+		m = m.updateContent(m.activeTab)
+
+		// return m, doUpdateObjectsTick()
+		cmds = append(cmds, doUpdateObjectsTick())
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -97,12 +111,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// return m, nil
-
-	case TickMsg:
-		m = m.updateContent()
-
-		// return m, doUpdateObjectsTick()
-		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.KeyMsg:
 		//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
@@ -124,10 +132,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				return m, tea.Quit
 			case key.Matches(msg, NavKeymap.Next):
-				//OPTIM: return ticker as tea.Cmd to instantly render new list on tab change
 				m.nextTab()
 			case key.Matches(msg, NavKeymap.Prev):
-				//OPTIM: same here
 				m.prevTab()
 			}
 
@@ -380,8 +386,8 @@ func (m Model) View() string {
 
 // helpers
 
-func (m Model) updateContent() Model {
-	m.TabContent[m.activeTab] = m.TabContent[m.activeTab].updateTab(m.dockerClient, tabId(m.activeTab))
+func (m Model) updateContent(currentTab int) Model {
+	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient, tabId(currentTab))
 	return m
 }
 
