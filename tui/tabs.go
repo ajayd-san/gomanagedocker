@@ -153,19 +153,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				case key.Matches(msg, ImageKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
-					containerId := curItem.(dockerRes).getId()
 
-					if containerId != "" {
-						err := m.dockerClient.DeleteImage(containerId, image.RemoveOptions{
-							Force:         true,
-							PruneChildren: false,
-						})
+					if curItem != nil {
+						containerId := curItem.(dockerRes).getId()
 
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error())
-							m.showDialog = true
+						if containerId != "" {
+							err := m.dockerClient.DeleteImage(containerId, image.RemoveOptions{
+								Force:         true,
+								PruneChildren: false,
+							})
+
+							if err != nil {
+								m.activeDialog = teadialog.NewErrorDialog(err.Error())
+								m.showDialog = true
+							}
 						}
 					}
+
 				case key.Matches(msg, ImageKeymap.Prune):
 					m.activeDialog = getPruneImagesDialog(make(map[string]string))
 					m.showDialog = true
@@ -192,27 +196,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					}
 				case key.Matches(msg, ContainerKeymap.Delete):
-					//BUG: check if any items are displayed, crashes otherwise
 					curItem := m.getSelectedItem()
-					containerId := curItem.(dockerRes).getId()
-					dialog := getRemoveContainerDialog(map[string]string{"ID": containerId})
-					m.activeDialog = dialog
-					m.showDialog = true
-					// return m, m.activeDialog.Init()
-					cmds = append(cmds, m.activeDialog.Init())
+					if containerInfo, ok := curItem.(dockerRes); ok {
+						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.getId()})
+						m.activeDialog = dialog
+						m.showDialog = true
+						// return m, m.activeDialog.Init()
+						cmds = append(cmds, m.activeDialog.Init())
+					}
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
-					containerId := curItem.(dockerRes).getId()
-					err := m.dockerClient.DeleteContainer(containerId, container.RemoveOptions{
-						RemoveVolumes: false,
-						RemoveLinks:   false,
-						Force:         true,
-					})
+					if containerInfo, ok := curItem.(dockerRes); ok {
+						err := m.dockerClient.DeleteContainer(containerInfo.getId(), container.RemoveOptions{
+							RemoveVolumes: false,
+							RemoveLinks:   false,
+							Force:         true,
+						})
 
-					if err != nil {
-						m.activeDialog = teadialog.NewErrorDialog(err.Error())
-						m.showDialog = true
+						if err != nil {
+							m.activeDialog = teadialog.NewErrorDialog(err.Error())
+							m.showDialog = true
+						}
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
