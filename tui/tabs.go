@@ -37,12 +37,12 @@ type Model struct {
 	activeDialog tea.Model
 }
 
-func doTick() tea.Cmd {
+func doUpdateObjectsTick() tea.Cmd {
 	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m Model) Init() tea.Cmd {
-	return doTick()
+	return doUpdateObjectsTick()
 }
 
 func NewModel(tabs []string) Model {
@@ -61,6 +61,7 @@ func NewModel(tabs []string) Model {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
+	var cmds []tea.Cmd
 	//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
 	//BUG: the dialog box remains fixed after first call to dialog
 	if m.showDialog {
@@ -71,9 +72,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
 			m.showDialog = false
+			// return m, nil
 		}
-		return m, cmd
+		// return m, cmd
+
+		cmds = append(cmds, cmd)
 	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -91,12 +96,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.getList(index).SetHeight(msg.Height - 7)
 		}
 
-		return m, nil
+		// return m, nil
 
 	case TickMsg:
 		m = m.updateContent()
 
-		return m, doTick()
+		// return m, doUpdateObjectsTick()
+		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.KeyMsg:
 		//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
@@ -111,18 +117,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// 	}
 		// 	return m, cmd
 		// }
-		if !m.getActiveList().SettingFilter() {
+		if !m.getActiveList().SettingFilter() && !m.showDialog {
 			switch {
 			case key.Matches(msg, NavKeymap.Quit):
+				log.Println(msg, "quitting")
+
 				return m, tea.Quit
 			case key.Matches(msg, NavKeymap.Next):
 				//OPTIM: return ticker as tea.Cmd to instantly render new list on tab change
 				m.nextTab()
-				return m, nil
+				// return m, nil
 			case key.Matches(msg, NavKeymap.Prev):
 				//OPTIM: same here
 				m.prevTab()
-				return m, nil
+				// return m, nil
 			}
 
 			if m.activeTab == int(images) {
@@ -135,7 +143,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.activeDialog = getRemoveImageDialog(storage)
 						m.showDialog = true
 
-						return m, m.activeDialog.Init()
+						// return m, m.activeDialog.Init()
+						cmds = append(cmds, m.activeDialog.Init())
 					}
 
 				case key.Matches(msg, ImageKeymap.DeleteForce):
@@ -151,13 +160,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error())
 							m.showDialog = true
-							return m, m.activeDialog.Init()
+							// return m, m.activeDialog.Init()
+							cmds = append(cmds, m.activeDialog.Init())
 						}
 					}
 				case key.Matches(msg, ImageKeymap.Prune):
 					m.activeDialog = getPruneImagesDialog(make(map[string]string))
 					m.showDialog = true
-					return m, m.activeDialog.Init()
+					// return m, m.activeDialog.Init()
+					cmds = append(cmds, m.activeDialog.Init())
 				}
 
 			} else if m.activeTab == int(containers) {
@@ -182,7 +193,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					dialog := getRemoveContainerDialog(map[string]string{"ID": containerId})
 					m.activeDialog = dialog
 					m.showDialog = true
-					return m, m.activeDialog.Init()
+					// return m, m.activeDialog.Init()
+					cmds = append(cmds, m.activeDialog.Init())
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
@@ -196,13 +208,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.activeDialog = teadialog.NewErrorDialog(err.Error())
 						m.showDialog = true
-						return m, nil
+						// return m, nil
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))
 					m.showDialog = true
-					return m, m.activeDialog.Init()
+					// return m, m.activeDialog.Init()
+					cmds = append(cmds, m.activeDialog.Init())
 				}
 
 			} else {
@@ -227,10 +240,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if containerId != "" {
 				log.Println("removing container: ", dialogRes.UserStorage["ID"])
 				err := m.dockerClient.DeleteContainer(containerId, opts)
+				log.Println("contianer delete")
 				if err != nil {
 					panic(err)
 				}
 			}
+
+			// return m, nil
 
 		case dialogPruneContainers:
 			log.Println("prune containers called")
@@ -256,6 +272,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if userChoice["confirm"] == "Yes" {
 				report, err := m.dockerClient.PruneImages()
 
+				//TODO: show report on screen
 				log.Println("prune images report", report)
 
 				if err != nil {
@@ -280,7 +297,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error())
 					m.showDialog = true
-					return m, nil
+					// return m, nil
 				}
 			}
 		}
@@ -290,7 +307,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
 
-	return m, cmd
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func tabBorderWithBottom(left, middle, right string) lipgloss.Border {

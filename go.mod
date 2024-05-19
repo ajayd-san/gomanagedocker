@@ -3,7 +3,7 @@ module github.com/ajayd-san/gomanagedocker
 go 1.22.2
 
 require (
-	github.com/ajayd-san/teaDialog v0.1.5
+	github.com/ajayd-san/teaDialog v0.1.6-0.20240519052436-6e46bc470f62
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/stretchr/testify v1.9.0
 )
