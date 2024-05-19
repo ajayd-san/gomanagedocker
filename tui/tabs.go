@@ -305,7 +305,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
+	//do not pass key.msg to list if dialog is active
+	if !m.showDialog {
+		m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
+	}
 
 	cmds = append(cmds, cmd)
 
