@@ -164,8 +164,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error())
 							m.showDialog = true
-							// return m, m.activeDialog.Init()
-							cmds = append(cmds, m.activeDialog.Init())
 						}
 					}
 				case key.Matches(msg, ImageKeymap.Prune):
@@ -186,9 +184,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if curItem != nil {
 						containerId := curItem.(dockerRes).getId()
 						err := m.dockerClient.ToggleStartStopContainer(containerId)
+
 						if err != nil {
-							panic(err)
+							m.activeDialog = teadialog.NewErrorDialog(err.Error())
+							m.showDialog = true
 						}
+
 					}
 				case key.Matches(msg, ContainerKeymap.Delete):
 					//BUG: check if any items are displayed, crashes otherwise
@@ -212,7 +213,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.activeDialog = teadialog.NewErrorDialog(err.Error())
 						m.showDialog = true
-						// return m, nil
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
@@ -246,7 +246,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				err := m.dockerClient.DeleteContainer(containerId, opts)
 				log.Println("contianer delete")
 				if err != nil {
-					panic(err)
+					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.showDialog = true
 				}
 			}
 
@@ -264,7 +265,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				log.Println(report)
 
 				if err != nil {
-					panic(err)
+					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.showDialog = true
 				}
 			}
 
@@ -280,7 +282,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				log.Println("prune images report", report)
 
 				if err != nil {
-					panic(err)
+					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.showDialog = true
 				}
 
 			}
@@ -301,7 +304,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error())
 					m.showDialog = true
-					// return m, nil
 				}
 			}
 		}
