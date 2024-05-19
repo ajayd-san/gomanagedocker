@@ -8,6 +8,7 @@ const (
 	dialogRemoveContainer dialog.DialogType = iota
 	dialogPruneContainers
 	dialogRemoveImage
+	dialogPruneImages
 )
 
 func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
@@ -35,4 +36,12 @@ func getRemoveImageDialog(storage map[string]string) dialog.Dialog {
 	}
 
 	return dialog.InitDialogue("Remove Image Options:", prompts, dialogRemoveImage, storage)
+}
+
+func getPruneImagesDialog(storage map[string]string) dialog.Dialog {
+	prompts := []dialog.Prompt{
+		dialog.MakeOptionPrompt("confirm", "This will remove all unused images, are your sure?", []string{"Yes", "No"}),
+	}
+
+	return dialog.InitDialogue("Prune Containers: ", prompts, dialogPruneImages, storage)
 }
