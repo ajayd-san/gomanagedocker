@@ -126,11 +126,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, NavKeymap.Next):
 				//OPTIM: return ticker as tea.Cmd to instantly render new list on tab change
 				m.nextTab()
-				// return m, nil
 			case key.Matches(msg, NavKeymap.Prev):
 				//OPTIM: same here
 				m.prevTab()
-				// return m, nil
 			}
 
 			if m.activeTab == int(images) {
