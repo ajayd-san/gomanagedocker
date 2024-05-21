@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
-	dialog "github.com/ajayd-san/teaDialog"
 	teadialog "github.com/ajayd-san/teaDialog"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -68,7 +67,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	//BUG: the dialog box remains fixed after first call to dialog
 	if m.showDialog {
 		update, cmd := m.activeDialog.Update(msg)
-		if d, ok := update.(dialog.Dialog); ok {
+		if d, ok := update.(teadialog.Dialog); ok {
 			m.activeDialog = d
 		}
 
@@ -252,7 +251,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		}
-	case dialog.DialogSelectionResult:
+	case teadialog.DialogSelectionResult:
 		dialogRes := msg
 		switch dialogRes.Kind {
 		case dialogRemoveContainer:
