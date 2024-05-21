@@ -246,6 +246,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						volumeId := curItem.(dockerRes).getId()
 						m.activeDialog = getRemoveVolumeDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
 					}
 				}
 			}
