@@ -25,3 +25,7 @@ func (dc DockerClient) PruneVolumes() (*types.VolumesPruneReport, error) {
 	}
 	return &res, nil
 }
+
+func (dc DockerClient) DeleteVolume(id string, force bool) error {
+	return dc.cli.VolumeRemove(context.Background(), id, force)
+}

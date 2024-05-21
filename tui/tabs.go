@@ -237,6 +237,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.activeDialog = getPruneVolumesDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
 					}
+
+				case key.Matches(msg, VolumeKeymap.Delete):
+					log.Println("volume delete called")
+
+					curItem := m.getSelectedItem()
+
+					if curItem != nil {
+						volumeId := curItem.(dockerRes).getId()
+						m.activeDialog = getRemoveVolumeDialog(map[string]string{"ID": volumeId})
+						m.showDialog = true
+					}
 				}
 			}
 
@@ -311,6 +322,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				report, err := m.dockerClient.PruneVolumes()
 
 				log.Println(report)
+
+				if err != nil {
+					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.showDialog = true
+				}
+			}
+
+		case dialogRemoveVolumes:
+			log.Println("remove volume called 2")
+			userChoice := dialogRes.UserChoices
+
+			volumeId := dialogRes.UserStorage["ID"]
+
+			if volumeId != "" {
+				err := m.dockerClient.DeleteVolume(volumeId, userChoice["force"].(bool))
 
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error())

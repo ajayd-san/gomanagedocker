@@ -10,6 +10,7 @@ const (
 	dialogRemoveImage
 	dialogPruneImages
 	dialogPruneVolumes
+	dialogRemoveVolumes
 )
 
 func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
@@ -20,6 +21,14 @@ func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
 	}
 
 	return dialog.InitDialogue("Remove Container Options:", prompts, dialogRemoveContainer, storage)
+}
+
+func getRemoveVolumeDialog(storage map[string]string) dialog.Dialog {
+	prompts := []dialog.Prompt{
+		dialog.MakeTogglePrompt("force", "Force?"),
+	}
+
+	return dialog.InitDialogue("Remove Volume Options:", prompts, dialogRemoveVolumes, storage)
 }
 
 func getPruneContainersDialog(storage map[string]string) dialog.Dialog {
