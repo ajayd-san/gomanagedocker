@@ -120,7 +120,7 @@ func (v VolumeItem) FilterValue() string {
 }
 
 func (v VolumeItem) getId() string {
-	panic("unimplemented")
+	return v.Name
 }
 
 func (v VolumeItem) getLabel() string {

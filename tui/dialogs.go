@@ -9,6 +9,7 @@ const (
 	dialogPruneContainers
 	dialogRemoveImage
 	dialogPruneImages
+	dialogPruneVolumes
 )
 
 func getRemoveContainerDialog(storage map[string]string) dialog.Dialog {
@@ -44,4 +45,13 @@ func getPruneImagesDialog(storage map[string]string) dialog.Dialog {
 	}
 
 	return dialog.InitDialogue("Prune Containers: ", prompts, dialogPruneImages, storage)
+}
+
+func getPruneVolumesDialog(storage map[string]string) dialog.Dialog {
+	prompts := []dialog.Prompt{
+		dialog.MakeTogglePrompt("all", "Removed all unused volumes"),
+		dialog.MakeOptionPrompt("confirm", "This will remove all unused volumes, are your sure?", []string{"Yes", "No"}),
+	}
+
+	return dialog.InitDialogue("Prune Containers: ", prompts, dialogPruneVolumes, storage)
 }

@@ -30,6 +30,7 @@ type contKeymap struct {
 
 type volKeymap struct {
 	Delete key.Binding
+	Prune  key.Binding
 }
 
 var ImageKeymap = imgKeymap{
@@ -91,6 +92,10 @@ var VolumeKeymap = volKeymap{
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
 	),
+	Prune: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "prune"),
+	),
 }
 
 var NavKeymap = navigationKeymap{
@@ -119,6 +124,7 @@ var NavKeymap = navigationKeymap{
 func getVolumeKeymap() []key.Binding {
 	return []key.Binding{
 		VolumeKeymap.Delete,
+		VolumeKeymap.Prune,
 	}
 }
 

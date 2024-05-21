@@ -227,8 +227,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.activeDialog.Init())
 				}
 
-			} else {
-
+			} else if m.activeTab == int(volumes) {
+				switch {
+				case key.Matches(msg, VolumeKeymap.Prune):
+					log.Println("Volume prune called")
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+						volumeId := curItem.(dockerRes).getId()
+						m.activeDialog = getPruneVolumesDialog(map[string]string{"ID": volumeId})
+						m.showDialog = true
+					}
+				}
 			}
 
 		}
@@ -291,6 +300,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.showDialog = true
 				}
 
+			}
+
+		case dialogPruneVolumes:
+			log.Println("prune volumes called")
+
+			userChoice := dialogRes.UserChoices
+
+			if userChoice["confirm"] == "Yes" {
+				report, err := m.dockerClient.PruneVolumes()
+
+				log.Println(report)
+
+				if err != nil {
+					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.showDialog = true
+				}
 			}
 
 		case dialogRemoveImage:
