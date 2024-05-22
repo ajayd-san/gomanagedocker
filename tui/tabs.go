@@ -404,8 +404,12 @@ func (m Model) View() string {
 
 	list := m.TabContent[m.activeTab].View()
 	curItem := m.getSelectedItem()
-	infobox := PopulateInfoBox(tabId(m.activeTab), curItem)
-	infobox = moreInfoStyle.Render(infobox)
+
+	infobox := ""
+	if curItem != nil {
+		infobox = PopulateInfoBox(tabId(m.activeTab), curItem)
+		infobox = moreInfoStyle.Render(infobox)
+	}
 
 	//TODO: align info box to right edge of the window
 	body_with_info := lipgloss.JoinHorizontal(lipgloss.Top, list, infobox)
