@@ -40,17 +40,6 @@ func (dc *DockerClient) ToggleStartStopContainer(id string) error {
 
 // Deletes the container
 func (dc *DockerClient) DeleteContainer(id string, opts container.RemoveOptions) error {
-	// stop the container first
-	info, err := dc.cli.ContainerInspect(context.Background(), id)
-	if err != nil {
-		return err
-	}
-
-	if info.State.Running {
-		timeout := 0
-		dc.cli.ContainerStop(context.Background(), id, container.StopOptions{Timeout: &timeout})
-	}
-
 	return dc.cli.ContainerRemove(context.Background(), id, opts)
 }
 
