@@ -1,9 +1,11 @@
 module github.com/ajayd-san/gomanagedocker
 
+replace github.com/ajayd-san/teaDialog => /mnt/devenv/go/teaDialog
+
 go 1.22.2
 
 require (
-	github.com/ajayd-san/teaDialog v0.1.6-0.20240519052436-6e46bc470f62
+	github.com/ajayd-san/teaDialog v1.5.3-0.20240522083935-787979c4cc4c
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/stretchr/testify v1.9.0
 )
