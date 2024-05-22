@@ -73,9 +73,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
 			m.showDialog = false
-			// return m, nil
 		}
-		// return m, cmd
 
 		cmds = append(cmds, cmd)
 	}
@@ -90,7 +88,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case TickMsg:
 		m = m.updateContent(m.activeTab)
 
-		// return m, doUpdateObjectsTick()
 		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.WindowSizeMsg:
@@ -109,21 +106,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.getList(index).SetHeight(msg.Height - 7)
 		}
 
-		// return m, nil
-
 	case tea.KeyMsg:
-		//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
-		// if m.showDialog {
-		// 	update, cmd := m.activeDialog.Update(msg)
-		// 	if d, ok := update.(dialog.Dialog); ok {
-		// 		m.activeDialog = d
-		// 	}
-
-		// 	if key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
-		// 		m.showDialog = false
-		// 	}
-		// 	return m, cmd
-		// }
 		if !m.getActiveList().SettingFilter() && !m.showDialog {
 			switch {
 			case key.Matches(msg, NavKeymap.Quit):
@@ -146,7 +129,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.activeDialog = getRemoveImageDialog(storage)
 						m.showDialog = true
 
-						// return m, m.activeDialog.Init()
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
@@ -172,7 +154,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ImageKeymap.Prune):
 					m.activeDialog = getPruneImagesDialog(make(map[string]string))
 					m.showDialog = true
-					// return m, m.activeDialog.Init()
 					cmds = append(cmds, m.activeDialog.Init())
 				}
 
@@ -200,7 +181,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.getId()})
 						m.activeDialog = dialog
 						m.showDialog = true
-						// return m, m.activeDialog.Init()
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
@@ -222,7 +202,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ContainerKeymap.Prune):
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))
 					m.showDialog = true
-					// return m, m.activeDialog.Init()
 					cmds = append(cmds, m.activeDialog.Init())
 				}
 
@@ -275,8 +254,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.showDialog = true
 				}
 			}
-
-			// return m, nil
 
 		case dialogPruneContainers:
 			log.Println("prune containers called")
