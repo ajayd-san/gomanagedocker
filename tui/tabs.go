@@ -64,7 +64,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
 	//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
-	//BUG: the dialog box remains fixed after first call to dialog
 	if m.showDialog {
 
 		update, cmd := m.activeDialog.Update(msg)
