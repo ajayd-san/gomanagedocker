@@ -27,14 +27,16 @@ const (
 )
 
 type Model struct {
-	dockerClient dockercmd.DockerClient
-	Tabs         []string
-	TabContent   []listModel
-	activeTab    int
-	width        int
-	height       int
-	showDialog   bool
-	activeDialog tea.Model
+	dockerClient        dockercmd.DockerClient
+	Tabs                []string
+	TabContent          []listModel
+	activeTab           int
+	width               int
+	height              int
+	showDialog          bool
+	activeDialog        tea.Model
+	windowTooSmall      bool
+	windowtoosmallModel WindowTooSmallModel
 }
 
 func doUpdateObjectsTick() tea.Cmd {
@@ -54,9 +56,10 @@ func NewModel(tabs []string) Model {
 	}
 
 	return Model{
-		dockerClient: dockercmd.NewDockerClient(),
-		Tabs:         tabs,
-		TabContent:   contents,
+		dockerClient:        dockercmd.NewDockerClient(),
+		Tabs:                tabs,
+		TabContent:          contents,
+		windowtoosmallModel: MakeNewWindowTooSmallModel(),
 	}
 }
 
@@ -91,6 +94,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.WindowSizeMsg:
+		// if window too small set and show windowTooSmall screen
+		if msg.Height <= 38 || msg.Width <= 173 {
+			m.windowTooSmall = true
+			temp, _ := m.windowtoosmallModel.Update(msg)
+			m.windowtoosmallModel = temp.(WindowTooSmallModel)
+		} else {
+			m.windowTooSmall = false
+		}
+
 		m.width = msg.Width
 		m.height = msg.Height
 		windowStyle = windowStyle.
@@ -362,6 +374,10 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 }
 
 func (m Model) View() string {
+
+	if m.windowTooSmall {
+		return dialogContainerStyle.Render(m.windowtoosmallModel.View())
+	}
 
 	if m.showDialog {
 		return dialogContainerStyle.Render(m.activeDialog.View())

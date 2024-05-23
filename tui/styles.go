@@ -29,4 +29,10 @@ var (
 	infoEntry = lipgloss.NewStyle().Margin(1)
 
 	dialogContainerStyle = lipgloss.NewStyle().Align(lipgloss.Center, lipgloss.Center)
+
+	windowTooSmallStyle = lipgloss.NewStyle().
+				Border(lipgloss.NormalBorder()).
+				BorderForeground(highlightColor).
+				Align(lipgloss.Center, lipgloss.Center).
+				Padding(2, 2)
 )
