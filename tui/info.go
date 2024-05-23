@@ -28,6 +28,7 @@ func PopulateInfoBox(tab tabId, item list.Item) string {
 	}
 	return ""
 }
+
 func populateImageInfoBox(imageinfo imageItem) string {
 	var res strings.Builder
 	// res.WriteString(addEntry(res, "Containers", imageinfo.Containers))
@@ -52,8 +53,8 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 	} else {
 		addEntry(&res, "Size: ", "Not Available")
 	}
-	return res.String()
 
+	return res.String()
 }
 
 func populateContainerInfoBox(containerInfo containerItem) string {
