@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"log"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -215,6 +216,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))
 					m.showDialog = true
 					cmds = append(cmds, m.activeDialog.Init())
+
+				case key.Matches(msg, ContainerKeymap.Exec):
+					curItem := m.getSelectedItem()
+					containerId := curItem.(dockerRes).getId()
+					cmd := exec.Command("docker", "exec", "-it", containerId, "bash")
+					cmds = append(cmds, tea.ExecProcess(cmd, nil))
 				}
 
 			} else if m.activeTab == int(volumes) {
