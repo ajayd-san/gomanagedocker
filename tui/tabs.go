@@ -220,7 +220,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ContainerKeymap.Exec):
 					curItem := m.getSelectedItem()
 					containerId := curItem.(dockerRes).getId()
-					cmd := exec.Command("docker", "exec", "-it", containerId, "bash")
+					// execs into the default shell of the container (got from lazydocker)
+					cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 					cmds = append(cmds, tea.ExecProcess(cmd, nil))
 				}
 
