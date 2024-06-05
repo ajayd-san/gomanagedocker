@@ -9,7 +9,7 @@ import (
 )
 
 func (dc *DockerClient) ListImages() []image.Summary {
-	images, err := dc.cli.ImageList(context.Background(), image.ListOptions{})
+	images, err := dc.cli.ImageList(context.Background(), image.ListOptions{ContainerCount: true})
 
 	if err != nil {
 		panic(err)

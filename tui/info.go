@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,11 +35,11 @@ func PopulateInfoBox(tab tabId, item list.Item) string {
 
 func populateImageInfoBox(imageinfo imageItem) string {
 	var res strings.Builder
-	// res.WriteString(addEntry(res, "Containers", imageinfo.Containers))
 	addEntry(&res, "id: ", strings.TrimPrefix(imageinfo.ID, "sha256:"))
 	addEntry(&res, "Name: ", imageinfo.getName())
-	//BUG: this always shows -1
-	addEntry(&res, "Containers: ", fmt.Sprintf("%d", imageinfo.Containers))
+	if imageinfo.Containers != -1 {
+		addEntry(&res, "Containers: ", strconv.Itoa(int(imageinfo.Containers)))
+	}
 	addEntry(&res, "Created: ", time.Unix(imageinfo.Created, 0).Format(time.UnixDate))
 	return res.String()
 }
