@@ -67,6 +67,8 @@ func populateContainerInfoBox(containerInfo containerItem) string {
 	addEntry(&res, "Name: ", containerInfo.getName())
 	addEntry(&res, "Image: ", containerInfo.Image)
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
+	sizeInGb := float64(containerInfo.SizeRootFs) / float64(1e+9)
+	addEntry(&res, "Root FS Size: ", strconv.FormatFloat(sizeInGb, 'f', 2, 64))
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)
 	addEntry(&res, "Status: ", containerInfo.Status)

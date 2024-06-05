@@ -17,7 +17,11 @@ func NewDockerClient() DockerClient {
 	}
 
 	return DockerClient{
-		cli:               cli,
-		containerListArgs: container.ListOptions{},
+		cli: cli,
+		containerListArgs: container.ListOptions{
+			Size:   true,
+			All:    false,
+			Latest: false,
+		},
 	}
 }
