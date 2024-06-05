@@ -78,9 +78,11 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 	}
 
 	//BUG: dont compare by lenght, compare by slice since slice can change without changing length
-	if len(m.list.Items()) != len(newlist) {
-		m.list.SetItems(makeItems(newlist))
-	}
+	// if len(m.list.Items()) != len(newlist) {
+	// 	m.list.SetItems(makeItems(newlist))
+	// }
 
+	//TODO: this is not efficient, find a better way
+	m.list.SetItems(makeItems(newlist))
 	return m
 }
