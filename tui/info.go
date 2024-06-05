@@ -1,11 +1,14 @@
 package tui
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/docker/docker/api/types"
 )
 
 func PopulateInfoBox(tab tabId, item list.Item) string {
@@ -67,6 +70,10 @@ func populateContainerInfoBox(containerInfo containerItem) string {
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)
 	addEntry(&res, "Status: ", containerInfo.Status)
+
+	if len(containerInfo.Mounts) > 0 {
+		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
+	}
 	return res.String()
 }
 
@@ -75,6 +82,25 @@ func addEntry(res *strings.Builder, label string, val string) {
 	label = infoEntryLabel.Render(label)
 	entry := infoEntry.Render(label + val)
 	res.WriteString(entry)
+}
+
+func mountPointString(mounts []types.MountPoint) string {
+
+	var res strings.Builder
+
+	slices.SortStableFunc(mounts, func(a types.MountPoint, b types.MountPoint) int {
+		return cmp.Compare(a.Source, b.Source)
+	})
+
+	for i, mount := range mounts {
+		res.WriteString(mount.Source)
+
+		if i < len(mounts)-1 {
+			res.WriteString(", ")
+		}
+	}
+
+	return res.String()
 }
 
 func mapToString(m map[string]string) string {
