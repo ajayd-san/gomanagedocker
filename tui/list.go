@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log"
 	"slices"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
@@ -9,7 +10,8 @@ import (
 )
 
 type listModel struct {
-	list list.Model
+	list        list.Model
+	previousIds map[string]struct{}
 }
 
 func (m listModel) Init() tea.Cmd {
@@ -36,7 +38,7 @@ func (m listModel) View() string {
 func InitList(tab tabId) listModel {
 
 	items := make([]list.Item, 0)
-	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 10, 30)}
+	m := listModel{list: list.New(items, list.NewDefaultDelegate(), 10, 30), previousIds: make(map[string]struct{})}
 
 	m.list.SetShowTitle(false)
 	m.list.DisableQuitKeybindings()
@@ -73,6 +75,22 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 	case containers:
 		newContainers := dockerClient.ListContainers(showContainerSize)
 		newlist = makeContainerItems(newContainers)
+
+		for _, newContainer := range newlist {
+			id := newContainer.getId()
+			if _, ok := m.previousIds[id]; !ok {
+				go func() {
+					containerInfo, err := dockerClient.InspectContainer(id)
+
+					if err != nil {
+						panic(err)
+					}
+
+					log.Println(containerInfo.SizeRw)
+					updateContainerSizeMap(containerInfo)
+				}()
+			}
+		}
 	case volumes:
 		//TODO: handle errors
 		newVolumes, _ := dockerClient.ListVolumes()
@@ -107,7 +125,14 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 	if !slices.EqualFunc(newlist, m.list.Items(), comparisionFunc) {
 		newlistItems := makeItems(newlist)
 		m.list.SetItems(newlistItems)
+		go m.updateIds(newlist)
 	}
 
 	return m
+}
+
+func (m *listModel) updateIds(newlistItems []dockerRes) {
+	for _, item := range newlistItems {
+		m.previousIds[item.getId()] = struct{}{}
+	}
 }

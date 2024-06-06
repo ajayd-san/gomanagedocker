@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 )
@@ -52,7 +53,7 @@ func doUpdateObjectsTick() tea.Cmd {
 
 func (m Model) Init() tea.Cmd {
 	//fetches container size info in a seperate go routine
-	go m.getContainerSizesConcurrently()
+	go m.prepopulateContainerSizeMapConcurrently()
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
@@ -498,7 +499,7 @@ func (m Model) getSelectedItem() list.Item {
 	return m.TabContent[m.activeTab].list.SelectedItem()
 }
 
-func (m *Model) getContainerSizesConcurrently() {
+func (m *Model) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
 	for _, info := range containerInfoWithSize {
@@ -506,5 +507,12 @@ func (m *Model) getContainerSizesConcurrently() {
 			sizeRw: info.SizeRw,
 			rootFs: info.SizeRootFs,
 		}
+	}
+}
+
+func updateContainerSizeMap(containerInfo *types.ContainerJSON) {
+	containerSizeMap[containerInfo.ID] = ContainerSize{
+		sizeRw: *containerInfo.SizeRw,
+		rootFs: *containerInfo.SizeRootFs,
 	}
 }
