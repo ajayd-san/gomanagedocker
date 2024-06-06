@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"slices"
+
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -77,12 +79,35 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 		newlist = makeVolumeItem(newVolumes)
 	}
 
-	//BUG: dont compare by lenght, compare by slice since slice can change without changing length
-	// if len(m.list.Items()) != len(newlist) {
-	// 	m.list.SetItems(makeItems(newlist))
-	// }
+	comparisionFunc := func(a dockerRes, b list.Item) bool {
+		switch id {
+		case images:
+			newA := a.(imageItem)
+			newB := b.(imageItem)
 
-	//TODO: this is not efficient, find a better way
-	m.list.SetItems(makeItems(newlist))
+			if newA.Containers != newB.Containers {
+				return false
+			}
+		case containers:
+			newA := a.(containerItem)
+			newB := b.(containerItem)
+
+			if newA.State != newB.State {
+				return false
+			}
+		case volumes:
+			// newA := a.(VolumeItem)
+			// newB := b.(VolumeItem)
+
+		}
+
+		return true
+	}
+
+	if !slices.EqualFunc(newlist, m.list.Items(), comparisionFunc) {
+		newlistItems := makeItems(newlist)
+		m.list.SetItems(newlistItems)
+	}
+
 	return m
 }

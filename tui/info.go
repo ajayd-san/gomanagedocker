@@ -72,7 +72,6 @@ func populateContainerInfoBox(containerInfo containerItem) string {
 	addEntry(&res, "Root FS Size: ", strconv.FormatFloat(sizeInGb, 'f', 2, 64))
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)
-	addEntry(&res, "Status: ", containerInfo.Status)
 
 	if len(containerInfo.Mounts) > 0 {
 		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
