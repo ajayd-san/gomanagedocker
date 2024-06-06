@@ -95,7 +95,7 @@ func (c containerItem) getSize() float64 {
 }
 
 func (c containerItem) getLabel() string {
-	return "labels here"
+	return c.getName()
 }
 
 func (c containerItem) getName() string {
