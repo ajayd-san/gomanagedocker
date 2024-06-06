@@ -130,7 +130,7 @@ type VolumeItem struct {
 }
 
 func (v VolumeItem) FilterValue() string {
-	panic("unimplemented")
+	return v.getId()
 }
 
 func (v VolumeItem) getId() string {
