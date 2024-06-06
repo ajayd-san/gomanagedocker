@@ -110,10 +110,19 @@ func (i containerItem) Description() string {
 	id = strings.TrimPrefix(id, "sha256:")
 	shortId := id[:15]
 
-	sizeStr := strconv.FormatFloat(i.getSize(), 'f', 2, 64) + "GB"
+	state := i.State
+	switch i.State {
+	case "running":
+		state = containerRunningStyle.Render(state)
+	case "exited":
+		state = containerExitedStyle.Render(state)
+	case "created":
+		state = containerCreatedStyle.Render(state)
+	}
 
-	return shortId + "\t\t\t\t\t\t\t" + sizeStr
+	return shortId + "\t\t\t\t\t\t\t" + state
 }
+
 func (i containerItem) FilterValue() string { return i.getLabel() }
 
 type VolumeItem struct {

@@ -35,4 +35,7 @@ var (
 				BorderForeground(highlightColor).
 				Align(lipgloss.Center, lipgloss.Center).
 				Padding(2, 2)
+	containerRunningStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("41"))
+	containerExitedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("172"))
+	containerCreatedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("118"))
 )
