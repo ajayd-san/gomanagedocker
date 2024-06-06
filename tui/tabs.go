@@ -27,6 +27,9 @@ const (
 	volumes
 )
 
+// INFO: temporary fix to performance hiccups
+const showContainerSize = false
+
 type Model struct {
 	dockerClient        dockercmd.DockerClient
 	Tabs                []string

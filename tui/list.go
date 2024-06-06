@@ -69,7 +69,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 		newImgs := dockerClient.ListImages()
 		newlist = makeImageItems(newImgs)
 	case containers:
-		newContainers := dockerClient.ListContainers()
+		newContainers := dockerClient.ListContainers(showContainerSize)
 		newlist = makeContainerItems(newContainers)
 	case volumes:
 		//TODO: handle errors

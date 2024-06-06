@@ -9,8 +9,11 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-func (dc *DockerClient) ListContainers() []types.Container {
-	containers, err := dc.cli.ContainerList(context.Background(), dc.containerListArgs)
+func (dc *DockerClient) ListContainers(showContainerSize bool) []types.Container {
+	listArgs := dc.containerListArgs
+	listArgs.Size = showContainerSize
+
+	containers, err := dc.cli.ContainerList(context.Background(), listArgs)
 
 	if err != nil {
 		panic(err)
