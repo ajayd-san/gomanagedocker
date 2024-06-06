@@ -11,6 +11,11 @@ import (
 	"github.com/docker/docker/api/types/volume"
 )
 
+type ContainerSize struct {
+	sizeRw int64
+	rootFs int64
+}
+
 type dockerRes interface {
 	list.Item
 	getId() string

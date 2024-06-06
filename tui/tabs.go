@@ -30,6 +30,9 @@ const (
 // INFO: temporary fix to performance hiccups
 const showContainerSize = false
 
+// INFO: holds container size info that is calculated on demand
+var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
+
 type Model struct {
 	dockerClient        dockercmd.DockerClient
 	Tabs                []string
@@ -48,6 +51,8 @@ func doUpdateObjectsTick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
+	//fetches container size info in a seperate go routine
+	go m.getContainerSizesConcurrently()
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
@@ -491,4 +496,15 @@ func (m Model) getList(index int) *list.Model {
 
 func (m Model) getSelectedItem() list.Item {
 	return m.TabContent[m.activeTab].list.SelectedItem()
+}
+
+func (m *Model) getContainerSizesConcurrently() {
+	containerInfoWithSize := m.dockerClient.ListContainers(true)
+
+	for _, info := range containerInfoWithSize {
+		containerSizeMap[info.ID] = ContainerSize{
+			sizeRw: info.SizeRw,
+			rootFs: info.SizeRootFs,
+		}
+	}
 }
