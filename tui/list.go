@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"log"
 	"slices"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
@@ -86,7 +85,6 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 						panic(err)
 					}
 
-					log.Println(containerInfo.SizeRw)
 					updateContainerSizeMap(containerInfo)
 				}()
 			}

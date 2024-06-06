@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"cmp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -10,6 +12,28 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 )
+
+type status int
+
+const (
+	containerStateRunning status = iota
+	containerStatePaused
+	containerStateRestarting
+	containerStateExited
+	containerStateCreated
+	containerStateRemoving
+	containerStateDead
+)
+
+var statusMap = map[string]status{
+	"running":    containerStateRunning,
+	"paused":     containerStatePaused,
+	"restarting": containerStateRestarting,
+	"exited":     containerStateExited,
+	"created":    containerStateCreated,
+	"removing":   containerStateRemoving,
+	"dead":       containerStateDead,
+}
 
 type ContainerSize struct {
 	sizeRw int64
@@ -77,6 +101,18 @@ type containerItem struct {
 
 func makeContainerItems(dockerlist []types.Container) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
+
+	slices.SortFunc(dockerlist, func(a types.Container, b types.Container) int {
+
+		if statusMap[a.State] < statusMap[b.State] {
+			return -1
+		} else if statusMap[a.State] > statusMap[b.State] {
+			return 1
+		}
+
+		//we can compare by only first name, since names cannot be equal
+		return cmp.Compare(a.Names[0], b.Names[0])
+	})
 
 	for i := range dockerlist {
 		res[i] = containerItem{Container: dockerlist[i]}
