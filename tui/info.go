@@ -37,6 +37,8 @@ func populateImageInfoBox(imageinfo imageItem) string {
 	var res strings.Builder
 	addEntry(&res, "id: ", strings.TrimPrefix(imageinfo.ID, "sha256:"))
 	addEntry(&res, "Name: ", imageinfo.getName())
+	sizeInGb := float64(imageinfo.getSize())
+	addEntry(&res, "Size: ", strconv.FormatFloat(sizeInGb, 'f', 2, 64)+"GB")
 	if imageinfo.Containers != -1 {
 		addEntry(&res, "Containers: ", strconv.Itoa(int(imageinfo.Containers)))
 	}
