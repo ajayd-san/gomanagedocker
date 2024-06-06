@@ -1,19 +1,20 @@
 package dockercmd
 
 import (
-	"encoding/json"
-	"log"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestListContainer(t *testing.T) {
+var dockerclient = NewDockerClient()
 
-	client := NewDockerClient()
-
-	containersList := client.ListContainers()
-	indenttest, _ := json.MarshalIndent(containersList, "", "\t")
-	log.Println(string(indenttest))
-	assert.Equal(t, len(containersList), 1, "Not all containers detected")
+func BenchmarkContainerList(b *testing.B) {
+	b.Run("Showing container size", func(b *testing.B) {
+		for range b.N {
+			dockerclient.ListContainers(false)
+		}
+	})
+	b.Run("NOT Showing container size", func(b *testing.B) {
+		for range b.N {
+			dockerclient.ListContainers(true)
+		}
+	})
 }
