@@ -332,14 +332,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-				report, err := m.dockerClient.PruneVolumes()
 
-				log.Println(report)
+				//same reason as above, again
+				go func() {
+					report, err := m.dockerClient.PruneVolumes()
 
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error())
-					m.showDialog = true
-				}
+					log.Println(report)
+
+					if err != nil {
+						m.activeDialog = teadialog.NewErrorDialog(err.Error())
+						m.showDialog = true
+					}
+				}()
 			}
 
 		case dialogRemoveVolumes:
