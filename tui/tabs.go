@@ -312,16 +312,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-				report, err := m.dockerClient.PruneImages()
+				//run on a different go routine, same reason as above (for Prune containers)
+				go func() {
+					report, err := m.dockerClient.PruneImages()
 
-				//TODO: show report on screen
-				log.Println("prune images report", report)
+					//TODO: show report on screen
+					log.Println("prune images report", report)
 
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error())
-					m.showDialog = true
-				}
-
+					if err != nil {
+						m.activeDialog = teadialog.NewErrorDialog(err.Error())
+						m.showDialog = true
+					}
+				}()
 			}
 
 		case dialogPruneVolumes:
