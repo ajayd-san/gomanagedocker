@@ -2,7 +2,6 @@ package tui
 
 import (
 	"slices"
-	"sync"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/charmbracelet/bubbles/list"
@@ -76,7 +75,6 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 		newContainers := dockerClient.ListContainers(showContainerSize)
 		newlist = makeContainerItems(newContainers)
 
-		mapLock := &sync.Mutex{}
 		for _, newContainer := range newlist {
 			id := newContainer.getId()
 			if _, ok := m.previousIds[id]; !ok {
@@ -87,9 +85,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 						panic(err)
 					}
 
-					mapLock.Lock()
 					updateContainerSizeMap(containerInfo)
-					mapLock.Unlock()
 				}()
 			}
 		}

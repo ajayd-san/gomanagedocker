@@ -5,6 +5,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
@@ -33,6 +34,7 @@ const showContainerSize = false
 
 // INFO: holds container size info that is calculated on demand
 var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
+var containerSizeMap_Mutex sync.Mutex = sync.Mutex{}
 
 type Model struct {
 	dockerClient        dockercmd.DockerClient
@@ -511,8 +513,10 @@ func (m *Model) prepopulateContainerSizeMapConcurrently() {
 }
 
 func updateContainerSizeMap(containerInfo *types.ContainerJSON) {
+	containerSizeMap_Mutex.Lock()
 	containerSizeMap[containerInfo.ID] = ContainerSize{
 		sizeRw: *containerInfo.SizeRw,
 		rootFs: *containerInfo.SizeRootFs,
 	}
+	containerSizeMap_Mutex.Unlock()
 }
