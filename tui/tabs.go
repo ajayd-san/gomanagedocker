@@ -293,14 +293,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if userChoice["confirm"] == "Yes" {
 				log.Println("prune containers confirmed")
 
-				report, err := m.dockerClient.PruneContainers()
+				//prune containers on a seperate goroutine, since UI gets stuck otherwise(since this may take sometime)
+				go func() {
+					report, err := m.dockerClient.PruneContainers()
 
-				log.Println(report)
+					log.Println(report)
 
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error())
-					m.showDialog = true
-				}
+					if err != nil {
+						m.activeDialog = teadialog.NewErrorDialog(err.Error())
+						m.showDialog = true
+					}
+				}()
 			}
 
 		case dialogPruneImages:
