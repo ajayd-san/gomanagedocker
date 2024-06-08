@@ -87,7 +87,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		select {
 		case newErr := <-m.possibleLongRunningOperrorChan:
 			m.showDialog = true
-			m.activeDialog = teadialog.NewErrorDialog(newErr.Error())
+			m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
 		default:
 		}
 	}
@@ -183,7 +183,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							})
 
 							if err != nil {
-								m.activeDialog = teadialog.NewErrorDialog(err.Error())
+								m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 								m.showDialog = true
 							}
 						}
@@ -208,7 +208,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						err := m.dockerClient.ToggleStartStopContainer(containerId)
 
 						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error())
+							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
 						}
 
@@ -232,7 +232,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						})
 
 						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error())
+							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
 						}
 					}
@@ -295,7 +295,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				err := m.dockerClient.DeleteContainer(containerId, opts)
 				log.Println("contianer delete")
 				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
 				}
 			}
@@ -367,7 +367,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				err := m.dockerClient.DeleteVolume(volumeId, userChoice["force"].(bool))
 
 				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
 				}
 			}
@@ -386,7 +386,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				err := m.dockerClient.DeleteImage(imageId, opts)
 				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error())
+					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
 				}
 			}
