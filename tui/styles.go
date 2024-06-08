@@ -20,7 +20,7 @@ var (
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("69")).
 			Width(90).
-			Height(30).MarginTop(2).MarginLeft(5)
+			Height(25).MarginTop(2).MarginLeft(5)
 
 	infoEntryLabel = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("49")).
