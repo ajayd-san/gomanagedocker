@@ -37,16 +37,18 @@ var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
 var containerSizeMap_Mutex sync.Mutex = sync.Mutex{}
 
 type Model struct {
-	dockerClient        dockercmd.DockerClient
-	Tabs                []string
-	TabContent          []listModel
-	activeTab           int
-	width               int
-	height              int
-	showDialog          bool
-	activeDialog        tea.Model
-	windowTooSmall      bool
-	windowtoosmallModel WindowTooSmallModel
+	dockerClient dockercmd.DockerClient
+	Tabs         []string
+	TabContent   []listModel
+	activeTab    int
+	width        int
+	height       int
+	showDialog   bool
+	activeDialog tea.Model
+	// we use this error channel to report error for possibly long running tasks, like pruneing
+	possibleLongRunningOperrorChan chan error
+	windowTooSmall                 bool
+	windowtoosmallModel            WindowTooSmallModel
 }
 
 func doUpdateObjectsTick() tea.Cmd {
@@ -68,16 +70,28 @@ func NewModel(tabs []string) Model {
 	}
 
 	return Model{
-		dockerClient:        dockercmd.NewDockerClient(),
-		Tabs:                tabs,
-		TabContent:          contents,
-		windowtoosmallModel: MakeNewWindowTooSmallModel(),
+		dockerClient:                   dockercmd.NewDockerClient(),
+		Tabs:                           tabs,
+		TabContent:                     contents,
+		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
+		possibleLongRunningOperrorChan: make(chan error, 10),
 	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
+
+	//check if error exists on error channel when no active dialog is preset
+	if !m.showDialog {
+		select {
+		case newErr := <-m.possibleLongRunningOperrorChan:
+			m.showDialog = true
+			m.activeDialog = teadialog.NewErrorDialog(newErr.Error())
+		default:
+		}
+	}
+
 	//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
 	if m.showDialog {
 
@@ -300,8 +314,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Println(report)
 
 					if err != nil {
-						m.activeDialog = teadialog.NewErrorDialog(err.Error())
-						m.showDialog = true
+						m.possibleLongRunningOperrorChan <- err
 					}
 				}()
 			}
@@ -320,8 +333,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Println("prune images report", report)
 
 					if err != nil {
-						m.activeDialog = teadialog.NewErrorDialog(err.Error())
-						m.showDialog = true
+						m.possibleLongRunningOperrorChan <- err
 					}
 				}()
 			}
@@ -340,8 +352,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Println(report)
 
 					if err != nil {
-						m.activeDialog = teadialog.NewErrorDialog(err.Error())
-						m.showDialog = true
+						m.possibleLongRunningOperrorChan <- err
 					}
 				}()
 			}
