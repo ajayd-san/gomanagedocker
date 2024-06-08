@@ -46,7 +46,7 @@ type Model struct {
 	showDialog   bool
 	activeDialog tea.Model
 	// we use this error channel to report error for possibly long running tasks, like pruneing
-	possibleLongRunningOperrorChan chan error
+	possibleLongRunningOpErrorChan chan error
 	windowTooSmall                 bool
 	windowtoosmallModel            WindowTooSmallModel
 }
@@ -74,7 +74,7 @@ func NewModel(tabs []string) Model {
 		Tabs:                           tabs,
 		TabContent:                     contents,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
-		possibleLongRunningOperrorChan: make(chan error, 10),
+		possibleLongRunningOpErrorChan: make(chan error, 10),
 	}
 }
 
@@ -85,7 +85,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	//check if error exists on error channel when no active dialog is preset
 	if !m.showDialog {
 		select {
-		case newErr := <-m.possibleLongRunningOperrorChan:
+		case newErr := <-m.possibleLongRunningOpErrorChan:
 			m.showDialog = true
 			m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
 		default:
@@ -121,7 +121,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		// if window too small set and show windowTooSmall screen
-		if msg.Height <= 38 || msg.Width <= 173 {
+		if msg.Height <= 35 || msg.Width <= 173 {
 			m.windowTooSmall = true
 			temp, _ := m.windowtoosmallModel.Update(msg)
 			m.windowtoosmallModel = temp.(WindowTooSmallModel)
@@ -314,7 +314,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Println(report)
 
 					if err != nil {
-						m.possibleLongRunningOperrorChan <- err
+						m.possibleLongRunningOpErrorChan <- err
 					}
 				}()
 			}
@@ -333,7 +333,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Println("prune images report", report)
 
 					if err != nil {
-						m.possibleLongRunningOperrorChan <- err
+						m.possibleLongRunningOpErrorChan <- err
 					}
 				}()
 			}
@@ -352,7 +352,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					log.Println(report)
 
 					if err != nil {
-						m.possibleLongRunningOperrorChan <- err
+						m.possibleLongRunningOpErrorChan <- err
 					}
 				}()
 			}
