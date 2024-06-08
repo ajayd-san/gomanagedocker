@@ -121,7 +121,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		// if window too small set and show windowTooSmall screen
-		if msg.Height <= 35 || msg.Width <= 173 {
+		if msg.Height < 33 || msg.Width < 169 {
 			m.windowTooSmall = true
 			temp, _ := m.windowtoosmallModel.Update(msg)
 			m.windowtoosmallModel = temp.(WindowTooSmallModel)
