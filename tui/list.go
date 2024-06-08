@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"log"
 	"slices"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
@@ -21,7 +20,6 @@ func (m listModel) Init() tea.Cmd {
 func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		log.Println(msg)
 		h, v := listDocStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v)
 		// m.list.SetSize(msg.Width, msg.Height)
@@ -43,6 +41,7 @@ func InitList(tab tabId) listModel {
 
 	m.list.SetShowTitle(false)
 	m.list.DisableQuitKeybindings()
+	m.list.SetShowHelp(false)
 
 	switch tab {
 	case images:

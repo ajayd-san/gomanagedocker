@@ -1,13 +1,17 @@
 package tui
 
-import "github.com/charmbracelet/bubbles/key"
+import (
+	"github.com/charmbracelet/bubbles/key"
+)
 
 type navigationKeymap struct {
-	Enter key.Binding
-	Back  key.Binding
-	Quit  key.Binding
-	Next  key.Binding
-	Prev  key.Binding
+	Enter    key.Binding
+	Back     key.Binding
+	Quit     key.Binding
+	NextTab  key.Binding
+	PrevTab  key.Binding
+	NextItem key.Binding
+	PrevItem key.Binding
 }
 
 type imgKeymap struct {
@@ -20,6 +24,11 @@ type imgKeymap struct {
 }
 
 type contKeymap struct {
+	Enter           key.Binding
+	Back            key.Binding
+	Quit            key.Binding
+	Next            key.Binding
+	Prev            key.Binding
 	ToggleListAll   key.Binding
 	ToggleStartStop key.Binding
 	Delete          key.Binding
@@ -29,6 +38,11 @@ type contKeymap struct {
 }
 
 type volKeymap struct {
+	Enter  key.Binding
+	Back   key.Binding
+	Quit   key.Binding
+	Next   key.Binding
+	Prev   key.Binding
 	Delete key.Binding
 	Prune  key.Binding
 }
@@ -60,6 +74,23 @@ var ImageKeymap = imgKeymap{
 	),
 }
 
+func (m imgKeymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{m.Create,
+			m.Delete,
+			m.DeleteForce,
+			m.Prune},
+	}
+}
+
+func (m imgKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{m.Create,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune}
+
+}
+
 var ContainerKeymap = contKeymap{
 	ToggleListAll: key.NewBinding(
 		key.WithKeys("a"),
@@ -87,6 +118,14 @@ var ContainerKeymap = contKeymap{
 	),
 }
 
+func (m contKeymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+func (m contKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.Delete, m.DeleteForce, m.Prune, m.Exec}
+}
+
 var VolumeKeymap = volKeymap{
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
@@ -96,6 +135,14 @@ var VolumeKeymap = volKeymap{
 		key.WithKeys("p"),
 		key.WithHelp("p", "prune"),
 	),
+}
+
+func (m volKeymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+func (m volKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{m.Delete, m.Prune}
 }
 
 var NavKeymap = navigationKeymap{
@@ -111,14 +158,30 @@ var NavKeymap = navigationKeymap{
 		key.WithKeys("ctrl+c", "q"),
 		key.WithHelp("ctrl+c/q", "quit"),
 	),
-	Next: key.NewBinding(
+	NextTab: key.NewBinding(
 		key.WithKeys("right", "l", "tab"),
 		key.WithHelp("->/l/tab", "next"),
 	),
-	Prev: key.NewBinding(
+	PrevTab: key.NewBinding(
 		key.WithKeys("left", "h", "shift+tab"),
 		key.WithHelp("<-/h/shift+tab", "prev"),
 	),
+	NextItem: key.NewBinding(
+		key.WithKeys("down", "j"),
+		key.WithHelp("↓/j", "next item"),
+	),
+	PrevItem: key.NewBinding(
+		key.WithKeys("up", "k"),
+		key.WithHelp("↑/h", "prev item"),
+	),
+}
+
+func (m navigationKeymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+func (m navigationKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.Enter, m.Quit}
 }
 
 func getVolumeKeymap() []key.Binding {

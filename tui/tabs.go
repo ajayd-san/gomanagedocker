@@ -10,6 +10,7 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	teadialog "github.com/ajayd-san/teaDialog"
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -49,6 +50,8 @@ type Model struct {
 	possibleLongRunningOpErrorChan chan error
 	windowTooSmall                 bool
 	windowtoosmallModel            WindowTooSmallModel
+	navKeymap                      help.Model
+	helpGen                        help.Model
 }
 
 func doUpdateObjectsTick() tea.Cmd {
@@ -69,12 +72,16 @@ func NewModel(tabs []string) Model {
 		contents[i] = InitList(tabKind)
 	}
 
+	helper := help.New()
+	NavKeymap := help.New()
 	return Model{
 		dockerClient:                   dockercmd.NewDockerClient(),
 		Tabs:                           tabs,
 		TabContent:                     contents,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
+		helpGen:                        helper,
+		navKeymap:                      NavKeymap,
 	}
 }
 
@@ -137,23 +144,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		dialogContainerStyle = dialogContainerStyle.Width(msg.Width).Height(msg.Height)
 
+		m.helpGen.Width = msg.Width
+
 		//change list dimentions when window size changes
 		// TODO: change width
 		for index := range m.TabContent {
 			m.getList(index).SetWidth(msg.Width)
-			m.getList(index).SetHeight(msg.Height - 7)
+			m.getList(index).SetHeight(msg.Height - 10)
 		}
 
 	case tea.KeyMsg:
 		if !m.getActiveList().SettingFilter() && !m.showDialog {
 			switch {
 			case key.Matches(msg, NavKeymap.Quit):
-				log.Println(msg, "quitting")
-
 				return m, tea.Quit
-			case key.Matches(msg, NavKeymap.Next):
+			case key.Matches(msg, NavKeymap.NextTab):
 				m.nextTab()
-			case key.Matches(msg, NavKeymap.Prev):
+			case key.Matches(msg, NavKeymap.PrevTab):
 				m.prevTab()
 			}
 
@@ -468,7 +475,20 @@ func (m Model) View() string {
 
 	//TODO: align info box to right edge of the window
 	body_with_info := lipgloss.JoinHorizontal(lipgloss.Top, list, infobox)
-	body_with_info = windowStyle.Render(body_with_info)
+
+	tabSpecificKeyBinds := ""
+
+	switch m.activeTab {
+	case int(images):
+		tabSpecificKeyBinds = m.helpGen.View(ImageKeymap)
+	case int(containers):
+		tabSpecificKeyBinds = m.helpGen.View(ContainerKeymap)
+	case int(volumes):
+		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
+	}
+
+	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, "  "+m.navKeymap.View(NavKeymap), "  "+tabSpecificKeyBinds)
+	body_with_info = windowStyle.Render(body_with_help)
 
 	doc.WriteString(row)
 	doc.WriteString("\n")
