@@ -15,7 +15,8 @@ var (
 				Border(lipgloss.NormalBorder()).
 				UnsetBorderTop()
 
-	listDocStyle  = lipgloss.NewStyle().Margin(1, 2)
+	listDocStyle  = lipgloss.NewStyle().Margin(1, 5, 0, 1)
+	listContainer = lipgloss.NewStyle().Border(lipgloss.HiddenBorder()).Width(60)
 	moreInfoStyle = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("69")).
