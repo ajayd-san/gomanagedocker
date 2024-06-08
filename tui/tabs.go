@@ -468,7 +468,7 @@ func (m Model) View() string {
 
 	//TODO: align info box to right edge of the window
 	body_with_info := lipgloss.JoinHorizontal(lipgloss.Top, list, infobox)
-	// body_with_info = windowStyle.Render(body_with_info)
+	body_with_info = windowStyle.Render(body_with_info)
 
 	doc.WriteString(row)
 	doc.WriteString("\n")
