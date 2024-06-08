@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"os"
 
 	"github.com/ajayd-san/gomanagedocker/tui"
@@ -16,6 +18,8 @@ func main() {
 	if *debug {
 		f, _ := tea.LogToFile("debug.log", "debug")
 		defer f.Close()
+	} else {
+		log.SetOutput(io.Discard)
 	}
 
 	tabs := []string{"Images", "Containers", "Volumes"}
