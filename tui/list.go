@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -42,6 +43,8 @@ func InitList(tab tabId) listModel {
 	m.list.SetShowTitle(false)
 	m.list.DisableQuitKeybindings()
 	m.list.SetShowHelp(false)
+	m.list.KeyMap.NextPage = key.NewBinding(key.WithKeys("]"))
+	m.list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("["))
 
 	switch tab {
 	case images:

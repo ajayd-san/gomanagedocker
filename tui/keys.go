@@ -12,6 +12,8 @@ type navigationKeymap struct {
 	PrevTab  key.Binding
 	NextItem key.Binding
 	PrevItem key.Binding
+	PrevPage key.Binding
+	NextPage key.Binding
 }
 
 type imgKeymap struct {
@@ -174,6 +176,14 @@ var NavKeymap = navigationKeymap{
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/h", "prev item"),
 	),
+	PrevPage: key.NewBinding(
+		key.WithKeys("["),
+		key.WithHelp("[", "prev page"),
+	),
+	NextPage: key.NewBinding(
+		key.WithKeys("]"),
+		key.WithHelp("]", "next page"),
+	),
 }
 
 func (m navigationKeymap) FullHelp() [][]key.Binding {
@@ -181,7 +191,7 @@ func (m navigationKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m navigationKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.Enter, m.Quit}
+	return []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Enter, m.Quit}
 }
 
 func getVolumeKeymap() []key.Binding {
