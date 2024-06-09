@@ -25,7 +25,7 @@ func (m WindowTooSmallModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m WindowTooSmallModel) View() string {
-	return windowTooSmallStyle.Render(fmt.Sprintf("Window size to small (%d x %d)\n\nConsider going fullscreen for optimal experience.", m.height, m.width))
+	return windowTooSmallStyle.Render(fmt.Sprintf("Window size too small (%d x %d)\n\nConsider going fullscreen for optimal experience.", m.height, m.width))
 }
 
 func MakeNewWindowTooSmallModel() WindowTooSmallModel {
