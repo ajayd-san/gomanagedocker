@@ -53,6 +53,10 @@ func (dc *DockerClient) ToggleStartStopContainer(id string) error {
 	}
 }
 
+func (dc *DockerClient) RestartContainer(id string) error {
+	return dc.cli.ContainerRestart(context.Background(), id, container.StopOptions{})
+}
+
 func (dc *DockerClient) TogglePauseResume(id string) error {
 	info, err := dc.cli.ContainerInspect(context.Background(), id)
 	if err != nil {

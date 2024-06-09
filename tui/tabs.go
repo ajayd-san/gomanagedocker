@@ -232,6 +232,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.showDialog = true
 						}
 					}
+				case key.Matches(msg, ContainerKeymap.Restart):
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+						log.Println("in restart")
+						containerId := curItem.(dockerRes).getId()
+						err := m.dockerClient.RestartContainer(containerId)
+
+						if err != nil {
+							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
+							m.showDialog = true
+						}
+					}
 				case key.Matches(msg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if containerInfo, ok := curItem.(dockerRes); ok {

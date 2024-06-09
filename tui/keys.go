@@ -29,6 +29,7 @@ type contKeymap struct {
 	ToggleListAll   key.Binding
 	ToggleStartStop key.Binding
 	TogglePause     key.Binding
+	Restart         key.Binding
 	Delete          key.Binding
 	DeleteForce     key.Binding
 	Exec            key.Binding
@@ -97,6 +98,10 @@ var ContainerKeymap = contKeymap{
 		key.WithKeys("t"),
 		key.WithHelp("t", "Toggle Pause/unPause"),
 	),
+	Restart: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "Restart"),
+	),
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
@@ -120,7 +125,7 @@ func (m contKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m contKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.TogglePause, m.Delete, m.DeleteForce, m.Prune, m.Exec}
+	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.Restart, m.TogglePause, m.Delete, m.DeleteForce, m.Prune, m.Exec}
 }
 
 var VolumeKeymap = volKeymap{
