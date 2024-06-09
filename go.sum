@@ -2,8 +2,8 @@ github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOEl
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
-github.com/ajayd-san/teaDialog v0.1.6 h1:K8m7CSElAt04lUjRBavlhnnk0HC/tbB/ztD3y5vTKUM=
-github.com/ajayd-san/teaDialog v0.1.6/go.mod h1:kJTmdgCYrFo/L56uusKhxxFVO5h+cvjEiupFfIXSdE4=
+github.com/ajayd-san/teaDialog v1.1.4 h1:4IDP4Wjrg8O2yqBKxudYygOin05GlvPdckNGLwV0JEs=
+github.com/ajayd-san/teaDialog v1.1.4/go.mod h1:kJTmdgCYrFo/L56uusKhxxFVO5h+cvjEiupFfIXSdE4=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
 github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
