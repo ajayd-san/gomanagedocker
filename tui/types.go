@@ -154,6 +154,10 @@ func (i containerItem) Description() string {
 		state = containerExitedStyle.Render(state)
 	case "created":
 		state = containerCreatedStyle.Render(state)
+	case "restarting":
+		state = containerRestartingStyle.Render(state)
+	case "dead":
+		state = containerDeadStyle.Render(state)
 	}
 
 	return shortId + "\t\t\t\t\t\t\t" + state
