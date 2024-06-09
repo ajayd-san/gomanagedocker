@@ -220,6 +220,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 
 					}
+				case key.Matches(msg, ContainerKeymap.TogglePause):
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+
+						containerId := curItem.(dockerRes).getId()
+						err := m.dockerClient.TogglePauseResume(containerId)
+
+						if err != nil {
+							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
+							m.showDialog = true
+						}
+					}
 				case key.Matches(msg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if containerInfo, ok := curItem.(dockerRes); ok {

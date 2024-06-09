@@ -26,13 +26,9 @@ type imgKeymap struct {
 }
 
 type contKeymap struct {
-	Enter           key.Binding
-	Back            key.Binding
-	Quit            key.Binding
-	Next            key.Binding
-	Prev            key.Binding
 	ToggleListAll   key.Binding
 	ToggleStartStop key.Binding
+	TogglePause     key.Binding
 	Delete          key.Binding
 	DeleteForce     key.Binding
 	Exec            key.Binding
@@ -40,11 +36,6 @@ type contKeymap struct {
 }
 
 type volKeymap struct {
-	Enter  key.Binding
-	Back   key.Binding
-	Quit   key.Binding
-	Next   key.Binding
-	Prev   key.Binding
 	Delete key.Binding
 	Prune  key.Binding
 }
@@ -102,6 +93,10 @@ var ContainerKeymap = contKeymap{
 		key.WithKeys("s"),
 		key.WithHelp("s", "Toggle Start/Stop"),
 	),
+	TogglePause: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "Toggle Pause/unPause"),
+	),
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
@@ -125,7 +120,7 @@ func (m contKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m contKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.Delete, m.DeleteForce, m.Prune, m.Exec}
+	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.TogglePause, m.Delete, m.DeleteForce, m.Prune, m.Exec}
 }
 
 var VolumeKeymap = volKeymap{

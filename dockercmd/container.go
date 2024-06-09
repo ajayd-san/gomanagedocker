@@ -2,6 +2,8 @@ package dockercmd
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/docker/docker/api/types"
@@ -49,6 +51,30 @@ func (dc *DockerClient) ToggleStartStopContainer(id string) error {
 	} else {
 		return dc.cli.ContainerStart(context.Background(), id, container.StartOptions{})
 	}
+}
+
+func (dc *DockerClient) TogglePauseResume(id string) error {
+	info, err := dc.cli.ContainerInspect(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	if info.State.Paused {
+		err = dc.cli.ContainerUnpause(context.Background(), id)
+
+		if err != nil {
+			return err
+		}
+	} else if info.State.Running {
+		err = dc.cli.ContainerPause(context.Background(), id)
+		if err != nil {
+			return err
+		}
+	} else {
+		return errors.New(fmt.Sprintf("Cannot Pause/unPause a %s Process.", info.State.Status))
+	}
+
+	return nil
 }
 
 // Deletes the container
