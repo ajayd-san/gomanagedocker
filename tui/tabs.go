@@ -48,7 +48,7 @@ type Model struct {
 	height       int
 	showDialog   bool
 	activeDialog tea.Model
-	// we use this error channel to report error for possibly long running tasks, like pruneing
+	// we use this error channel to report error for possibly long running tasks, like pruning
 	possibleLongRunningOpErrorChan chan error
 	windowTooSmall                 bool
 	windowtoosmallModel            WindowTooSmallModel
@@ -56,7 +56,7 @@ type Model struct {
 	helpGen                        help.Model
 }
 
-// this ticker enables us to update docker lists items every 500ms
+// this ticker enables us to update Docker lists items every 500ms
 // TODO: possibly add option in config file to configure polling time.
 const POLLING_TIME = 500
 
@@ -65,10 +65,10 @@ func doUpdateObjectsTick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
-	//check if docker is alive, if not exit
+	// check if Docker is alive, if not, exit
 	err := m.dockerClient.PingDocker()
 	if err != nil {
-		fmt.Printf("Error connecting to docker deamon.\nInfo: %s", err.Error())
+		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s", err.Error())
 		os.Exit(1)
 	}
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
@@ -100,7 +100,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
 
-	//check if error exists on error channel when no active dialog is preset
+	// check if error exists on error channel when no active dialog is preset
 	if !m.showDialog {
 		select {
 		case newErr := <-m.possibleLongRunningOpErrorChan:
@@ -110,7 +110,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	//INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
+	// INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
 	if m.showDialog {
 
 		update, cmd := m.activeDialog.Update(msg)
@@ -126,11 +126,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	//fetches container size info in a seperate go routine
+	// fetches container size info in a separate go routine
 	case preloadSizeMap:
 		go m.prepopulateContainerSizeMapConcurrently()
 
-	//preloads all tabs, so no delay in displaying objects when first changing tabs
+	// preloads all tabs, so no delay in displaying objects when first changing tabs
 	case preloadObjects:
 		m = m.updateContent(0)
 		m = m.updateContent(1)
@@ -161,7 +161,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.helpGen.Width = msg.Width
 
-		//change list dimentions when window size changes
+		// change list dimensions when window size changes
 		// TODO: change width
 		for index := range m.TabContent {
 			m.getList(index).SetWidth(msg.Width)
@@ -339,7 +339,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if containerId != "" {
 				log.Println("removing container: ", dialogRes.UserStorage["ID"])
 				err := m.dockerClient.DeleteContainer(containerId, opts)
-				log.Println("contianer delete")
+				log.Println("container delete")
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
@@ -353,7 +353,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if userChoice["confirm"] == "Yes" {
 				log.Println("prune containers confirmed")
 
-				//prune containers on a seperate goroutine, since UI gets stuck otherwise(since this may take sometime)
+				// prune containers on a separate goroutine, since UI gets stuck otherwise(since this may take sometime)
 				go func() {
 					report, err := m.dockerClient.PruneContainers()
 
@@ -371,11 +371,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-				//run on a different go routine, same reason as above (for Prune containers)
+				// run on a different go routine, same reason as above (for Prune containers)
 				go func() {
 					report, err := m.dockerClient.PruneImages()
 
-					//TODO: show report on screen
+					// TODO: show report on screen
 					log.Println("prune images report", report)
 
 					if err != nil {
@@ -390,8 +390,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-
-				//same reason as above, again
+				// same reason as above, again
 				go func() {
 					report, err := m.dockerClient.PruneVolumes()
 
@@ -419,7 +418,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case dialogRemoveImage:
-			log.Println("remove image instruction recieved")
+			log.Println("remove image instruction received")
 			userChoice := dialogRes.UserChoices
 
 			imageId := dialogRes.UserStorage["ID"]
@@ -441,7 +440,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	//do not pass key.msg to list if dialog is active, otherwise tui updates to navigation keys
+	// do not pass key.msg to list if dialog is active, otherwise tui updates to navigation keys
 	if !m.showDialog {
 		m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
 		cmds = append(cmds, cmd)
@@ -512,7 +511,7 @@ func (m Model) View() string {
 		infobox = moreInfoStyle.Render(infobox)
 	}
 
-	//TODO: align info box to right edge of the window
+	// TODO: align info box to right edge of the window
 	body_with_info := lipgloss.JoinHorizontal(lipgloss.Top, list, infobox)
 
 	tabSpecificKeyBinds := ""
@@ -543,8 +542,7 @@ func (m Model) updateContent(currentTab int) Model {
 	return m
 }
 
-//Util
-
+// Util
 func (m *Model) nextTab() {
 	if m.activeTab == int(volumes) {
 		m.activeTab = int(images)

@@ -110,7 +110,7 @@ func makeContainerItems(dockerlist []types.Container) []dockerRes {
 			return 1
 		}
 
-		//we can compare by only first name, since names cannot be equal
+		// we can compare by only first name, since names cannot be equal
 		return cmp.Compare(a.Names[0], b.Names[0])
 	})
 
