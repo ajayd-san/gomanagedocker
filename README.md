@@ -4,6 +4,12 @@ Do Docker commands slip your mind because you don't use Docker often enough? Sic
 
 Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go and BubbleTea, will make managing your Docker objects a breeze. 
 
+## Contents
+1. [Install Instructions](#install-instructions)
+2. [Features](#features)
+3. [Roadmap](#roadmap)
+4. [Found an issue?](#found-an-issue-)
+
 ## Install Instructions
 
 Building from source is pretty easy: 
@@ -45,6 +51,9 @@ Now, **goManageDocker 😏!!**
   ![search](https://github.com/ajayd-san/gomanagedocker/assets/54715852/513564e5-dacf-4f8a-8eca-c575dcfe6be2)
 
 
+## Roadmap
+- Make the program work with minimized terminal state
+- Add a networks tab
 
 ## Found an issue ?
 
