@@ -24,6 +24,7 @@ import (
 type tabId int
 type TickMsg time.Time
 type preloadObjects int
+type preloadSizeMap struct{}
 
 const (
 	images tabId = iota
@@ -125,6 +126,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	//fetches container size info in a seperate go routine
+	case preloadSizeMap:
+		go m.prepopulateContainerSizeMapConcurrently()
+
 	//preloads all tabs, so no delay in displaying objects when first changing tabs
 	case preloadObjects:
 		m = m.updateContent(0)
