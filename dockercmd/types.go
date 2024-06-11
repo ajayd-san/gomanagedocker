@@ -1,6 +1,8 @@
 package dockercmd
 
 import (
+	"context"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
@@ -24,4 +26,9 @@ func NewDockerClient() DockerClient {
 			Latest: false,
 		},
 	}
+}
+
+func (dc DockerClient) PingDocker() error {
+	_, err := dc.cli.Ping(context.Background())
+	return err
 }

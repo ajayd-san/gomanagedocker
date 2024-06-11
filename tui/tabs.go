@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -54,13 +55,22 @@ type Model struct {
 	helpGen                        help.Model
 }
 
+// this ticker enables us to update docker lists items every 500ms
+// TODO: possibly add option in config file to configure polling time.
+const POLLING_TIME = 500
+
 func doUpdateObjectsTick() tea.Cmd {
-	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
+	return tea.Tick(POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m Model) Init() tea.Cmd {
-	//fetches container size info in a seperate go routine
-	go m.prepopulateContainerSizeMapConcurrently()
+	//check if docker is alive, if not exit
+	err := m.dockerClient.PingDocker()
+	if err != nil {
+		fmt.Printf("Error connecting to docker deamon.\nInfo: %s", err.Error())
+		os.Exit(1)
+	}
+	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
