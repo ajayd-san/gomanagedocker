@@ -100,15 +100,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
 
-	//check if error exists on error channel when no active dialog is preset
-	// if !m.showDialog {
+	//check if error exists on error channel, if yes show the error in new dialog
 	select {
 	case newErr := <-m.possibleLongRunningOpErrorChan:
 		m.showDialog = true
 		m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
 	default:
 	}
-	// }
 
 	// INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
 	if m.showDialog {
