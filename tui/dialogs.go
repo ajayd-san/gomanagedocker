@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	teadialog "github.com/ajayd-san/teaDialog"
 )
 
@@ -11,7 +12,24 @@ const (
 	dialogPruneImages
 	dialogPruneVolumes
 	dialogRemoveVolumes
+	dialogImageScout
 )
+
+func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
+	infoCard := teadialog.InitInfoCard(
+		"Image Scout",
+		"",
+		dialogImageScout,
+		teadialog.WithMinHeight(13),
+		teadialog.WithMinWidth(130),
+	)
+	return InfoCardWrapperModel{
+		tableChan: make(chan *TableModel),
+		inner:     &infoCard,
+		f:         f,
+		spinner:   initialModel(),
+	}
+}
 
 func getRemoveContainerDialog(storage map[string]string) teadialog.Dialog {
 	prompts := []teadialog.Prompt{
@@ -20,7 +38,7 @@ func getRemoveContainerDialog(storage map[string]string) teadialog.Dialog {
 		teadialog.MakeTogglePrompt("force", "Force?"),
 	}
 
-	return teadialog.InitDialogue("Remove Container Options:", prompts, dialogRemoveContainer, storage)
+	return teadialog.InitDialogWithPrompt("Remove Container Options:", prompts, dialogRemoveContainer, storage)
 }
 
 func getRemoveVolumeDialog(storage map[string]string) teadialog.Dialog {
@@ -28,7 +46,7 @@ func getRemoveVolumeDialog(storage map[string]string) teadialog.Dialog {
 		teadialog.MakeTogglePrompt("force", "Force?"),
 	}
 
-	return teadialog.InitDialogue("Remove Volume Options:", prompts, dialogRemoveVolumes, storage)
+	return teadialog.InitDialogWithPrompt("Remove Volume Options:", prompts, dialogRemoveVolumes, storage)
 }
 
 func getPruneContainersDialog(storage map[string]string) teadialog.Dialog {
@@ -36,7 +54,7 @@ func getPruneContainersDialog(storage map[string]string) teadialog.Dialog {
 		teadialog.MakeOptionPrompt("confirm", "This will remove all stopped containers, are your sure?", []string{"Yes", "No"}),
 	}
 
-	return teadialog.InitDialogue("Prune Containers: ", prompts, dialogPruneContainers, storage)
+	return teadialog.InitDialogWithPrompt("Prune Containers: ", prompts, dialogPruneContainers, storage)
 }
 
 func getRemoveImageDialog(storage map[string]string) teadialog.Dialog {
@@ -45,7 +63,7 @@ func getRemoveImageDialog(storage map[string]string) teadialog.Dialog {
 		teadialog.MakeTogglePrompt("pruneChildren", "Prune Children"),
 	}
 
-	return teadialog.InitDialogue("Remove Image Options:", prompts, dialogRemoveImage, storage)
+	return teadialog.InitDialogWithPrompt("Remove Image Options:", prompts, dialogRemoveImage, storage)
 }
 
 func getPruneImagesDialog(storage map[string]string) teadialog.Dialog {
@@ -53,7 +71,7 @@ func getPruneImagesDialog(storage map[string]string) teadialog.Dialog {
 		teadialog.MakeOptionPrompt("confirm", "This will remove all unused images, are your sure?", []string{"Yes", "No"}),
 	}
 
-	return teadialog.InitDialogue("Prune Containers: ", prompts, dialogPruneImages, storage)
+	return teadialog.InitDialogWithPrompt("Prune Containers: ", prompts, dialogPruneImages, storage)
 }
 
 func getPruneVolumesDialog(storage map[string]string) teadialog.Dialog {
@@ -62,5 +80,5 @@ func getPruneVolumesDialog(storage map[string]string) teadialog.Dialog {
 		teadialog.MakeOptionPrompt("confirm", "This will remove all unused volumes, are your sure?", []string{"Yes", "No"}),
 	}
 
-	return teadialog.InitDialogue("Prune Containers: ", prompts, dialogPruneVolumes, storage)
+	return teadialog.InitDialogWithPrompt("Prune Containers: ", prompts, dialogPruneVolumes, storage)
 }

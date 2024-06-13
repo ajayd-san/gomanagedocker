@@ -100,21 +100,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
 
-	// check if error exists on error channel when no active dialog is preset
-	if !m.showDialog {
-		select {
-		case newErr := <-m.possibleLongRunningOpErrorChan:
-			m.showDialog = true
-			m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
-		default:
-		}
+	//check if error exists on error channel when no active dialog is preset
+	// if !m.showDialog {
+	select {
+	case newErr := <-m.possibleLongRunningOpErrorChan:
+		m.showDialog = true
+		m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
+	default:
 	}
+	// }
 
 	// INFO: if m.showDialog is true, then hijack all keyinputs and forward them to the dialog
 	if m.showDialog {
 
 		update, cmd := m.activeDialog.Update(msg)
 		if d, ok := update.(teadialog.Dialog); ok {
+			m.activeDialog = d
+		}
+
+		if d, ok := update.(InfoCardWrapperModel); ok {
 			m.activeDialog = d
 		}
 
@@ -215,6 +219,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activeDialog = getPruneImagesDialog(make(map[string]string))
 					m.showDialog = true
 					cmds = append(cmds, m.activeDialog.Init())
+
+				case key.Matches(msg, ImageKeymap.Scout):
+					curItem := m.getSelectedItem()
+					if curItem != nil {
+						imageName := curItem.(dockerRes).getName()
+
+						f := func() (*dockercmd.ScoutData, error) {
+
+							scoutData, err := m.dockerClient.ScoutImage(imageName)
+
+							if err != nil {
+								m.possibleLongRunningOpErrorChan <- err
+							}
+
+							return scoutData, err
+						}
+
+						m.activeDialog = getImageScoutDialog(f)
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
 				}
 
 			} else if m.activeTab == int(containers) {
