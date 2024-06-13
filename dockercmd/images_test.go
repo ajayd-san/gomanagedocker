@@ -30,7 +30,6 @@ func TestParseDockerScoutOutput(t *testing.T) {
 					{Label: "Base image", ImageName: "debian:bookworm-slim", Critical: "0", High: "0", Medium: "0", Low: "23", UnknownSeverity: ""},
 					{Label: "Updated base image", ImageName: "debian:stable-slim", Critical: "0", High: "0", Medium: "0", Low: "23", UnknownSeverity: ""},
 				},
-				"",
 			},
 		},
 		{
@@ -48,7 +47,6 @@ func TestParseDockerScoutOutput(t *testing.T) {
 					{"Base image", "ubuntu:20.04", "1", "2", "3", "4", ""},
 					{"Updated base image", "ubuntu:latest", "0", "0", "1", "2", ""},
 				},
-				"",
 			},
 		},
 	}

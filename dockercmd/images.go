@@ -56,7 +56,6 @@ func parseDockerScoutOutput(reader []byte) *ScoutData {
 
 	return &ScoutData{
 		ImageVulEntries: vulnerabilityEntries,
-		TargetDigest:    "",
 	}
 }
 

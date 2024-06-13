@@ -33,7 +33,6 @@ func makeImageVulnerabilities(submatches [][]byte) ImageVulnerabilities {
 
 type ScoutData struct {
 	ImageVulEntries []ImageVulnerabilities
-	TargetDigest    string
 }
 
 type DockerClient struct {
