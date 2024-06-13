@@ -24,12 +24,12 @@ const (
 )
 
 var (
-	colorNormal = lipgloss.NewStyle().Foreground(lipgloss.Color("#fa0"))
-	colorCrit   = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-	colorHigh   = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
-	colorMed    = lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
-	colorLow    = lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
-	colorUnkown = lipgloss.NewStyle().Foreground(lipgloss.Color("129"))
+	colorImgName = lipgloss.NewStyle().Foreground(lipgloss.Color("#fa0"))
+	colorCrit    = lipgloss.NewStyle().Foreground(lipgloss.Color("196")) //196
+	colorHigh    = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
+	colorMed     = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	colorLow     = lipgloss.NewStyle().Foreground(lipgloss.Color("190")) //226
+	colorUnkown  = lipgloss.NewStyle().Foreground(lipgloss.Color("129"))
 )
 
 var (
@@ -45,7 +45,7 @@ type TableModel struct {
 func makeRow(label, name, crit, high, med, low, unknown string) table.Row {
 	return table.NewRow(table.RowData{
 		columnKeyLabel:   label,
-		columnKeyImgName: table.NewStyledCell(name, colorNormal),
+		columnKeyImgName: table.NewStyledCell(name, colorImgName),
 		columnKeyCrit:    table.NewStyledCell(crit, colorCrit),
 		columnKeyhigh:    table.NewStyledCell(high, colorHigh),
 		columnKeyMed:     table.NewStyledCell(med, colorMed),
@@ -106,7 +106,8 @@ func (m TableModel) View() string {
 	return lipgloss.NewStyle().MarginLeft(1).Render(view)
 }
 
-func getDummyTable() *TableModel {
+// has no utility, useful to debug and style dockerscout table quickly
+func getDockerScoutDummyTable() *TableModel {
 	return &TableModel{
 		table.New([]table.Column{
 			table.NewColumn(columnKeyLabel, "", 25),
