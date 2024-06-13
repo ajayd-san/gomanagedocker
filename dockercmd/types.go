@@ -19,6 +19,12 @@ type ImageVulnerabilities struct {
 
 // takes [][]bytes returned by regex.FindSubmatches and returns ImageVulnerabilities
 func makeImageVulnerabilities(submatches [][]byte) ImageVulnerabilities {
+	//this makes sure "" is not printed in the table
+	unknownSev := string(submatches[8])
+	if unknownSev == "" {
+		unknownSev = "0"
+	}
+
 	return ImageVulnerabilities{
 		Label:           string(submatches[1]),
 		ImageName:       string(submatches[2]),
@@ -26,7 +32,7 @@ func makeImageVulnerabilities(submatches [][]byte) ImageVulnerabilities {
 		High:            string(submatches[4]),
 		Medium:          string(submatches[5]),
 		Low:             string(submatches[6]),
-		UnknownSeverity: string(submatches[8]),
+		UnknownSeverity: unknownSev,
 	}
 
 }
