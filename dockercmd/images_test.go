@@ -27,8 +27,8 @@ func TestParseDockerScoutOutput(t *testing.T) {
 			ScoutData{
 				[]ImageVulnerabilities{
 					{Label: "Target", ImageName: "nginx:latest", Critical: "0", High: "0", Medium: "1", Low: "48", UnknownSeverity: "1"},
-					{Label: "Base image", ImageName: "debian:bookworm-slim", Critical: "0", High: "0", Medium: "0", Low: "23", UnknownSeverity: ""},
-					{Label: "Updated base image", ImageName: "debian:stable-slim", Critical: "0", High: "0", Medium: "0", Low: "23", UnknownSeverity: ""},
+					{Label: "Base image", ImageName: "debian:bookworm-slim", Critical: "0", High: "0", Medium: "0", Low: "23", UnknownSeverity: "0"},
+					{Label: "Updated base image", ImageName: "debian:stable-slim", Critical: "0", High: "0", Medium: "0", Low: "23", UnknownSeverity: "0"},
 				},
 			},
 		},
@@ -44,8 +44,8 @@ func TestParseDockerScoutOutput(t *testing.T) {
 			ScoutData{
 				[]ImageVulnerabilities{
 					{"Target", "myimage:latest", "1", "2", "3", "4", "5"},
-					{"Base image", "ubuntu:20.04", "1", "2", "3", "4", ""},
-					{"Updated base image", "ubuntu:latest", "0", "0", "1", "2", ""},
+					{"Base image", "ubuntu:20.04", "1", "2", "3", "4", "0"},
+					{"Updated base image", "ubuntu:latest", "0", "0", "1", "2", "0"},
 				},
 			},
 		},
