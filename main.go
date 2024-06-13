@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	debug := flag.Bool("debug", false, "bolean value to toggle debug")
+	debug := flag.Bool("debug", false, "boolean value to toggle debug")
 	flag.Parse()
 
 	if *debug {

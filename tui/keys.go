@@ -19,6 +19,7 @@ type navigationKeymap struct {
 type imgKeymap struct {
 	Create key.Binding
 	Rename key.Binding
+	Scout  key.Binding
 	// Pull        key.Binding
 	Prune       key.Binding
 	Delete      key.Binding
@@ -58,6 +59,10 @@ var ImageKeymap = imgKeymap{
 		key.WithKeys("D"),
 		key.WithHelp("D", "delete (force)"),
 	),
+	Scout: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "Scout"),
+	),
 	// Pull: key.NewBinding(
 	// 	key.WithKeys("o"),
 	// 	key.WithHelp("o", "Pull new Image"),
@@ -81,7 +86,7 @@ func (m imgKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{m.Create,
 		m.Delete,
 		m.DeleteForce,
-		m.Prune}
+		m.Prune, m.Scout}
 
 }
 

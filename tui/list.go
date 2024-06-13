@@ -60,7 +60,7 @@ func InitList(tab tabId) listModel {
 func makeItems(raw []dockerRes) []list.Item {
 	listItems := make([]list.Item, len(raw))
 
-	//TODO: only converting to gb (might want to change later to accomidate mb)
+	// TODO: only converting to gb (might want to change later to accommodate mb)
 	for i, data := range raw {
 		listItems[i] = list.Item(data)
 	}
@@ -94,12 +94,12 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 			}
 		}
 	case volumes:
-		//TODO: handle errors
+		// TODO: handle errors
 		newVolumes, _ := dockerClient.ListVolumes()
 		newlist = makeVolumeItem(newVolumes)
 	}
 
-	comparisionFunc := func(a dockerRes, b list.Item) bool {
+	comparisonFunc := func(a dockerRes, b list.Item) bool {
 		switch id {
 		case images:
 			newA := a.(imageItem)
@@ -124,7 +124,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 		return true
 	}
 
-	if !slices.EqualFunc(newlist, m.list.Items(), comparisionFunc) {
+	if !slices.EqualFunc(newlist, m.list.Items(), comparisonFunc) {
 		newlistItems := makeItems(newlist)
 		m.list.SetItems(newlistItems)
 		go m.updateIds(newlist)
