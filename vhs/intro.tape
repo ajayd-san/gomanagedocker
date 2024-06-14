@@ -1,6 +1,6 @@
-Output intro.gif
+Output vhs/gifs/intro.gif
 
-Require gomanagedocker
+Require gmd
 
 Set Shell "zsh"
 Set FontSize 16
@@ -11,7 +11,7 @@ Set Theme Batman
 
 
 Sleep 1s
-Type "gomanagedocker"
+Type "gmd"
 Enter
 Sleep 2.5s
 Type "j"

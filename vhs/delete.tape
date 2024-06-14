@@ -1,6 +1,6 @@
-Output delete.gif
+Output vhs/gifs/delete.gif
 
-Require gomanagedocker
+Require gmd
 
 Set Shell "zsh"
 Set FontSize 16
@@ -10,7 +10,7 @@ Set TypingSpeed 0.1
 Set Theme Batman
 
 Sleep 1.5s
-Type "gomanagedocker"
+Type "gmd"
 Enter
 Sleep 1s
 Type "l"

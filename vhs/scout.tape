@@ -1,4 +1,4 @@
-Output scout.gif
+Output vhs/gifs/scout.gif
 
 Require gmd
 
@@ -12,13 +12,13 @@ Set Shell zsh
 Sleep 500ms
 Type "gmd"
 Enter
-Sleep 500ms
+Sleep 2s
 Type "s"
 Hide
-Sleep 7s
+Sleep 13s
 Show
-Sleep 5s
+Sleep 9s
+Enter
+Sleep 2s
 Type "q"
-
-Sleep 1s
 

@@ -1,6 +1,6 @@
-Output search.gif
+Output vhs/gifs/search.gif
 
-Require gomanagedocker
+Require gmd
 
 Set FontSize 16
 Set Width 1920
@@ -9,7 +9,7 @@ Set TypingSpeed 0.1
 Set Theme Batman
 Set Shell zsh
 
-Type "gomanagedocker"
+Type "gmd"
 Enter
 Sleep 1.5s
 Type@0.2s "/ng"

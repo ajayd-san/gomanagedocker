@@ -1,6 +1,6 @@
-Output prune.gif
+Output vhs/gifs/prune.gif
 
-Require gomanagedocker
+Require gmd
 
 Set FontSize 16
 Set Width 1920
@@ -10,7 +10,7 @@ Set Theme Batman
 Set Shell zsh
 
 Sleep 500ms
-Type "gomanagedocker"
+Type "gmd"
 Enter
 Sleep 500ms
 Type "l"
