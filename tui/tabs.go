@@ -221,11 +221,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ImageKeymap.Scout):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						imageId := curItem.(dockerRes).getId()
+						dockerRes := curItem.(dockerRes)
+						imageInfo := dockerRes.(imageItem)
+						imageName := imageInfo.RepoTags[0]
 
 						f := func() (*dockercmd.ScoutData, error) {
 
-							scoutData, err := m.dockerClient.ScoutImage(imageId)
+							scoutData, err := m.dockerClient.ScoutImage(imageName)
 
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
