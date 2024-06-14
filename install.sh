@@ -35,7 +35,7 @@ if [ $? -ne 0 ]; then
 fi
 
 package=gomanagedocker
-version=1.1
+version=1.1.1
 arch=$(uname -m)
 os=$(uname -s)
 
