@@ -1,22 +1,38 @@
 # goManageDocker
 
-Do Docker commands slip your mind because you don't use Docker often enough? Sick of googling commands for everyday tasks? Worry no more!
+Do Docker commands slip your mind because you don't use Docker often enough? Sick of googling commands for everyday tasks? GoManageDocker is designed to NUKE this annoyance. 
 
 Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go and BubbleTea, will make managing your Docker objects a breeze. 
 
 ## Contents
 1. [Install Instructions](#install-instructions)
 2. [Features](#features)
+3. [Configuration](#configuration)
 3. [Roadmap](#roadmap)
 4. [Found an issue?](#found-an-issue-)
 
 ## Install Instructions
 
-Building from source is pretty easy: 
+### Unix
+
+You can install the latest release of goManageDocker on UNIX systems with a simple bash script:
+```
+bash -c "$(curl -sLo- https://raw.githubusercontent.com/ajayd-san/gomanagedocker/main/install.sh)"
+```
+Start the program with `gmd`. 
+
+### Build from source
+
+Just build like any other Go binary: 
 
 ```
-go install github.com/ajayd-san/gomanagedocker@v1.0.1
+go install github.com/ajayd-san/gomanagedocker@v1.2
 ```
+Start the program with `gmd`.
+
+### Windows 
+
+You can get the latest precompiled binary from releases or you may build from source. 
 
 Now, **goManageDocker 😏!!**
 
@@ -25,35 +41,60 @@ Now, **goManageDocker 😏!!**
 
 ## Features
 
+**New in v1.2**: You can now run an image directly from the image tab by pressing `r`.
+
+![runImage](vhs/gifs/runImage.gif)
+
+**New in v1.1.1**: Ability to perform `docker scout quickview` on any image (just press `s`).
+
+![scout](vhs/gifs/scout.gif)
+
 1. Easy navigation with vim keybinds and arrow keys.
 
-  ![intro](https://github.com/ajayd-san/gomanagedocker/assets/54715852/00bf4e8e-44fa-417c-a8cf-7cbccd687ad6)
+  ![intro](vhs/gifs/intro.gif)
 
 2. Exec into selected container with A SINGLE KEYSTROKE: `x`...How cool is that?
 
-![exec](https://github.com/ajayd-san/gomanagedocker/assets/54715852/b168b3d7-75f5-4339-884e-573a6e6fb688)
+![exec](vhs/gifs/exec.gif)
 
 
 3. Delete objects using `d` (You can force delete with `D`, you won't have to answer a prompt this way)
    
-  ![delete](https://github.com/ajayd-san/gomanagedocker/assets/54715852/a4b54c6c-11ad-4ed8-9111-ffad85567188)
+  ![delete](vhs/gifs/delete.gif)
 
 4. Prune objects using `p`
    
-  ![prune](https://github.com/ajayd-san/gomanagedocker/assets/54715852/1ff3809d-d08e-4200-b00b-aefc7b9f2485)
+  ![prune](vhs/gifs/prune.gif)
 
 5. start/stop/pause/restart containers with `s`, `t` and `r`
    
-  ![startstop](https://github.com/ajayd-san/gomanagedocker/assets/54715852/3e54bc51-1d7c-4669-8f8e-18eae0ca18bf)
+  ![startstop](vhs/gifs/startstop.gif)
 
 6. Filter objects with `/`
 
-  ![search](https://github.com/ajayd-san/gomanagedocker/assets/54715852/513564e5-dacf-4f8a-8eca-c575dcfe6be2)
+  ![search](vhs/gifs/search.gif)
 
+## Configuration
+I've added support for config files from V1.2.
+
+Place `gomanagedocker/gomanagedocker.yaml` in your XDG config folder and configure to your heart's content!
+
+Default Configuration:  
+
+```
+config:
+  Polling-Time: 500
+  Tab-Order: [images, containers, volumes]
+```
+
+
+- Polling-Time: Set how frequently the program calls the docker API (measured in milliseconds, default: 500ms)
+- Tab-Order: Set the order of tabs displayed, the keys must be `images`, `containers` and `volumes`. You can omit the names of the tabs you do not wish to see as well. Say I want to see `containers` tab first and do not want to see the `volumes` tab, I can set `Tab-Order: [containers, images]`
 
 ## Roadmap
 - Make the program work with minimized terminal state
 - Add a networks tab
+- Add More Config Options
 
 ## Found an issue ?
 
