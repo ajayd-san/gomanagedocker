@@ -1,6 +1,6 @@
 # goManageDocker
 
-Do Docker commands slip your mind because you don't use Docker often enough? Sick of googling commands for everyday tasks? Worry no more!
+Do Docker commands slip your mind because you don't use Docker often enough? Sick of googling commands for everyday tasks? GoManageDocker is designed to NUKE this annoyance. 
 
 Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go and BubbleTea, will make managing your Docker objects a breeze. 
 
@@ -12,11 +12,26 @@ Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go a
 
 ## Install Instructions
 
-Building from source is pretty easy: 
+### Unix
+
+You can install the latest release of goManageDocker on UNIX systems with a simple bash script:
+```
+bash -c "$(curl -sLo- https://raw.githubusercontent.com/ajayd-san/gomanagedocker/main/install.sh)"
+```
+Start the program with `gmd`. 
+
+### Build from source
+
+Just build like any other Go binary: 
 
 ```
 go install github.com/ajayd-san/gomanagedocker@v1.0.1
 ```
+Start the program with `gmd`.
+
+### Windows 
+
+You can get the latest precompiled binary from releases or you may build from source. 
 
 Now, **goManageDocker 😏!!**
 
@@ -25,31 +40,34 @@ Now, **goManageDocker 😏!!**
 
 ## Features
 
+**New in v1.1.1**: Ability to perform `docker scout quickview` on any image.
+
+![scout](vhs/gifs/scout.gif)
+
 1. Easy navigation with vim keybinds and arrow keys.
 
-  ![intro](https://github.com/ajayd-san/gomanagedocker/assets/54715852/00bf4e8e-44fa-417c-a8cf-7cbccd687ad6)
+  ![intro](vhs/gifs/intro.gif)
 
 2. Exec into selected container with A SINGLE KEYSTROKE: `x`...How cool is that?
 
-![exec](https://github.com/ajayd-san/gomanagedocker/assets/54715852/b168b3d7-75f5-4339-884e-573a6e6fb688)
+![exec](vhs/gifs/exec.gif)
 
 
 3. Delete objects using `d` (You can force delete with `D`, you won't have to answer a prompt this way)
    
-  ![delete](https://github.com/ajayd-san/gomanagedocker/assets/54715852/a4b54c6c-11ad-4ed8-9111-ffad85567188)
+  ![delete](vhs/gifs/delete.gif)
 
 4. Prune objects using `p`
    
-  ![prune](https://github.com/ajayd-san/gomanagedocker/assets/54715852/1ff3809d-d08e-4200-b00b-aefc7b9f2485)
+  ![prune](vhs/gifs/prune.gif)
 
 5. start/stop/pause/restart containers with `s`, `t` and `r`
    
-  ![startstop](https://github.com/ajayd-san/gomanagedocker/assets/54715852/3e54bc51-1d7c-4669-8f8e-18eae0ca18bf)
+  ![startstop](vhs/gifs/startstop.gif)
 
 6. Filter objects with `/`
 
-  ![search](https://github.com/ajayd-san/gomanagedocker/assets/54715852/513564e5-dacf-4f8a-8eca-c575dcfe6be2)
-
+  ![search](vhs/gifs/search.gif)
 
 ## Roadmap
 - Make the program work with minimized terminal state
