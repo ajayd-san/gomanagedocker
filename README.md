@@ -40,7 +40,7 @@ Now, **goManageDocker 😏!!**
 
 ## Features
 
-**New in v1.1.1**: Ability to perform `docker scout quickview` on any image.
+**New in v1.1.1**: Ability to perform `docker scout quickview` on any image (just press `s`).
 
 ![scout](vhs/gifs/scout.gif)
 
