@@ -2,6 +2,7 @@ package dockercmd
 
 import (
 	"context"
+	"errors"
 	"os/exec"
 	"regexp"
 
@@ -31,8 +32,8 @@ func (dc *DockerClient) PruneImages() (types.ImagesPruneReport, error) {
 }
 
 // runs docker scout and parses the output using regex
-func (dc *DockerClient) ScoutImage(imageName string) (*ScoutData, error) {
-	res, err := runDockerScout(imageName)
+func (dc *DockerClient) ScoutImage(ctx context.Context, imageName string) (*ScoutData, error) {
+	res, err := runDockerScout(ctx, imageName)
 
 	if err != nil {
 		return nil, err
@@ -59,12 +60,13 @@ func parseDockerScoutOutput(reader []byte) *ScoutData {
 	}
 }
 
-func runDockerScout(imageId string) ([]byte, error) {
-	cmd := exec.Command("docker", "scout", "quickview", imageId)
+func runDockerScout(ctx context.Context, imageId string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, "docker", "scout", "quickview", imageId)
 
 	output, err := cmd.Output()
 
-	if err != nil {
+	// we the error is due to Cancel() being invoked, ignore that error
+	if err != nil && !errors.Is(ctx.Err(), context.Canceled) {
 		return nil, err
 	}
 

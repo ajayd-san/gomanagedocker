@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -48,6 +49,8 @@ type Model struct {
 	height       int
 	showDialog   bool
 	activeDialog tea.Model
+	// we use this to cancel dialog ops when we exit from them
+	dialogOpCancel context.CancelFunc
 	// we use this error channel to report error for possibly long running tasks, like pruning
 	possibleLongRunningOpErrorChan chan error
 	windowTooSmall                 bool
@@ -121,6 +124,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
+			if m.dialogOpCancel != nil {
+				m.dialogOpCancel()
+				// this might be required, in the future
+				// m.dialogOpCancel = nil
+			}
 			m.showDialog = false
 		}
 
@@ -225,9 +233,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						imageInfo := dockerRes.(imageItem)
 						imageName := imageInfo.RepoTags[0]
 
+						ctx, cancel := context.WithCancel(context.Background())
+						m.dialogOpCancel = cancel
+
 						f := func() (*dockercmd.ScoutData, error) {
 
-							scoutData, err := m.dockerClient.ScoutImage(imageName)
+							scoutData, err := m.dockerClient.ScoutImage(ctx, imageName)
 
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
