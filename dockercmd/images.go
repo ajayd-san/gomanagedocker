@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 )
@@ -19,6 +20,30 @@ func (dc *DockerClient) ListImages() []image.Summary {
 	}
 
 	return images
+}
+
+func (dc *DockerClient) RunImage(imageId string) error {
+
+	res, err := dc.cli.ContainerCreate(
+		context.Background(),
+		&container.Config{Image: imageId},
+		nil,
+		nil,
+		nil,
+		"",
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = dc.cli.ContainerStart(context.Background(), res.ID, container.StartOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (dc *DockerClient) DeleteImage(id string, opts image.RemoveOptions) error {

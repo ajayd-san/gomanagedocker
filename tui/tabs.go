@@ -191,6 +191,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.activeTab == int(images) {
 				switch {
+				case key.Matches(msg, ImageKeymap.Run):
+					curItem := m.getSelectedItem()
+
+					if curItem != nil {
+						imageId := curItem.(dockerRes).getId()
+
+						/*
+							we run on a different go routine since it may take sometime to run an image(rare case)
+							and we do not want to hang the main thread
+						*/
+						go func() {
+							err := m.dockerClient.RunImage(imageId)
+							if err != nil {
+								m.possibleLongRunningOpErrorChan <- err
+							}
+						}()
+					}
 				case key.Matches(msg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
