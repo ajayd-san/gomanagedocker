@@ -25,7 +25,7 @@ Start the program with `gmd`.
 Just build like any other Go binary: 
 
 ```
-go install github.com/ajayd-san/gomanagedocker@v1.0.1
+go install github.com/ajayd-san/gomanagedocker@v1.1.1
 ```
 Start the program with `gmd`.
 
