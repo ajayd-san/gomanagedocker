@@ -19,12 +19,13 @@ func (m listModel) Init() tea.Cmd {
 }
 
 func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		h, v := listDocStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
-		// m.list.SetSize(msg.Width, msg.Height)
-	}
+	// switch msg := msg.(type) {
+	// case tea.WindowSizeMsg:
+	// 	// h, v := listDocStyle.GetFrameSize()
+	// 	// m.list.SetSize(msg.Width-h, msg.Height-v)
+	// 	// m.list.SetSize(msg.Width, msg.Height)
+	// }
+	// log.Println("here", msg)
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
