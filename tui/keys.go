@@ -44,11 +44,11 @@ type volKeymap struct {
 
 var ImageKeymap = imgKeymap{
 	Run: key.NewBinding(
-		key.WithKeys("s"),
-		key.WithHelp("s", "start"),
+		key.WithKeys("r"),
+		key.WithHelp("r", "run"),
 	),
 	Rename: key.NewBinding(
-		key.WithKeys("r"),
+		key.WithKeys("R"),
 		key.WithHelp("r", "rename"),
 	),
 	Delete: key.NewBinding(
