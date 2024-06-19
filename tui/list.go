@@ -70,6 +70,11 @@ func makeItems(raw []dockerRes) []list.Item {
 }
 
 // Util
+/*
+this function calls the docker api and repopulates the tab with updated items(if they are any).
+For now does a linear search if the number of items have not changed to update the list (O(n) time)
+Also, computes storage sizes for newly added containers in another go routine
+*/
 func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) listModel {
 	var newlist []dockerRes
 	switch id {
@@ -128,14 +133,14 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 	if !slices.EqualFunc(newlist, m.list.Items(), comparisonFunc) {
 		newlistItems := makeItems(newlist)
 		m.list.SetItems(newlistItems)
-		go m.updateIds(newlist)
+		go m.updateIds(&newlist)
 	}
 
 	return m
 }
 
-func (m *listModel) updateIds(newlistItems []dockerRes) {
-	for _, item := range newlistItems {
+func (m *listModel) updateIds(newlistItems *[]dockerRes) {
+	for _, item := range *newlistItems {
 		m.previousIds[item.getId()] = struct{}{}
 	}
 }
