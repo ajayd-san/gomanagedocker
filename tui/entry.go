@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/spf13/viper"
 )
+
+var POLLING_TIME time.Duration
 
 func StartTUI(debug bool) error {
 	if debug {
@@ -16,6 +20,8 @@ func StartTUI(debug bool) error {
 		log.SetOutput(io.Discard)
 	}
 
+	loadConfig()
+
 	tabs := []string{"Images", "Containers", "Volumes"}
 	m := NewModel(tabs)
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
@@ -23,4 +29,8 @@ func StartTUI(debug bool) error {
 		return err
 	}
 	return nil
+}
+
+func loadConfig() {
+	POLLING_TIME = viper.GetDuration("config.Polling-Time")
 }

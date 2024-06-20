@@ -59,10 +59,7 @@ type Model struct {
 	helpGen                        help.Model
 }
 
-// this ticker enables us to update Docker lists items every 500ms
-// TODO: possibly add option in config file to configure polling time.
-const POLLING_TIME = 500
-
+// this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
 func doUpdateObjectsTick() tea.Cmd {
 	return tea.Tick(POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
@@ -71,7 +68,7 @@ func (m Model) Init() tea.Cmd {
 	// check if Docker is alive, if not, exit
 	err := m.dockerClient.PingDocker()
 	if err != nil {
-		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s", err.Error())
+		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s\n", err.Error())
 		os.Exit(1)
 	}
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
