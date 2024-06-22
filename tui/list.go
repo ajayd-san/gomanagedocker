@@ -73,7 +73,8 @@ func makeItems(raw []dockerRes) []list.Item {
 /*
 this function calls the docker api and repopulates the tab with updated items(if they are any).
 For now does a linear search if the number of items have not changed to update the list (O(n) time)
-Also, computes storage sizes for newly added containers in another go routine
+Also, computes storage sizes for newly added containers and maps imageIds to imageNames
+(to display in container infobox) in another go routine
 */
 func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) listModel {
 	var newlist []dockerRes
@@ -81,6 +82,15 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient, id tabId) list
 	case images:
 		newImgs := dockerClient.ListImages()
 		newlist = makeImageItems(newImgs)
+
+		// update imageToName map if there are new images
+		go func() {
+			for _, image := range newlist {
+				if _, keyExists := imageIdToNameMap[image.getId()]; !keyExists {
+					imageIdToNameMap[image.getId()] = image.getName()
+				}
+			}
+		}()
 	case containers:
 		newContainers := dockerClient.ListContainers(showContainerSize)
 		newlist = makeContainerItems(newContainers)

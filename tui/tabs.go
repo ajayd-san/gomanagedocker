@@ -40,6 +40,8 @@ const showContainerSize = false
 var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
 var containerSizeMap_Mutex sync.Mutex = sync.Mutex{}
 
+var imageIdToNameMap map[string]string = make(map[string]string)
+
 type Model struct {
 	dockerClient dockercmd.DockerClient
 	Tabs         []string

@@ -65,12 +65,13 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 
 func populateContainerInfoBox(containerInfo containerItem) string {
 	var res strings.Builder
-
 	addEntry(&res, "ID: ", containerInfo.ID)
 	addEntry(&res, "Name: ", containerInfo.getName())
-	addEntry(&res, "Image: ", containerInfo.Image)
+	addEntry(&res, "Image: ", imageIdToNameMap[containerInfo.ImageID])
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
 
+	//this is a pretty trivial refactor to make this look cleaner, but I'm too lazy to do this
+	// whoever completes this bounty will win......nothing (except my heart)
 	if mutexok := containerSizeMap_Mutex.TryLock(); mutexok {
 		if containerSizeInfo, ok := containerSizeMap[containerInfo.ID]; ok {
 			rootSizeInGb := float64(containerSizeInfo.rootFs) / float64(1e+9)
