@@ -46,7 +46,7 @@ type Model struct {
 	dockerClient dockercmd.DockerClient
 	Tabs         []string
 	TabContent   []listModel
-	activeTab    int
+	activeTab    tabId
 	width        int
 	height       int
 	showDialog   bool
@@ -188,7 +188,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prevTab()
 			}
 
-			if m.activeTab == int(images) {
+			if m.activeTab == images {
 				switch {
 				case key.Matches(msg, ImageKeymap.Run):
 					curItem := m.getSelectedItem()
@@ -269,7 +269,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-			} else if m.activeTab == int(containers) {
+			} else if m.activeTab == containers {
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
@@ -348,7 +348,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, tea.ExecProcess(cmd, nil))
 				}
 
-			} else if m.activeTab == int(volumes) {
+			} else if m.activeTab == volumes {
 				switch {
 				case key.Matches(msg, VolumeKeymap.Prune):
 					log.Println("Volume prune called")
@@ -526,7 +526,7 @@ func (m Model) View() string {
 
 	for i, t := range m.Tabs {
 		var style lipgloss.Style
-		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == m.activeTab
+		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == int(m.activeTab)
 		if isActive {
 			style = activeTabStyle.Copy()
 		} else {
@@ -571,11 +571,11 @@ func (m Model) View() string {
 	tabSpecificKeyBinds := ""
 
 	switch m.activeTab {
-	case int(images):
+	case images:
 		tabSpecificKeyBinds = m.helpGen.View(ImageKeymap)
-	case int(containers):
+	case containers:
 		tabSpecificKeyBinds = m.helpGen.View(ContainerKeymap)
-	case int(volumes):
+	case volumes:
 		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
 	}
 
@@ -591,23 +591,23 @@ func (m Model) View() string {
 
 // helpers
 
-func (m Model) updateContent(currentTab int) Model {
+func (m Model) updateContent(currentTab tabId) Model {
 	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient)
 	return m
 }
 
 // Util
 func (m *Model) nextTab() {
-	if m.activeTab == int(volumes) {
-		m.activeTab = int(images)
+	if m.activeTab == volumes {
+		m.activeTab = images
 	} else {
 		m.activeTab += 1
 	}
 }
 
 func (m *Model) prevTab() {
-	if m.activeTab == int(images) {
-		m.activeTab = int(volumes)
+	if m.activeTab == images {
+		m.activeTab = volumes
 	} else {
 		m.activeTab -= 1
 	}
