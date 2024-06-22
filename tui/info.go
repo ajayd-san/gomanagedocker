@@ -15,17 +15,17 @@ import (
 func PopulateInfoBox(tab tabId, item list.Item) string {
 	temp, _ := item.(dockerRes)
 	switch tab {
-	case images:
+	case IMAGES:
 		if it, ok := temp.(imageItem); ok {
 			return populateImageInfoBox(it)
 		}
 
-	case containers:
+	case CONTAINERS:
 		if ct, ok := temp.(containerItem); ok {
 			return populateContainerInfoBox(ct)
 		}
 
-	case volumes:
+	case VOLUMES:
 		if vt, ok := temp.(VolumeItem); ok {
 			return populateVolumeInfoBox(vt)
 		}

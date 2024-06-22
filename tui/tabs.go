@@ -27,12 +27,6 @@ type TickMsg time.Time
 type preloadObjects int
 type preloadSizeMap struct{}
 
-const (
-	images tabId = iota
-	containers
-	volumes
-)
-
 // INFO: temporary fix to performance hiccups
 const showContainerSize = false
 
@@ -78,23 +72,26 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
 
-func NewModel(tabs []string) Model {
-	contents := make([]listModel, 3)
+func NewModel() Model {
+	contents := make([]listModel, len(CONFIG_TAB_ORDERING_SLICE))
 
-	for i, tabKind := range []tabId{images, containers, volumes} {
-		contents[i] = InitList(tabKind)
+	for tabid := range CONFIG_TAB_ORDERING_SLICE {
+		contents[tabid] = InitList(tabId(tabid))
 	}
+
+	firstTab := contents[0].tabKind
 
 	helper := help.New()
 	NavKeymap := help.New()
 	return Model{
 		dockerClient:                   dockercmd.NewDockerClient(),
-		Tabs:                           tabs,
+		Tabs:                           CONFIG_TAB_ORDERING_SLICE,
 		TabContent:                     contents,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
 		helpGen:                        helper,
 		navKeymap:                      NavKeymap,
+		activeTab:                      firstTab,
 	}
 }
 
@@ -141,9 +138,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// preloads all tabs, so no delay in displaying objects when first changing tabs
 	case preloadObjects:
-		m = m.updateContent(0)
-		m = m.updateContent(1)
-		m = m.updateContent(2)
+		//FIXME: use a range on TAB_ORDERING to preload lists
+
+		for tabid := range CONFIG_TAB_ORDERING_SLICE {
+			m = m.updateContent(tabId(tabid))
+		}
 
 	case TickMsg:
 		m = m.updateContent(m.activeTab)
@@ -188,7 +187,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prevTab()
 			}
 
-			if m.activeTab == images {
+			if m.activeTab == IMAGES {
 				switch {
 				case key.Matches(msg, ImageKeymap.Run):
 					curItem := m.getSelectedItem()
@@ -269,7 +268,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-			} else if m.activeTab == containers {
+			} else if m.activeTab == CONTAINERS {
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
@@ -348,7 +347,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, tea.ExecProcess(cmd, nil))
 				}
 
-			} else if m.activeTab == volumes {
+			} else if m.activeTab == VOLUMES {
 				switch {
 				case key.Matches(msg, VolumeKeymap.Prune):
 					log.Println("Volume prune called")
@@ -561,7 +560,7 @@ func (m Model) View() string {
 
 	infobox := ""
 	if curItem != nil {
-		infobox = PopulateInfoBox(tabId(m.activeTab), curItem)
+		infobox = PopulateInfoBox(m.activeTab, curItem)
 		infobox = moreInfoStyle.Render(infobox)
 	}
 
@@ -571,11 +570,11 @@ func (m Model) View() string {
 	tabSpecificKeyBinds := ""
 
 	switch m.activeTab {
-	case images:
+	case IMAGES:
 		tabSpecificKeyBinds = m.helpGen.View(ImageKeymap)
-	case containers:
+	case CONTAINERS:
 		tabSpecificKeyBinds = m.helpGen.View(ContainerKeymap)
-	case volumes:
+	case VOLUMES:
 		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
 	}
 
@@ -598,16 +597,16 @@ func (m Model) updateContent(currentTab tabId) Model {
 
 // Util
 func (m *Model) nextTab() {
-	if m.activeTab == volumes {
-		m.activeTab = images
+	if int(m.activeTab) == len(CONFIG_TAB_ORDERING_SLICE)-1 {
+		m.activeTab = 0
 	} else {
 		m.activeTab += 1
 	}
 }
 
 func (m *Model) prevTab() {
-	if m.activeTab == images {
-		m.activeTab = volumes
+	if int(m.activeTab) == 0 {
+		m.activeTab = tabId(len(CONFIG_TAB_ORDERING_SLICE) - 1)
 	} else {
 		m.activeTab -= 1
 	}

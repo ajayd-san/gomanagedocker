@@ -53,11 +53,11 @@ func InitList(tabkind tabId) listModel {
 	m.list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("["))
 
 	switch tabkind {
-	case images:
+	case IMAGES:
 		m.list.AdditionalFullHelpKeys = getImageKeymap
-	case containers:
+	case CONTAINERS:
 		m.list.AdditionalFullHelpKeys = getContainerKeymap
-	case volumes:
+	case VOLUMES:
 		m.list.AdditionalFullHelpKeys = getVolumeKeymap
 	}
 	return m
@@ -85,7 +85,7 @@ Also, computes storage sizes for newly added containers and maps imageIds to ima
 func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
 	var newlist []dockerRes
 	switch m.tabKind {
-	case images:
+	case IMAGES:
 		newImgs := dockerClient.ListImages()
 		newlist = makeImageItems(newImgs)
 
@@ -97,7 +97,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
 				}
 			}
 		}()
-	case containers:
+	case CONTAINERS:
 		newContainers := dockerClient.ListContainers(showContainerSize)
 		newlist = makeContainerItems(newContainers)
 
@@ -115,7 +115,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
 				}()
 			}
 		}
-	case volumes:
+	case VOLUMES:
 		// TODO: handle errors
 		newVolumes, _ := dockerClient.ListVolumes()
 		newlist = makeVolumeItem(newVolumes)
@@ -123,21 +123,21 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
 
 	comparisonFunc := func(a dockerRes, b list.Item) bool {
 		switch m.tabKind {
-		case images:
+		case IMAGES:
 			newA := a.(imageItem)
 			newB := b.(imageItem)
 
 			if newA.Containers != newB.Containers {
 				return false
 			}
-		case containers:
+		case CONTAINERS:
 			newA := a.(containerItem)
 			newB := b.(containerItem)
 
 			if newA.State != newB.State {
 				return false
 			}
-		case volumes:
+		case VOLUMES:
 			// newA := a.(VolumeItem)
 			// newB := b.(VolumeItem)
 
