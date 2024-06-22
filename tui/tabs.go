@@ -592,7 +592,7 @@ func (m Model) View() string {
 // helpers
 
 func (m Model) updateContent(currentTab int) Model {
-	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient, tabId(currentTab))
+	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient)
 	return m
 }
 
