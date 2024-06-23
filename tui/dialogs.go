@@ -76,7 +76,7 @@ func getPruneImagesDialog(storage map[string]string) teadialog.Dialog {
 
 func getPruneVolumesDialog(storage map[string]string) teadialog.Dialog {
 	prompts := []teadialog.Prompt{
-		teadialog.MakeTogglePrompt("all", "Removed all unused volumes"),
+		teadialog.MakeTogglePrompt("all", "Removed all unused volumes(not just anonymous ones)"),
 		teadialog.MakeOptionPrompt("confirm", "This will remove all unused volumes, are your sure?", []string{"Yes", "No"}),
 	}
 
