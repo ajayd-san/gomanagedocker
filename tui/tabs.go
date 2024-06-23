@@ -54,7 +54,7 @@ type Model struct {
 
 // this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
 func doUpdateObjectsTick() tea.Cmd {
-	return tea.Tick(POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
+	return tea.Tick(CONFIG_POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m Model) Init() tea.Cmd {
@@ -70,9 +70,9 @@ func (m Model) Init() tea.Cmd {
 }
 
 func NewModel() Model {
-	contents := make([]listModel, len(CONFIG_TAB_ORDERING_SLICE))
+	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
-	for tabid := range CONFIG_TAB_ORDERING_SLICE {
+	for tabid := range CONFIG_TAB_ORDERING {
 		contents[tabid] = InitList(tabId(tabid))
 	}
 
@@ -82,7 +82,7 @@ func NewModel() Model {
 	NavKeymap := help.New()
 	return Model{
 		dockerClient:                   dockercmd.NewDockerClient(),
-		Tabs:                           CONFIG_TAB_ORDERING_SLICE,
+		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
@@ -137,7 +137,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case preloadObjects:
 		//FIXME: use a range on TAB_ORDERING to preload lists
 
-		for tabid := range CONFIG_TAB_ORDERING_SLICE {
+		for tabid := range CONFIG_TAB_ORDERING {
 			m = m.updateContent(tabId(tabid))
 		}
 
@@ -594,7 +594,7 @@ func (m Model) updateContent(currentTab tabId) Model {
 
 // Util
 func (m *Model) nextTab() {
-	if int(m.activeTab) == len(CONFIG_TAB_ORDERING_SLICE)-1 {
+	if int(m.activeTab) == len(CONFIG_TAB_ORDERING)-1 {
 		m.activeTab = 0
 	} else {
 		m.activeTab += 1
@@ -603,7 +603,7 @@ func (m *Model) nextTab() {
 
 func (m *Model) prevTab() {
 	if int(m.activeTab) == 0 {
-		m.activeTab = tabId(len(CONFIG_TAB_ORDERING_SLICE) - 1)
+		m.activeTab = tabId(len(CONFIG_TAB_ORDERING) - 1)
 	} else {
 		m.activeTab -= 1
 	}

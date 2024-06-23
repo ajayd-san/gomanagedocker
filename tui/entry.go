@@ -19,8 +19,8 @@ var (
 	VOLUMES    tabId
 )
 
-var POLLING_TIME time.Duration
-var CONFIG_TAB_ORDERING_SLICE []string
+var CONFIG_POLLING_TIME time.Duration
+var CONFIG_TAB_ORDERING []string
 
 var globalConfig = koanf.New(".")
 
@@ -44,10 +44,10 @@ func StartTUI(debug bool) error {
 }
 
 func loadConfig() {
-	POLLING_TIME = globalConfig.Duration("config.Polling-Time")
+	CONFIG_POLLING_TIME = globalConfig.Duration("config.Polling-Time")
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
-	CONFIG_TAB_ORDERING_SLICE = globalConfig.Strings("config.Tab-Order")
-	setTabConstants(CONFIG_TAB_ORDERING_SLICE)
+	CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order")
+	setTabConstants(CONFIG_TAB_ORDERING)
 }
 
 // set tab variables, AKA IMAGES, CONTAINERS, VOLUMES, etc.
