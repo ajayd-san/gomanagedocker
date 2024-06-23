@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
+	config "github.com/ajayd-san/gomanagedocker/config"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/v2"
 )
 
 type TabOrderingMap map[string]tabId
@@ -21,6 +22,8 @@ var (
 var POLLING_TIME time.Duration
 var CONFIG_TAB_ORDERING_SLICE []string
 
+var globalConfig = koanf.New(".")
+
 func StartTUI(debug bool) error {
 	if debug {
 		f, _ := tea.LogToFile("gmd_debug.log", "debug")
@@ -29,6 +32,7 @@ func StartTUI(debug bool) error {
 		log.SetOutput(io.Discard)
 	}
 
+	config.ReadConfig(globalConfig)
 	loadConfig()
 
 	m := NewModel()
@@ -40,9 +44,9 @@ func StartTUI(debug bool) error {
 }
 
 func loadConfig() {
-	POLLING_TIME = viper.GetDuration("config.Polling-Time")
+	POLLING_TIME = globalConfig.Duration("config.Polling-Time")
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
-	CONFIG_TAB_ORDERING_SLICE = viper.GetStringSlice("config.Tab-Order")
+	CONFIG_TAB_ORDERING_SLICE = globalConfig.Strings("config.Tab-Order")
 	setTabConstants(CONFIG_TAB_ORDERING_SLICE)
 }
 
