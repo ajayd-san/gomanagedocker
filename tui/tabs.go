@@ -27,9 +27,6 @@ type TickMsg time.Time
 type preloadObjects int
 type preloadSizeMap struct{}
 
-// INFO: temporary fix to performance hiccups
-const showContainerSize = false
-
 // INFO: holds container size info that is calculated on demand
 var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
 var containerSizeMap_Mutex sync.Mutex = sync.Mutex{}

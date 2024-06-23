@@ -98,7 +98,7 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
 			}
 		}()
 	case CONTAINERS:
-		newContainers := dockerClient.ListContainers(showContainerSize)
+		newContainers := dockerClient.ListContainers(false)
 		newlist = makeContainerItems(newContainers)
 
 		for _, newContainer := range newlist {
