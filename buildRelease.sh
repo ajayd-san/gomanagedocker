@@ -16,15 +16,21 @@ if [ -d ./releases/ ]; then
 fi 
 
 #linux
+echo "Building linux:amd64"
 env GOOS=linux GOARCH=amd64 go build -o ./releases/linux_amd64_$RELEASE/"gmd" github.com/ajayd-san/gomanagedocker
 
 
 # macos
+echo "Building darwin:amd64"
 env GOOS=darwin GOARCH=amd64 go build -o ./releases/darwin_amd64_$RELEASE/"gmd" github.com/ajayd-san/gomanagedocker
+
+echo "Building darwin:arm64"
 env GOOS=darwin GOARCH=arm64 go build -o ./releases/darwin_arm64_$RELEASE/"gmd" github.com/ajayd-san/gomanagedocker
 
 
 #windows
+
+echo "Building windows:amd64"
 env GOOS=windows GOARCH=amd64 go build -o ./releases/windows_amd64_$RELEASE/"gmd.exe" github.com/ajayd-san/gomanagedocker
 
 cd releases

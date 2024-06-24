@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -26,28 +27,23 @@ type TickMsg time.Time
 type preloadObjects int
 type preloadSizeMap struct{}
 
-const (
-	images tabId = iota
-	containers
-	volumes
-)
-
-// INFO: temporary fix to performance hiccups
-const showContainerSize = false
-
 // INFO: holds container size info that is calculated on demand
 var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
 var containerSizeMap_Mutex sync.Mutex = sync.Mutex{}
+
+var imageIdToNameMap map[string]string = make(map[string]string)
 
 type Model struct {
 	dockerClient dockercmd.DockerClient
 	Tabs         []string
 	TabContent   []listModel
-	activeTab    int
+	activeTab    tabId
 	width        int
 	height       int
 	showDialog   bool
 	activeDialog tea.Model
+	// we use this to cancel dialog ops when we exit from them
+	dialogOpCancel context.CancelFunc
 	// we use this error channel to report error for possibly long running tasks, like pruning
 	possibleLongRunningOpErrorChan chan error
 	windowTooSmall                 bool
@@ -56,19 +52,16 @@ type Model struct {
 	helpGen                        help.Model
 }
 
-// this ticker enables us to update Docker lists items every 500ms
-// TODO: possibly add option in config file to configure polling time.
-const POLLING_TIME = 500
-
+// this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
 func doUpdateObjectsTick() tea.Cmd {
-	return tea.Tick(POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
+	return tea.Tick(CONFIG_POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m Model) Init() tea.Cmd {
 	// check if Docker is alive, if not, exit
 	err := m.dockerClient.PingDocker()
 	if err != nil {
-		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s", err.Error())
+		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s\n", err.Error())
 		os.Exit(1)
 	}
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
@@ -76,23 +69,26 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
 
-func NewModel(tabs []string) Model {
-	contents := make([]listModel, 3)
+func NewModel() Model {
+	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
-	for i, tabKind := range []tabId{images, containers, volumes} {
-		contents[i] = InitList(tabKind)
+	for tabid := range CONFIG_TAB_ORDERING {
+		contents[tabid] = InitList(tabId(tabid))
 	}
+
+	firstTab := contents[0].tabKind
 
 	helper := help.New()
 	NavKeymap := help.New()
 	return Model{
 		dockerClient:                   dockercmd.NewDockerClient(),
-		Tabs:                           tabs,
+		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
 		helpGen:                        helper,
 		navKeymap:                      NavKeymap,
+		activeTab:                      firstTab,
 	}
 }
 
@@ -121,6 +117,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
+			if m.dialogOpCancel != nil {
+				m.dialogOpCancel()
+				// this might be required, in the future
+				// m.dialogOpCancel = nil
+			}
 			m.showDialog = false
 		}
 
@@ -134,9 +135,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// preloads all tabs, so no delay in displaying objects when first changing tabs
 	case preloadObjects:
-		m = m.updateContent(0)
-		m = m.updateContent(1)
-		m = m.updateContent(2)
+		//FIXME: use a range on TAB_ORDERING to preload lists
+
+		for tabid := range CONFIG_TAB_ORDERING {
+			m = m.updateContent(tabId(tabid))
+		}
 
 	case TickMsg:
 		m = m.updateContent(m.activeTab)
@@ -181,8 +184,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prevTab()
 			}
 
-			if m.activeTab == int(images) {
+			if m.activeTab == IMAGES {
 				switch {
+				case key.Matches(msg, ImageKeymap.Run):
+					curItem := m.getSelectedItem()
+
+					if curItem != nil {
+						imageId := curItem.(dockerRes).getId()
+
+						/*
+							we run on a different go routine since it may take sometime to run an image(rare case)
+							and we do not want to hang the main thread
+						*/
+						go func() {
+							err := m.dockerClient.RunImage(imageId)
+							if err != nil {
+								m.possibleLongRunningOpErrorChan <- err
+							}
+						}()
+					}
 				case key.Matches(msg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
@@ -225,9 +245,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						imageInfo := dockerRes.(imageItem)
 						imageName := imageInfo.RepoTags[0]
 
+						ctx, cancel := context.WithCancel(context.Background())
+						m.dialogOpCancel = cancel
+
 						f := func() (*dockercmd.ScoutData, error) {
 
-							scoutData, err := m.dockerClient.ScoutImage(imageName)
+							scoutData, err := m.dockerClient.ScoutImage(ctx, imageName)
 
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
@@ -242,7 +265,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-			} else if m.activeTab == int(containers) {
+			} else if m.activeTab == CONTAINERS {
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
@@ -321,7 +344,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, tea.ExecProcess(cmd, nil))
 				}
 
-			} else if m.activeTab == int(volumes) {
+			} else if m.activeTab == VOLUMES {
 				switch {
 				case key.Matches(msg, VolumeKeymap.Prune):
 					log.Println("Volume prune called")
@@ -464,10 +487,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	var cmd tea.Cmd
+	// var cmd tea.Cmd
 	// do not pass key.msg to list if dialog is active, otherwise tui updates to navigation keys
 	if !m.showDialog {
-		m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
+		newList, cmd := m.TabContent[m.activeTab].Update(msg)
+		m.TabContent[m.activeTab] = newList.(listModel)
+		// m.TabContent[m.activeTab].list, cmd = m.TabContent[m.activeTab].list.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 
@@ -497,7 +522,7 @@ func (m Model) View() string {
 
 	for i, t := range m.Tabs {
 		var style lipgloss.Style
-		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == m.activeTab
+		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == int(m.activeTab)
 		if isActive {
 			style = activeTabStyle.Copy()
 		} else {
@@ -532,7 +557,7 @@ func (m Model) View() string {
 
 	infobox := ""
 	if curItem != nil {
-		infobox = PopulateInfoBox(tabId(m.activeTab), curItem)
+		infobox = PopulateInfoBox(m.activeTab, curItem)
 		infobox = moreInfoStyle.Render(infobox)
 	}
 
@@ -542,11 +567,11 @@ func (m Model) View() string {
 	tabSpecificKeyBinds := ""
 
 	switch m.activeTab {
-	case int(images):
+	case IMAGES:
 		tabSpecificKeyBinds = m.helpGen.View(ImageKeymap)
-	case int(containers):
+	case CONTAINERS:
 		tabSpecificKeyBinds = m.helpGen.View(ContainerKeymap)
-	case int(volumes):
+	case VOLUMES:
 		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
 	}
 
@@ -562,23 +587,23 @@ func (m Model) View() string {
 
 // helpers
 
-func (m Model) updateContent(currentTab int) Model {
-	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient, tabId(currentTab))
+func (m Model) updateContent(currentTab tabId) Model {
+	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient)
 	return m
 }
 
 // Util
 func (m *Model) nextTab() {
-	if m.activeTab == int(volumes) {
-		m.activeTab = int(images)
+	if int(m.activeTab) == len(CONFIG_TAB_ORDERING)-1 {
+		m.activeTab = 0
 	} else {
 		m.activeTab += 1
 	}
 }
 
 func (m *Model) prevTab() {
-	if m.activeTab == int(images) {
-		m.activeTab = int(volumes)
+	if int(m.activeTab) == 0 {
+		m.activeTab = tabId(len(CONFIG_TAB_ORDERING) - 1)
 	} else {
 		m.activeTab -= 1
 	}

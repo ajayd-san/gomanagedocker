@@ -7,6 +7,7 @@ Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go a
 ## Contents
 1. [Install Instructions](#install-instructions)
 2. [Features](#features)
+3. [Configuration](#configuration)
 3. [Roadmap](#roadmap)
 4. [Found an issue?](#found-an-issue-)
 
@@ -25,7 +26,7 @@ Start the program with `gmd`.
 Just build like any other Go binary: 
 
 ```
-go install github.com/ajayd-san/gomanagedocker@v1.1.1
+go install github.com/ajayd-san/gomanagedocker@v1.2
 ```
 Start the program with `gmd`.
 
@@ -39,6 +40,10 @@ Now, **goManageDocker 😏!!**
 >goManageDocker runs best on terminals that support ANSI 256 colors and designed to run while the **terminal is maximized**.
 
 ## Features
+
+**New in v1.2**: You can now run an image directly from the image tab by pressing `r`.
+
+![runImage](vhs/gifs/runImage.gif)
 
 **New in v1.1.1**: Ability to perform `docker scout quickview` on any image (just press `s`).
 
@@ -69,9 +74,29 @@ Now, **goManageDocker 😏!!**
 
   ![search](vhs/gifs/search.gif)
 
+
+## Configuration
+I've added support for config files from V1.2.
+
+Place `gomanagedocker/gomanagedocker.yaml` in your XDG config folder and configure to your heart's content!
+
+Default Configuration:  
+
+```
+config:
+  Polling-Time: 500
+  Tab-Order: [images, containers, volumes]
+```
+
+
+- Polling-Time: Set how frequently the program calls the docker API (measured in milliseconds, default: 500ms)
+- Tab-Order: Set the order of tabs displayed, the keys must be `images`, `containers` and `volumes`. You can omit the names of the tabs you do not wish to see as well. Say I want to see `containers` tab first and do not want to see the `volumes` tab, I can set `Tab-Order: [containers, images]`
+
+
 ## Roadmap
 - Make the program work with minimized terminal state
 - Add a networks tab
+- Add More Config Options
 
 ## Found an issue ?
 
