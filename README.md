@@ -74,6 +74,7 @@ Now, **goManageDocker 😏!!**
 
   ![search](vhs/gifs/search.gif)
 
+
 ## Configuration
 I've added support for config files from V1.2.
 
@@ -90,6 +91,7 @@ config:
 
 - Polling-Time: Set how frequently the program calls the docker API (measured in milliseconds, default: 500ms)
 - Tab-Order: Set the order of tabs displayed, the keys must be `images`, `containers` and `volumes`. You can omit the names of the tabs you do not wish to see as well. Say I want to see `containers` tab first and do not want to see the `volumes` tab, I can set `Tab-Order: [containers, images]`
+
 
 ## Roadmap
 - Make the program work with minimized terminal state
