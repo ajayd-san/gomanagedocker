@@ -17,7 +17,7 @@ var (
 		Use:     "gmd",
 		Short:   "TUI to manage docker objects",
 		Long:    `The Definitive TUI to manage docker objects with ease.`,
-		Version: "1.1.1",
+		Version: "1.2",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tui.StartTUI(debug)
 		},
