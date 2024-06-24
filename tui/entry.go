@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"time"
 
 	config "github.com/ajayd-san/gomanagedocker/config"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/knadh/koanf/v2"
 )
+
+const xdgPathTail string = "/gomanagedocker/gomanagedocker.yaml"
 
 type TabOrderingMap map[string]tabId
 
@@ -32,8 +35,7 @@ func StartTUI(debug bool) error {
 		log.SetOutput(io.Discard)
 	}
 
-	config.ReadConfig(globalConfig)
-	loadConfig()
+	readAndLoadConfig()
 
 	m := NewModel()
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
@@ -41,6 +43,17 @@ func StartTUI(debug bool) error {
 		return err
 	}
 	return nil
+}
+
+func readAndLoadConfig() {
+	configPath, err := os.UserConfigDir()
+
+	if err != nil {
+		log.Println("$HOME could not be determined")
+	}
+
+	config.ReadConfig(globalConfig, configPath+xdgPathTail)
+	loadConfig()
 }
 
 func loadConfig() {

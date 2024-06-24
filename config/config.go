@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"os"
 
 	_ "embed"
 
@@ -15,17 +14,10 @@ import (
 //go:embed defaultConfig.yaml
 var defaultConfigRaw []byte
 
-func ReadConfig(config *koanf.Koanf) {
-	//read config file
-	configPath, err := os.UserConfigDir()
-
-	if err != nil {
-		log.Println("$HOME could not be determined")
-	}
-
+func ReadConfig(config *koanf.Koanf, path string) {
 	if err := config.Load(rawbytes.Provider(defaultConfigRaw), yaml.Parser()); err != nil {
 		log.Fatal("Could not load default config\n")
 	}
 
-	config.Load(file.Provider(configPath+xdgPathTail), yaml.Parser())
+	config.Load(file.Provider(path), yaml.Parser())
 }
