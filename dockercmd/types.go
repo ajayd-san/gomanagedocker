@@ -42,7 +42,7 @@ type ScoutData struct {
 }
 
 type DockerClient struct {
-	cli               *client.Client
+	cli               client.CommonAPIClient
 	containerListArgs container.ListOptions
 }
 
@@ -52,6 +52,7 @@ func NewDockerClient() DockerClient {
 		panic(err)
 	}
 
+	//TODO: size should not be true, investigate later
 	return DockerClient{
 		cli: cli,
 		containerListArgs: container.ListOptions{

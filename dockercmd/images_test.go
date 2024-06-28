@@ -3,9 +3,142 @@ package dockercmd
 import (
 	"testing"
 
+	"github.com/docker/docker/api/types/container"
+	dimage "github.com/docker/docker/api/types/image"
 	"github.com/google/go-cmp/cmp"
+	"gotest.tools/v3/assert"
 )
 
+func TestListImages(t *testing.T) {
+
+	imgs := []dimage.Summary{
+		{
+			Containers: 0,
+			ID:         "0",
+		},
+
+		{
+			Containers: 2,
+			ID:         "1",
+		},
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+		{
+			Containers: 4,
+			ID:         "5",
+		},
+	}
+
+	dclient := DockerClient{
+		cli: &MockApi{
+			mockImages:      imgs,
+			CommonAPIClient: nil,
+		},
+		containerListArgs: container.ListOptions{},
+	}
+
+	got := dclient.ListImages()
+	want := imgs
+
+	assert.DeepEqual(t, got, want)
+}
+
+func TestDeleteImage(t *testing.T) {
+	imgs := []dimage.Summary{
+		{
+			Containers: 0,
+			ID:         "0",
+		},
+
+		{
+			Containers: 2,
+			ID:         "1",
+		},
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+		{
+			Containers: 4,
+			ID:         "5",
+		},
+	}
+
+	dclient := DockerClient{
+		cli: &MockApi{
+			mockImages:      imgs,
+			CommonAPIClient: nil,
+		},
+		containerListArgs: container.ListOptions{},
+	}
+
+	t.Run("No force required image test", func(t *testing.T) {
+		err := dclient.DeleteImage("0", dimage.RemoveOptions{})
+		assert.NilError(t, err)
+
+		afterDeleteImgs := dclient.cli.(*MockApi).mockImages
+
+		// we do len(img) - 1 because the slices.Delete swaps the 'to be deleted' index with last index and zeros it. so we exclude the last element in the array
+		assert.DeepEqual(t, afterDeleteImgs, imgs[0:len(imgs)-1])
+	})
+
+	t.Run("Should fail, image has active containers", func(t *testing.T) {
+		err := dclient.DeleteImage("1", dimage.RemoveOptions{})
+		assert.ErrorContains(t, err, "must be forced")
+	})
+
+	t.Run("With force", func(t *testing.T) {
+		err := dclient.DeleteImage("1", dimage.RemoveOptions{Force: true})
+		assert.NilError(t, err)
+
+		// same reason as above, but this time we exclude last to elements
+		afterDeleteImgs := dclient.cli.(*MockApi).mockImages
+		assert.DeepEqual(t, afterDeleteImgs, imgs[0:len(imgs)-2])
+	})
+}
+
+func TestPruneImages(t *testing.T) {
+	imgs := []dimage.Summary{
+		{
+			Containers: 0,
+			ID:         "0",
+		},
+
+		{
+			Containers: 0,
+			ID:         "1",
+		},
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+		{
+			Containers: 0,
+			ID:         "5",
+		},
+	}
+
+	dclient := DockerClient{
+		cli: &MockApi{
+			mockImages:      imgs,
+			CommonAPIClient: nil,
+		},
+		containerListArgs: container.ListOptions{},
+	}
+
+	dclient.PruneImages()
+
+	finalImages := dclient.cli.(*MockApi).mockImages
+	want := []dimage.Summary{
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+	}
+	assert.DeepEqual(t, finalImages, want)
+}
 func TestParseDockerScoutOutput(t *testing.T) {
 	type test struct {
 		input string
