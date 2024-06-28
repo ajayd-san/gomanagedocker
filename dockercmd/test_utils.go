@@ -9,12 +9,40 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dimage "github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 )
 
 type MockApi struct {
-	mockImages []dimage.Summary
+	mockVolumes []*volume.Volume
+	mockImages  []dimage.Summary
 	client.CommonAPIClient
+}
+
+func (m *MockApi) VolumeList(ctx context.Context, options volume.ListOptions) (volume.ListResponse, error) {
+	return volume.ListResponse{
+		Volumes: m.mockVolumes,
+	}, nil
+}
+
+func (m *MockApi) VolumeRemove(ctx context.Context, volumeID string, force bool) error {
+	final := []*volume.Volume{}
+
+	for _, vol := range m.mockVolumes {
+		if vol.Name == volumeID {
+			continue
+		}
+
+		final = append(final, vol)
+	}
+
+	m.mockVolumes = final
+	return nil
+
+}
+
+func (mo *MockApi) VolumesPrune(ctx context.Context, pruneFilter filters.Args) (types.VolumesPruneReport, error) {
+	panic("not implemented") // TODO: Implement
 }
 
 func (m *MockApi) ImageList(ctx context.Context, options dimage.ListOptions) ([]dimage.Summary, error) {
