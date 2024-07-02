@@ -22,6 +22,38 @@ type MockApi struct {
 	client.CommonAPIClient
 }
 
+func (mo *MockApi) ContainerInspectWithRaw(ctx context.Context, container string, getSize bool) (types.ContainerJSON, []byte, error) {
+
+	index := slices.IndexFunc(mo.mockContainers, func(cont types.Container) bool {
+		if cont.ID == container {
+			return true
+		}
+
+		return false
+	})
+
+	base, _ := mo.ContainerInspect(ctx, container)
+
+	if getSize {
+		base.SizeRw = &mo.mockContainers[index].SizeRw
+		base.SizeRootFs = &mo.mockContainers[index].SizeRootFs
+	}
+
+	return base, nil, nil
+}
+
+func (m *MockApi) SetMockImages(imgs []dimage.Summary) {
+	m.mockImages = imgs
+}
+
+func (m *MockApi) SetMockVolumes(vols []*volume.Volume) {
+	m.mockVolumes = vols
+}
+
+func (m *MockApi) SetMockContainers(conts []types.Container) {
+	m.mockContainers = conts
+}
+
 func (mo *MockApi) ContainerInspect(ctx context.Context, container string) (types.ContainerJSON, error) {
 	index := slices.IndexFunc(mo.mockContainers, func(cont types.Container) bool {
 		if cont.ID == container {

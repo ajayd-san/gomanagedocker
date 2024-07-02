@@ -67,3 +67,10 @@ func (dc DockerClient) PingDocker() error {
 	_, err := dc.cli.Ping(context.Background())
 	return err
 }
+
+func NewMockCli(cli *MockApi) DockerClient {
+	return DockerClient{
+		cli:               cli,
+		containerListArgs: container.ListOptions{},
+	}
+}
