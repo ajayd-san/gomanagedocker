@@ -27,19 +27,29 @@ type TickMsg time.Time
 type preloadObjects int
 type preloadSizeMap struct{}
 
+type ContainerSize struct {
+	sizeRw int64
+	rootFs int64
+}
+
+type ContainerSizeManager struct {
+	sizeMap map[string]ContainerSize
+	mu      *sync.Mutex
+}
+
 // INFO: holds container size info that is calculated on demand
-var containerSizeMap map[string]ContainerSize = make(map[string]ContainerSize)
-var containerSizeMap_Mutex sync.Mutex = sync.Mutex{}
 
 var imageIdToNameMap map[string]string = make(map[string]string)
 
 type Model struct {
-	dockerClient dockercmd.DockerClient
-	Tabs         []string
-	TabContent   []listModel
-	activeTab    tabId
-	width        int
-	height       int
+	dockerClient         dockercmd.DockerClient
+	Tabs                 []string
+	TabContent           []listModel
+	activeTab            tabId
+	width                int
+	height               int
+	containerSizeTracker ContainerSizeManager
+
 	showDialog   bool
 	activeDialog tea.Model
 	// we use this to cancel dialog ops when we exit from them
@@ -89,6 +99,10 @@ func NewModel() Model {
 		helpGen:                        helper,
 		navKeymap:                      NavKeymap,
 		activeTab:                      firstTab,
+		containerSizeTracker: ContainerSizeManager{
+			sizeMap: make(map[string]ContainerSize),
+			mu:      &sync.Mutex{},
+		},
 	}
 }
 
@@ -557,7 +571,7 @@ func (m Model) View() string {
 
 	infobox := ""
 	if curItem != nil {
-		infobox = PopulateInfoBox(m.activeTab, curItem)
+		infobox = m.populateInfoBox(curItem)
 		infobox = moreInfoStyle.Render(infobox)
 	}
 
@@ -615,7 +629,7 @@ func (m Model) fetchNewData(tab tabId) []dockerRes {
 						panic(err)
 					}
 
-					updateContainerSizeMap(containerInfo)
+					updateContainerSizeMap(containerInfo, &m.containerSizeTracker)
 				}()
 			}
 		}
@@ -635,6 +649,27 @@ func (m Model) updateContent(tab tabId) Model {
 	listM, _ := m.TabContent[tab].Update(newlist)
 	m.TabContent[tab] = listM.(listModel)
 	return m
+}
+
+func (m Model) populateInfoBox(item list.Item) string {
+	temp, _ := item.(dockerRes)
+	switch m.activeTab {
+	case IMAGES:
+		if it, ok := temp.(imageItem); ok {
+			return populateImageInfoBox(it)
+		}
+
+	case CONTAINERS:
+		if ct, ok := temp.(containerItem); ok {
+			return populateContainerInfoBox(ct, &m.containerSizeTracker)
+		}
+
+	case VOLUMES:
+		if vt, ok := temp.(VolumeItem); ok {
+			return populateVolumeInfoBox(vt)
+		}
+	}
+	return ""
 }
 
 // Util
@@ -677,18 +712,18 @@ func (m *Model) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
 	for _, info := range containerInfoWithSize {
-		containerSizeMap[info.ID] = ContainerSize{
+		m.containerSizeTracker.sizeMap[info.ID] = ContainerSize{
 			sizeRw: info.SizeRw,
 			rootFs: info.SizeRootFs,
 		}
 	}
 }
 
-func updateContainerSizeMap(containerInfo *types.ContainerJSON) {
-	containerSizeMap_Mutex.Lock()
-	containerSizeMap[containerInfo.ID] = ContainerSize{
+func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTracker *ContainerSizeManager) {
+	containerSizeTracker.mu.Lock()
+	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
 		sizeRw: *containerInfo.SizeRw,
 		rootFs: *containerInfo.SizeRootFs,
 	}
-	containerSizeMap_Mutex.Unlock()
+	containerSizeTracker.mu.Unlock()
 }

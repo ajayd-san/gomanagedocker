@@ -35,11 +35,6 @@ var statusMap = map[string]status{
 	"dead":       containerStateDead,
 }
 
-type ContainerSize struct {
-	sizeRw int64
-	rootFs int64
-}
-
 type dockerRes interface {
 	list.Item
 	getId() string
