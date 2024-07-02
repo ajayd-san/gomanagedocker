@@ -169,8 +169,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// change list dimensions when window size changes
 		// TODO: change width
 		for index := range m.TabContent {
-			m.getList(index).SetWidth(msg.Width)
-			m.getList(index).SetHeight(msg.Height - 10)
+			listM, _ := m.TabContent[index].Update(msg)
+			m.TabContent[index] = listM.(listModel)
 		}
 
 	case tea.KeyMsg:

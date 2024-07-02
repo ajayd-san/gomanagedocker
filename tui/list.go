@@ -9,6 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const listWidthRatio float32 = 0.3
+
 type listModel struct {
 	list        list.Model
 	existingIds map[string]struct{}
@@ -20,13 +22,10 @@ func (m listModel) Init() tea.Cmd {
 }
 
 func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// switch msg := msg.(type) {
-	// case tea.WindowSizeMsg:
-	// 	// h, v := listDocStyle.GetFrameSize()
-	// 	// m.list.SetSize(msg.Width-h, msg.Height-v)
-	// 	// m.list.SetSize(msg.Width, msg.Height)
-	// }
-	// log.Println("here", msg)
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetSize(int(listWidthRatio*float32(msg.Width)), msg.Height-10)
+	}
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
@@ -41,7 +40,7 @@ func InitList(tabkind tabId) listModel {
 
 	items := make([]list.Item, 0)
 	m := listModel{
-		list:        list.New(items, list.NewDefaultDelegate(), 10, 30),
+		list:        list.New(items, list.NewDefaultDelegate(), 60, 30),
 		existingIds: make(map[string]struct{}),
 		tabKind:     tabkind,
 	}
