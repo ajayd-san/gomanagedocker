@@ -39,26 +39,27 @@ type ContainerSizeManager struct {
 
 // INFO: holds container size info that is calculated on demand
 
-type Model struct {
-	dockerClient         dockercmd.DockerClient
-	Tabs                 []string
-	TabContent           []listModel
-	activeTab            tabId
-	width                int
-	height               int
-	containerSizeTracker ContainerSizeManager
-	imageIdToNameMap     map[string]string
-
-	showDialog   bool
-	activeDialog tea.Model
+type MainModel struct {
+	dockerClient        dockercmd.DockerClient
+	Tabs                []string
+	TabContent          []listModel
+	activeTab           tabId
+	width               int
+	height              int
+	windowTooSmall      bool
+	windowtoosmallModel WindowTooSmallModel
+	navKeymap           help.Model
+	helpGen             help.Model
+	showDialog          bool
+	activeDialog        tea.Model
 	// we use this to cancel dialog ops when we exit from them
 	dialogOpCancel context.CancelFunc
+	// this maintains a map of container image sizes
+	containerSizeTracker ContainerSizeManager
+	// this maps imageIds to imageNames (for legibility)
+	imageIdToNameMap map[string]string
 	// we use this error channel to report error for possibly long running tasks, like pruning
 	possibleLongRunningOpErrorChan chan error
-	windowTooSmall                 bool
-	windowtoosmallModel            WindowTooSmallModel
-	navKeymap                      help.Model
-	helpGen                        help.Model
 }
 
 // this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
@@ -66,7 +67,7 @@ func doUpdateObjectsTick() tea.Cmd {
 	return tea.Tick(CONFIG_POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
-func (m Model) Init() tea.Cmd {
+func (m MainModel) Init() tea.Cmd {
 	// check if Docker is alive, if not, exit
 	err := m.dockerClient.PingDocker()
 	if err != nil {
@@ -78,7 +79,7 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
 
-func NewModel() Model {
+func NewModel() MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
 	for tabid := range CONFIG_TAB_ORDERING {
@@ -89,7 +90,7 @@ func NewModel() Model {
 
 	helper := help.New()
 	NavKeymap := help.New()
-	return Model{
+	return MainModel{
 		dockerClient:                   dockercmd.NewDockerClient(),
 		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
@@ -106,7 +107,7 @@ func NewModel() Model {
 	}
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
 
@@ -521,7 +522,7 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
-func (m Model) View() string {
+func (m MainModel) View() string {
 
 	if m.windowTooSmall {
 		return dialogContainerStyle.Render(m.windowtoosmallModel.View())
@@ -600,7 +601,7 @@ func (m Model) View() string {
 }
 
 // helpers
-func (m Model) fetchNewData(tab tabId) []dockerRes {
+func (m MainModel) fetchNewData(tab tabId) []dockerRes {
 	var newlist []dockerRes
 	switch tab {
 	case IMAGES:
@@ -643,7 +644,7 @@ func (m Model) fetchNewData(tab tabId) []dockerRes {
 	return newlist
 }
 
-func (m Model) updateContent(tab tabId) Model {
+func (m MainModel) updateContent(tab tabId) MainModel {
 	newlist := m.fetchNewData(tab)
 	// m.TabContent[tab] = m.TabContent[tab].updateTab(m.dockerClient)
 	listM, _ := m.TabContent[tab].Update(newlist)
@@ -651,7 +652,7 @@ func (m Model) updateContent(tab tabId) Model {
 	return m
 }
 
-func (m Model) populateInfoBox(item list.Item) string {
+func (m MainModel) populateInfoBox(item list.Item) string {
 	temp, _ := item.(dockerRes)
 	switch m.activeTab {
 	case IMAGES:
@@ -673,7 +674,7 @@ func (m Model) populateInfoBox(item list.Item) string {
 }
 
 // Util
-func (m *Model) nextTab() {
+func (m *MainModel) nextTab() {
 	if int(m.activeTab) == len(CONFIG_TAB_ORDERING)-1 {
 		m.activeTab = 0
 	} else {
@@ -681,7 +682,7 @@ func (m *Model) nextTab() {
 	}
 }
 
-func (m *Model) prevTab() {
+func (m *MainModel) prevTab() {
 	if int(m.activeTab) == 0 {
 		m.activeTab = tabId(len(CONFIG_TAB_ORDERING) - 1)
 	} else {
@@ -689,26 +690,26 @@ func (m *Model) prevTab() {
 	}
 }
 
-func (m Model) getActiveTab() listModel {
+func (m MainModel) getActiveTab() listModel {
 	return m.TabContent[m.activeTab]
 }
 
-func (m Model) getActiveList() *list.Model {
+func (m MainModel) getActiveList() *list.Model {
 	return &m.TabContent[m.activeTab].list
 }
 
-func (m Model) getList(index int) *list.Model {
+func (m MainModel) getList(index int) *list.Model {
 	if index >= len(m.TabContent) {
 		panic(fmt.Sprintf("Index %d out of bounds", index))
 	}
 	return &m.TabContent[index].list
 }
 
-func (m Model) getSelectedItem() list.Item {
+func (m MainModel) getSelectedItem() list.Item {
 	return m.TabContent[m.activeTab].list.SelectedItem()
 }
 
-func (m *Model) prepopulateContainerSizeMapConcurrently() {
+func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
 	for _, info := range containerInfoWithSize {
