@@ -39,8 +39,6 @@ type ContainerSizeManager struct {
 
 // INFO: holds container size info that is calculated on demand
 
-var imageIdToNameMap map[string]string = make(map[string]string)
-
 type Model struct {
 	dockerClient         dockercmd.DockerClient
 	Tabs                 []string
@@ -49,6 +47,7 @@ type Model struct {
 	width                int
 	height               int
 	containerSizeTracker ContainerSizeManager
+	imageIdToNameMap     map[string]string
 
 	showDialog   bool
 	activeDialog tea.Model
@@ -103,6 +102,7 @@ func NewModel() Model {
 			sizeMap: make(map[string]ContainerSize),
 			mu:      &sync.Mutex{},
 		},
+		imageIdToNameMap: make(map[string]string),
 	}
 }
 
@@ -610,8 +610,8 @@ func (m Model) fetchNewData(tab tabId) []dockerRes {
 		// update imageToName map if there are new images
 		go func() {
 			for _, image := range newlist {
-				if _, keyExists := imageIdToNameMap[image.getId()]; !keyExists {
-					imageIdToNameMap[image.getId()] = image.getName()
+				if _, keyExists := m.imageIdToNameMap[image.getId()]; !keyExists {
+					m.imageIdToNameMap[image.getId()] = image.getName()
 				}
 			}
 		}()
@@ -661,7 +661,7 @@ func (m Model) populateInfoBox(item list.Item) string {
 
 	case CONTAINERS:
 		if ct, ok := temp.(containerItem); ok {
-			return populateContainerInfoBox(ct, &m.containerSizeTracker)
+			return populateContainerInfoBox(ct, &m.containerSizeTracker, m.imageIdToNameMap)
 		}
 
 	case VOLUMES:

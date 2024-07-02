@@ -41,7 +41,7 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 	return res.String()
 }
 
-func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker *ContainerSizeManager) string {
+func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker *ContainerSizeManager, imageIdToNameMap map[string]string) string {
 	var res strings.Builder
 	addEntry(&res, "ID: ", containerInfo.ID)
 	addEntry(&res, "Name: ", containerInfo.getName())
