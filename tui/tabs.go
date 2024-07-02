@@ -586,9 +586,54 @@ func (m Model) View() string {
 }
 
 // helpers
+func (m Model) fetchNewData(tab tabId) []dockerRes {
+	var newlist []dockerRes
+	switch tab {
+	case IMAGES:
+		newImgs := m.dockerClient.ListImages()
+		newlist = makeImageItems(newImgs)
 
-func (m Model) updateContent(currentTab tabId) Model {
-	m.TabContent[currentTab] = m.TabContent[currentTab].updateTab(m.dockerClient)
+		// update imageToName map if there are new images
+		go func() {
+			for _, image := range newlist {
+				if _, keyExists := imageIdToNameMap[image.getId()]; !keyExists {
+					imageIdToNameMap[image.getId()] = image.getName()
+				}
+			}
+		}()
+	case CONTAINERS:
+		newContainers := m.dockerClient.ListContainers(false)
+		newlist = makeContainerItems(newContainers)
+
+		for _, newContainer := range newlist {
+			id := newContainer.getId()
+			if _, ok := m.TabContent[CONTAINERS].ExistingIds[id]; !ok {
+				go func() {
+					containerInfo, err := m.dockerClient.InspectContainer(id)
+
+					if err != nil {
+						panic(err)
+					}
+
+					updateContainerSizeMap(containerInfo)
+				}()
+			}
+		}
+
+	case VOLUMES:
+		// TODO: handle errors
+		newVolumes, _ := m.dockerClient.ListVolumes()
+		newlist = makeVolumeItem(newVolumes)
+	}
+
+	return newlist
+}
+
+func (m Model) updateContent(tab tabId) Model {
+	newlist := m.fetchNewData(tab)
+	// m.TabContent[tab] = m.TabContent[tab].updateTab(m.dockerClient)
+	listM, _ := m.TabContent[tab].Update(newlist)
+	m.TabContent[tab] = listM.(listModel)
 	return m
 }
 
