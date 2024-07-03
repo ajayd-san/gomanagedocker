@@ -24,6 +24,7 @@ type imgKeymap struct {
 	Prune       key.Binding
 	Delete      key.Binding
 	DeleteForce key.Binding
+	CopyId      key.Binding
 }
 
 type contKeymap struct {
@@ -71,6 +72,10 @@ var ImageKeymap = imgKeymap{
 		key.WithKeys("p"),
 		key.WithHelp("p", "Prune images"),
 	),
+	CopyId: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy Image ID"),
+	),
 }
 
 func (m imgKeymap) FullHelp() [][]key.Binding {
@@ -86,7 +91,7 @@ func (m imgKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{m.Run,
 		m.Delete,
 		m.DeleteForce,
-		m.Prune, m.Scout}
+		m.Prune, m.Scout, m.CopyId}
 
 }
 
@@ -211,6 +216,7 @@ func getImageKeymap() []key.Binding {
 		ImageKeymap.Delete,
 		ImageKeymap.DeleteForce,
 		ImageKeymap.Prune,
+		ImageKeymap.CopyId,
 		// ImageKeymap.Pull,
 	}
 }

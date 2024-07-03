@@ -20,6 +20,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"golang.design/x/clipboard"
 )
 
 type tabId int
@@ -74,6 +75,9 @@ func (m MainModel) Init() tea.Cmd {
 		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s\n", err.Error())
 		os.Exit(1)
 	}
+	// initialize clipboard
+	err = clipboard.Init()
+	log.Println(err)
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
@@ -277,6 +281,16 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.activeDialog = getImageScoutDialog(f)
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
+					}
+				case key.Matches(msg, ImageKeymap.CopyId):
+					log.Println("c pressed")
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil {
+						dres := currentItem.(dockerRes)
+						id := dres.getId()
+						id = strings.TrimPrefix(id, "sha256:")
+						clipboard.Write(clipboard.FmtText, []byte(id))
 					}
 				}
 
