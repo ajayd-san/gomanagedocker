@@ -2,7 +2,6 @@ package tui
 
 import (
 	"cmp"
-	"log"
 	"slices"
 	"sort"
 	"strconv"
@@ -74,7 +73,6 @@ func (i imageItem) getLabel() string {
 }
 
 func (i imageItem) getName() string {
-	log.Println(i.RepoTags)
 	return transformListNames(i.RepoTags)
 }
 
