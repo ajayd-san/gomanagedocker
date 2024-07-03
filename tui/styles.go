@@ -18,7 +18,7 @@ var (
 			UnsetBorderTop()
 
 	listDocStyle  = lipgloss.NewStyle().Margin(1, 5, 0, 1)
-	listContainer = lipgloss.NewStyle().Border(lipgloss.HiddenBorder()).Width(60)
+	listContainer = lipgloss.NewStyle().Border(lipgloss.HiddenBorder()).Width(60) // 60 is the default width of the list
 
 	moreInfoStyle = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).

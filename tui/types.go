@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
@@ -85,7 +86,7 @@ func (i imageItem) Description() string {
 
 	sizeStr := strconv.FormatFloat(i.getSize(), 'f', 2, 64) + "GB"
 
-	return shortId + "\t\t\t\t\t\t\t" + sizeStr
+	return makeDescriptionString(shortId, sizeStr, len(shortId))
 }
 
 func (i imageItem) FilterValue() string { return i.getName() }
@@ -155,7 +156,7 @@ func (i containerItem) Description() string {
 		state = containerDeadStyle.Render(state)
 	}
 
-	return shortId + "\t\t\t\t\t\t\t" + state
+	return makeDescriptionString(shortId, state, len(shortId))
 }
 
 func (i containerItem) FilterValue() string { return i.getLabel() }
@@ -202,4 +203,16 @@ func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
 	})
 
 	return res
+}
+
+// util
+
+/*
+This function makes the final description string with white space between the two strings
+using string manipulation, offset is typically the length of the first string.
+The final length of the returned string would be listContainer.Width - offset - 3
+*/
+func makeDescriptionString(str1, str2 string, offset int) string {
+	str2 = lipgloss.PlaceHorizontal(listContainer.GetWidth()-offset-3, lipgloss.Right, str2)
+	return lipgloss.JoinHorizontal(lipgloss.Left, str1, str2)
 }
