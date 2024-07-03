@@ -2,6 +2,7 @@ package tui
 
 import (
 	"cmp"
+	"log"
 	"slices"
 	"sort"
 	"strconv"
@@ -73,7 +74,8 @@ func (i imageItem) getLabel() string {
 }
 
 func (i imageItem) getName() string {
-	return strings.Join(i.RepoTags, ", ")
+	log.Println(i.RepoTags)
+	return transformListNames(i.RepoTags)
 }
 
 // INFO: impl list.Item Interface
@@ -131,7 +133,7 @@ func (c containerItem) getLabel() string {
 }
 
 func (c containerItem) getName() string {
-	return strings.Join(c.Names, ", ")
+	return transformListNames(c.Names)
 }
 
 // INFO: impl list.Item Interface
@@ -178,6 +180,7 @@ func (v VolumeItem) getLabel() string {
 }
 
 func (v VolumeItem) getName() string {
+
 	return v.Name[:min(30, len(v.Name))]
 }
 
@@ -215,4 +218,29 @@ The final length of the returned string would be listContainer.Width - offset - 
 func makeDescriptionString(str1, str2 string, offset int) string {
 	str2 = lipgloss.PlaceHorizontal(listContainer.GetWidth()-offset-3, lipgloss.Right, str2)
 	return lipgloss.JoinHorizontal(lipgloss.Left, str1, str2)
+}
+
+// This function takes in names associated with objects (e.g: RepoTags in case of Image)
+// and concatenates into a string depending on the width of the list
+func transformListNames(names []string) string {
+	runningLength := 0
+	var maxindex int
+	for index, name := range names {
+		runningLength += len(name)
+		if runningLength > listContainer.GetWidth()-7 {
+			break
+		}
+		if !(index == len(names)-1) {
+			runningLength += 2 // +2 cuz we also append ", " after each element
+		}
+		maxindex = index
+	}
+
+	res := strings.Join(names[:maxindex+1], ", ")
+
+	if len(res) > listContainer.GetWidth()-7 {
+		return res[:listContainer.GetWidth()-7] + "..."
+	}
+
+	return res
 }
