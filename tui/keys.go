@@ -42,6 +42,7 @@ type contKeymap struct {
 type volKeymap struct {
 	Delete key.Binding
 	Prune  key.Binding
+	CopyId key.Binding
 }
 
 var ImageKeymap = imgKeymap{
@@ -162,6 +163,10 @@ var VolumeKeymap = volKeymap{
 		key.WithKeys("p"),
 		key.WithHelp("p", "prune"),
 	),
+	CopyId: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy Name"),
+	),
 }
 
 func (m volKeymap) FullHelp() [][]key.Binding {
@@ -169,7 +174,7 @@ func (m volKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m volKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.Delete, m.Prune}
+	return []key.Binding{m.Delete, m.Prune, m.CopyId}
 }
 
 var NavKeymap = navigationKeymap{

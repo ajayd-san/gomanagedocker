@@ -372,6 +372,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 						cmds = append(cmds, tea.ExecProcess(cmd, nil))
 					}
+
 				case key.Matches(msg, ContainerKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
@@ -403,6 +404,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.activeDialog = getRemoveVolumeDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(msg, VolumeKeymap.CopyId):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil {
+						dres := currentItem.(dockerRes)
+						name := dres.getId()
+						clipboard.Write(clipboard.FmtText, []byte(name))
 					}
 				}
 			}
