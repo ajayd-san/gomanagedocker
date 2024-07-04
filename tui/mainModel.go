@@ -400,13 +400,33 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ContainerKeymap.Exec):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
-						// execs into the default shell of the container (got from lazydocker)
-						cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
-						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
-							m.possibleLongRunningOpErrorChan <- err
-							return nil
-						}))
+						container := curItem.(containerItem)
+
+						if container.getState() != "running" {
+							//get the article for correct grammar
+							var article string
+							if container.getState() == "exited" {
+								article = "an"
+							} else {
+								article = "a"
+							}
+
+							m.activeDialog = teadialog.NewErrorDialog(
+								fmt.Sprintf("Cannot exec into %s %s container", article, container.getState()),
+								m.width,
+							)
+							m.showDialog = true
+							cmds = append(cmds, m.activeDialog.Init())
+						} else {
+							containerId := container.getId()
+							// execs into the default shell of the container (got from lazydocker)
+							cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
+
+							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+								m.possibleLongRunningOpErrorChan <- err
+								return nil
+							}))
+						}
 					}
 
 				case key.Matches(msg, ContainerKeymap.CopyId):

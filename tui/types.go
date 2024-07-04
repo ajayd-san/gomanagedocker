@@ -134,6 +134,10 @@ func (c containerItem) getName() string {
 	return transformListNames(c.Names)
 }
 
+func (c containerItem) getState() string {
+	return c.State
+}
+
 // INFO: impl list.Item Interface
 func (i containerItem) Title() string { return i.getName() }
 func (i containerItem) Description() string {
