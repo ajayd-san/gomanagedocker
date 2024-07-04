@@ -36,6 +36,7 @@ type contKeymap struct {
 	DeleteForce     key.Binding
 	Exec            key.Binding
 	Prune           key.Binding
+	CopyId          key.Binding
 }
 
 type volKeymap struct {
@@ -128,6 +129,10 @@ var ContainerKeymap = contKeymap{
 		key.WithKeys("x"),
 		key.WithHelp("x", "exec"),
 	),
+	CopyId: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy Container ID"),
+	),
 }
 
 func (m contKeymap) FullHelp() [][]key.Binding {
@@ -135,7 +140,17 @@ func (m contKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m contKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.Restart, m.TogglePause, m.Delete, m.DeleteForce, m.Prune, m.Exec}
+	return []key.Binding{
+		m.ToggleListAll,
+		m.ToggleStartStop,
+		m.Restart,
+		m.TogglePause,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune,
+		m.Exec,
+		m.CopyId,
+	}
 }
 
 var VolumeKeymap = volKeymap{

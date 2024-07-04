@@ -283,7 +283,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 				case key.Matches(msg, ImageKeymap.CopyId):
-					log.Println("c pressed")
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
@@ -372,6 +371,14 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						// execs into the default shell of the container (got from lazydocker)
 						cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 						cmds = append(cmds, tea.ExecProcess(cmd, nil))
+					}
+				case key.Matches(msg, ContainerKeymap.CopyId):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil {
+						dres := currentItem.(dockerRes)
+						id := dres.getId()
+						clipboard.Write(clipboard.FmtText, []byte(id))
 					}
 				}
 
