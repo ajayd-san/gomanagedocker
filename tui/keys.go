@@ -218,31 +218,3 @@ func (m navigationKeymap) FullHelp() [][]key.Binding {
 func (m navigationKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Enter, m.Quit}
 }
-
-func getVolumeKeymap() []key.Binding {
-	return []key.Binding{
-		VolumeKeymap.Delete,
-		VolumeKeymap.Prune,
-	}
-}
-
-func getImageKeymap() []key.Binding {
-	return []key.Binding{
-		ImageKeymap.Delete,
-		ImageKeymap.DeleteForce,
-		ImageKeymap.Prune,
-		ImageKeymap.CopyId,
-		// ImageKeymap.Pull,
-	}
-}
-
-func getContainerKeymap() []key.Binding {
-	return []key.Binding{
-		ContainerKeymap.ToggleListAll,
-		ContainerKeymap.ToggleStartStop,
-		ContainerKeymap.Delete,
-		ContainerKeymap.DeleteForce,
-		ContainerKeymap.Prune,
-		ContainerKeymap.Exec,
-	}
-}

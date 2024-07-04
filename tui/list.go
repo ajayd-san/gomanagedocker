@@ -53,14 +53,6 @@ func InitList(tabkind tabId) listModel {
 	m.list.KeyMap.NextPage = key.NewBinding(key.WithKeys("]"))
 	m.list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("["))
 
-	switch tabkind {
-	case IMAGES:
-		m.list.AdditionalFullHelpKeys = getImageKeymap
-	case CONTAINERS:
-		m.list.AdditionalFullHelpKeys = getContainerKeymap
-	case VOLUMES:
-		m.list.AdditionalFullHelpKeys = getVolumeKeymap
-	}
 	return m
 }
 
