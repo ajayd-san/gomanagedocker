@@ -118,8 +118,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	//check if error exists on error channel, if yes show the error in new dialog
 	select {
 	case newErr := <-m.possibleLongRunningOpErrorChan:
-		m.showDialog = true
-		m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
+		if newErr != nil {
+			m.showDialog = true
+			m.activeDialog = teadialog.NewErrorDialog(newErr.Error(), m.width)
+		}
 	default:
 	}
 
