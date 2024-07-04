@@ -296,6 +296,34 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						id = strings.TrimPrefix(id, "sha256:")
 						clipboard.Write(clipboard.FmtText, []byte(id))
 					}
+
+				case key.Matches(msg, ImageKeymap.RunAndExec):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil {
+						dres := currentItem.(dockerRes)
+						id := dres.getId()
+
+						config := container.Config{
+							AttachStdin:  true,
+							AttachStdout: true,
+							AttachStderr: true,
+							Tty:          true,
+							Image:        id,
+						}
+
+						containerId, err := m.dockerClient.RunImage(config)
+						if err != nil {
+							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
+							m.showDialog = true
+						}
+
+						cmd := exec.Command("docker", "exec", "-it", *containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
+						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+							m.possibleLongRunningOpErrorChan <- err
+							return nil
+						}))
+					}
 				}
 
 			} else if m.activeTab == CONTAINERS {
@@ -375,7 +403,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						containerId := curItem.(dockerRes).getId()
 						// execs into the default shell of the container (got from lazydocker)
 						cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
-						cmds = append(cmds, tea.ExecProcess(cmd, nil))
+						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+							m.possibleLongRunningOpErrorChan <- err
+							return nil
+						}))
 					}
 
 				case key.Matches(msg, ContainerKeymap.CopyId):
