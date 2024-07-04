@@ -218,7 +218,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							and we do not want to hang the main thread
 						*/
 						go func() {
-							err := m.dockerClient.RunImage(imageId)
+							config := container.Config{
+								Image: imageId,
+							}
+							_, err := m.dockerClient.RunImage(config)
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
 							}
