@@ -40,6 +40,7 @@ type contKeymap struct {
 	Exec            key.Binding
 	Prune           key.Binding
 	CopyId          key.Binding
+	ShowLogs        key.Binding
 }
 
 type volKeymap struct {
@@ -81,6 +82,7 @@ var ImageKeymap = imgKeymap{
 		key.WithKeys("c"),
 		key.WithHelp("c", "copy Image ID"),
 	),
+
 	RunAndExec: key.NewBinding(
 		key.WithKeys("x"),
 		key.WithHelp("x", "run and exec"),
@@ -153,6 +155,10 @@ var ContainerKeymap = contKeymap{
 		key.WithKeys("c"),
 		key.WithHelp("c", "copy ID"),
 	),
+	ShowLogs: key.NewBinding(
+		key.WithKeys("L"),
+		key.WithHelp("L", "Show Logs"),
+	),
 }
 
 func (m contKeymap) FullHelp() [][]key.Binding {
@@ -166,6 +172,7 @@ func (m contKeymap) FullHelp() [][]key.Binding {
 		m.Prune,
 		m.Exec,
 		m.CopyId,
+		m.ShowLogs,
 	}
 
 	return packKeybindings(allBindings, KeymapAvailableWidth)
@@ -182,6 +189,7 @@ func (m contKeymap) ShortHelp() []key.Binding {
 		m.Prune,
 		m.Exec,
 		m.CopyId,
+		m.ShowLogs,
 	}
 }
 
