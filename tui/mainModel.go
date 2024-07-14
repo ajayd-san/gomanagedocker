@@ -448,6 +448,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						volumeId := curItem.(dockerRes).getId()
 						m.activeDialog = getPruneVolumesDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
 					}
 
 				case key.Matches(msg, VolumeKeymap.Delete):
