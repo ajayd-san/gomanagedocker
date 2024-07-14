@@ -663,7 +663,6 @@ func (m MainModel) View() string {
 	infobox := ""
 	if curItem != nil {
 		infobox = m.populateInfoBox(curItem)
-		infobox = moreInfoStyle.Render(infobox)
 	}
 
 	// TODO: align info box to right edge of the window
@@ -747,17 +746,20 @@ func (m MainModel) populateInfoBox(item list.Item) string {
 	switch m.activeTab {
 	case IMAGES:
 		if it, ok := temp.(imageItem); ok {
-			return populateImageInfoBox(it)
+			info := populateImageInfoBox(it)
+			return moreInfoStyle.Render(info)
 		}
 
 	case CONTAINERS:
 		if ct, ok := temp.(containerItem); ok {
-			return populateContainerInfoBox(ct, &m.containerSizeTracker, m.imageIdToNameMap)
+			info := populateContainerInfoBox(ct, &m.containerSizeTracker, m.imageIdToNameMap)
+			return moreInfoStyle.Render(info)
 		}
 
 	case VOLUMES:
 		if vt, ok := temp.(VolumeItem); ok {
-			return populateVolumeInfoBox(vt)
+			info := populateVolumeInfoBox(vt)
+			return moreInfoStyle.Render(info)
 		}
 	}
 	return ""
