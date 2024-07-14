@@ -301,8 +301,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
 						id := dres.getId()
-						id = strings.TrimPrefix(id, "sha256:")
-						clipboard.Write(clipboard.FmtText, []byte(id))
+						copyToClipboard(id)
 					}
 
 				case key.Matches(msg, ImageKeymap.RunAndExec):
@@ -443,7 +442,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
 						id := dres.getId()
-						clipboard.Write(clipboard.FmtText, []byte(id))
+						copyToClipboard(id)
 					}
 				}
 
@@ -477,7 +476,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
 						name := dres.getId()
-						clipboard.Write(clipboard.FmtText, []byte(name))
+						copyToClipboard(name)
 					}
 				}
 			}
@@ -807,6 +806,11 @@ func (m MainModel) getList(index int) *list.Model {
 
 func (m MainModel) getSelectedItem() list.Item {
 	return m.TabContent[m.activeTab].list.SelectedItem()
+}
+
+func copyToClipboard(str string) {
+	str = strings.TrimPrefix(str, "sha256:")[:20]
+	clipboard.Write(clipboard.FmtText, []byte(str))
 }
 
 func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
