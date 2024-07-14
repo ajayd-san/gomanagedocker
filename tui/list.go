@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// list always takes up 30% of the screen
 const listWidthRatio float32 = 0.3
 
 type listModel struct {

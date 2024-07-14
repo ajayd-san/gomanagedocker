@@ -23,6 +23,10 @@ import (
 	"golang.design/x/clipboard"
 )
 
+// dimension ratios for infobox
+const infoBoxWidthRatio = 0.55
+const infoBoxHeightRatio = 0.65
+
 type tabId int
 type TickMsg time.Time
 type preloadObjects int
@@ -184,6 +188,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
 
 		dialogContainerStyle = dialogContainerStyle.Width(msg.Width).Height(msg.Height)
+
+		// dynamically resizes the dimentions of infobox depending on the window size
+		moreInfoStyle = moreInfoStyle.Width(int(infoBoxWidthRatio * float64(m.width)))
+		moreInfoStyle = moreInfoStyle.Height(int(infoBoxHeightRatio * float64(m.height)))
 
 		m.helpGen.Width = msg.Width
 

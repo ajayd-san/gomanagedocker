@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -149,6 +150,47 @@ func TestFetchNewData(t *testing.T) {
 			assert.DeepEqual(t, model.imageIdToNameMap, want)
 		})
 
+	})
+
+}
+
+func TestInfoBoxSize(t *testing.T) {
+	api := dockercmd.MockApi{}
+
+	containers := []types.Container{
+		{
+			Names:      []string{"a"},
+			ID:         "1",
+			SizeRw:     1e+9,
+			SizeRootFs: 2e+9,
+			State:      "running",
+			Status:     "",
+		},
+	}
+
+	api.SetMockContainers(containers)
+
+	mockcli := dockercmd.NewMockCli(&api)
+
+	CONTAINERS = 0
+	model := MainModel{
+		dockerClient: mockcli,
+		activeTab:    0,
+		TabContent: []listModel{
+			InitList(0),
+		},
+	}
+
+	t.Run("With (100 width, 100 height)", func(t *testing.T) {
+		model.Update(tea.WindowSizeMsg{Width: 100, Height: 100})
+		assert.Equal(t, moreInfoStyle.GetHeight(), 65)
+		assert.Equal(t, moreInfoStyle.GetWidth(), 55)
+	})
+
+	t.Run("With (350 width, 200 height)", func(t *testing.T) {
+		model.Update(tea.WindowSizeMsg{Width: 350, Height: 200})
+		assert.Equal(t, moreInfoStyle.GetHeight(), 130)
+		assert.Equal(t, moreInfoStyle.GetWidth(), 192)
 	})
 
 }
