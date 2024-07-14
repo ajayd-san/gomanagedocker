@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -210,4 +211,55 @@ func TestUpdate(t *testing.T) {
 
 		assert.Equal(t, imgList.list.Width(), int(210*0.3))
 	})
+}
+
+func TestEmptyList(t *testing.T) {
+
+	IMAGES = 0
+	CONTAINERS = 1
+
+	imgs := []image.Summary{
+		{
+			Containers: 0,
+			ID:         "0as;dkfjasdfasdfasdfaasdf",
+			RepoTags:   []string{"a"},
+		},
+
+		{
+			Containers: 0,
+			ID:         "10as;dkfjasdfasdfasdfaasdf",
+			RepoTags:   []string{"b"},
+		},
+		{
+			Containers: 3,
+			ID:         "20as;dkfjasdfasdfasdfaasdf",
+			RepoTags:   []string{"c"},
+		},
+		{
+			Containers: 0,
+			ID:         "30as;dkfjasdfasdfasdfaasdf",
+			RepoTags:   []string{"d"},
+		},
+	}
+
+	imgList := InitList(IMAGES)
+
+	t.Run("List with items", func(t *testing.T) {
+		dres := makeImageItems(imgs)
+		temp, _ := imgList.Update(dres)
+		imgList = temp.(listModel)
+		got := imgList.View()
+
+		assert.Assert(t, !strings.Contains(got, "No items"))
+	})
+
+	t.Run("Empty list", func(t *testing.T) {
+		temp, _ := imgList.Update([]dockerRes{})
+		imgList = temp.(listModel)
+		got := imgList.View()
+
+		assert.Assert(t, strings.Contains(got, "No items"))
+
+	})
+
 }

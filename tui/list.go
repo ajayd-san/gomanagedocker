@@ -15,6 +15,7 @@ type listModel struct {
 	list        list.Model
 	ExistingIds map[string]struct{}
 	tabKind     tabId
+	listEmpty   bool
 }
 
 func (m listModel) Init() tea.Cmd {
@@ -25,9 +26,16 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(int(listWidthRatio*float32(msg.Width)), msg.Height-10)
-		listContainer = listContainer.Width(int(listWidthRatio * float32(msg.Width)))
+		listContainer = listContainer.Width(int(listWidthRatio * float32(msg.Width))).Height(msg.Height - 9)
 	case []dockerRes:
 		m.updateTab(msg)
+
+		if len(msg) == 0 {
+			m.listEmpty = true
+		} else {
+			m.listEmpty = false
+		}
+
 	}
 
 	var cmd tea.Cmd
@@ -36,6 +44,10 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m listModel) View() string {
+	if m.listEmpty {
+		return listContainer.Render(emptyListStyle.Render("No items"))
+	}
+
 	return listContainer.Render(listDocStyle.Render(m.list.View()))
 }
 
@@ -71,10 +83,8 @@ func makeItems(raw []dockerRes) []list.Item {
 // Util
 
 /*
-This function calls the docker api and repopulates the tab with updated items(if they are any).
+This function  repopulates the tab with updated items(if they are any).
 For now does a linear search if the number of items have not changed to update the list (O(n) time)
-Also, computes storage sizes for newly added containers and maps imageIds to imageNames
-(to display in container infobox) in another go routine
 */
 func (m *listModel) updateTab(newlist []dockerRes) {
 	comparisonFunc := func(a dockerRes, b list.Item) bool {

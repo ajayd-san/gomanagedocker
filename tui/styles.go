@@ -20,6 +20,9 @@ var (
 	listDocStyle  = lipgloss.NewStyle().Margin(1, 5, 0, 1)
 	listContainer = lipgloss.NewStyle().Border(lipgloss.HiddenBorder()).Width(60) // 60 is the default width of the list
 
+	subduedColor   = lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}
+	emptyListStyle = lipgloss.NewStyle().Foreground(subduedColor).MarginTop(2).MarginLeft(2)
+
 	moreInfoStyle = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("69")).
