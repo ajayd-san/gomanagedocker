@@ -103,7 +103,9 @@ func TestFetchNewData(t *testing.T) {
 		imageIdToNameMap: map[string]string{},
 	}
 
-	newlist := model.fetchNewData(0)
+	wg := sync.WaitGroup{}
+	newlist := model.fetchNewData(0, &wg)
+	wg.Wait()
 
 	t.Run("Containers", func(t *testing.T) {
 		t.Run("Assert lists", func(t *testing.T) {
@@ -131,7 +133,8 @@ func TestFetchNewData(t *testing.T) {
 	t.Run("Images", func(t *testing.T) {
 		model.nextTab()
 		assert.Equal(t, model.activeTab, IMAGES)
-		newlist := model.fetchNewData(IMAGES)
+		newlist := model.fetchNewData(IMAGES, &wg)
+		wg.Wait()
 		t.Run("Assert images", func(t *testing.T) {
 
 			for i := range len(newlist) {

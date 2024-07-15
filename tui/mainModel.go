@@ -697,7 +697,13 @@ func (m MainModel) View() string {
 }
 
 // helpers
-func (m MainModel) fetchNewData(tab tabId) []dockerRes {
+
+/*
+Fetches new data from the docker api and returns []dockerRes, also updates other required fields depending on the tabId passed.
+Passing `wg` is optional and is add is added for the sole purpose of testing.
+*/
+
+func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 	var newlist []dockerRes
 	switch tab {
 	case IMAGES:
@@ -705,13 +711,21 @@ func (m MainModel) fetchNewData(tab tabId) []dockerRes {
 		newlist = makeImageItems(newImgs)
 
 		// update imageToName map if there are new images
+		if wg != nil {
+			wg.Add(1)
+		}
+
 		go func() {
+			if wg != nil {
+				defer wg.Done()
+			}
 			for _, image := range newlist {
 				if _, keyExists := m.imageIdToNameMap[image.getId()]; !keyExists {
 					m.imageIdToNameMap[image.getId()] = image.getName()
 				}
 			}
 		}()
+
 	case CONTAINERS:
 		newContainers := m.dockerClient.ListContainers(false)
 		newlist = makeContainerItems(newContainers)
@@ -719,7 +733,14 @@ func (m MainModel) fetchNewData(tab tabId) []dockerRes {
 		for _, newContainer := range newlist {
 			id := newContainer.getId()
 			if _, ok := m.TabContent[CONTAINERS].ExistingIds[id]; !ok {
+
+				if wg != nil {
+					wg.Add(1)
+				}
 				go func() {
+					if wg != nil {
+						defer wg.Done()
+					}
 					containerInfo, err := m.dockerClient.InspectContainer(id)
 
 					if err != nil {
@@ -741,7 +762,7 @@ func (m MainModel) fetchNewData(tab tabId) []dockerRes {
 }
 
 func (m MainModel) updateContent(tab tabId) MainModel {
-	newlist := m.fetchNewData(tab)
+	newlist := m.fetchNewData(tab, nil)
 	// m.TabContent[tab] = m.TabContent[tab].updateTab(m.dockerClient)
 	listM, _ := m.TabContent[tab].Update(newlist)
 	m.TabContent[tab] = listM.(listModel)
