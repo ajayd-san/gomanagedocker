@@ -2,14 +2,19 @@ package tui
 
 import (
 	"slices"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// list always takes up 30% of the screen
-const listWidthRatio float32 = 0.3
+const (
+	// list always takes up 30% of the screen
+	listWidthRatio float32 = 0.3
+	// duration of the list status message on screen, default: 2s
+	statusMessageDuration time.Duration = 2 * time.Second
+)
 
 type listModel struct {
 	list        list.Model
@@ -60,7 +65,8 @@ func InitList(tabkind tabId) listModel {
 		tabKind:     tabkind,
 	}
 
-	m.list.SetShowTitle(false)
+	m.list.Title = CONFIG_POLLING_TIME.String()
+	m.list.StatusMessageLifetime = statusMessageDuration
 	m.list.DisableQuitKeybindings()
 	m.list.SetShowHelp(false)
 	m.list.KeyMap.NextPage = key.NewBinding(key.WithKeys("]"))

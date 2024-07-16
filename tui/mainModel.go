@@ -69,7 +69,7 @@ type MainModel struct {
 
 // this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
 func doUpdateObjectsTick() tea.Cmd {
-	return tea.Tick(CONFIG_POLLING_TIME*time.Millisecond, func(t time.Time) tea.Msg { return TickMsg(t) })
+	return tea.Tick(CONFIG_POLLING_TIME, func(t time.Time) tea.Msg { return TickMsg(t) })
 }
 
 func (m MainModel) Init() tea.Cmd {
@@ -81,7 +81,6 @@ func (m MainModel) Init() tea.Cmd {
 	}
 	// initialize clipboard
 	err = clipboard.Init()
-	log.Println(err)
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
@@ -302,6 +301,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						dres := currentItem.(dockerRes)
 						id := dres.getId()
 						copyToClipboard(id)
+						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
+						cmds = append(cmds, timeout_cmd)
 					}
 
 				case key.Matches(msg, ImageKeymap.RunAndExec):
@@ -443,6 +444,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						dres := currentItem.(dockerRes)
 						id := dres.getId()
 						copyToClipboard(id)
+
+						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
+						cmds = append(cmds, timeout_cmd)
 					}
 				}
 
@@ -477,6 +481,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						dres := currentItem.(dockerRes)
 						name := dres.getId()
 						copyToClipboard(name)
+						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
+						cmds = append(cmds, timeout_cmd)
 					}
 				}
 			}

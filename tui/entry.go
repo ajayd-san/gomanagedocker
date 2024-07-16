@@ -57,7 +57,7 @@ func readAndLoadConfig() {
 }
 
 func loadConfig() {
-	CONFIG_POLLING_TIME = globalConfig.Duration("config.Polling-Time")
+	CONFIG_POLLING_TIME = globalConfig.Duration("config.Polling-Time") * time.Millisecond
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
 	CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order")
 	setTabConstants(CONFIG_TAB_ORDERING)
