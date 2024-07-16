@@ -8,30 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/docker/docker/api/types"
 )
-
-func PopulateInfoBox(tab tabId, item list.Item) string {
-	temp, _ := item.(dockerRes)
-	switch tab {
-	case IMAGES:
-		if it, ok := temp.(imageItem); ok {
-			return populateImageInfoBox(it)
-		}
-
-	case CONTAINERS:
-		if ct, ok := temp.(containerItem); ok {
-			return populateContainerInfoBox(ct)
-		}
-
-	case VOLUMES:
-		if vt, ok := temp.(VolumeItem); ok {
-			return populateVolumeInfoBox(vt)
-		}
-	}
-	return ""
-}
 
 func populateImageInfoBox(imageinfo imageItem) string {
 	var res strings.Builder
@@ -63,7 +41,7 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 	return res.String()
 }
 
-func populateContainerInfoBox(containerInfo containerItem) string {
+func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker *ContainerSizeManager, imageIdToNameMap map[string]string) string {
 	var res strings.Builder
 	addEntry(&res, "ID: ", containerInfo.ID)
 	addEntry(&res, "Name: ", containerInfo.getName())
@@ -72,8 +50,8 @@ func populateContainerInfoBox(containerInfo containerItem) string {
 
 	//this is a pretty trivial refactor to make this look cleaner, but I'm too lazy to do this
 	// whoever completes this bounty will win......nothing (except my heart)
-	if mutexok := containerSizeMap_Mutex.TryLock(); mutexok {
-		if containerSizeInfo, ok := containerSizeMap[containerInfo.ID]; ok {
+	if mutexok := containerSizeTracker.mu.TryLock(); mutexok {
+		if containerSizeInfo, ok := containerSizeTracker.sizeMap[containerInfo.ID]; ok {
 			rootSizeInGb := float64(containerSizeInfo.rootFs) / float64(1e+9)
 			SizeRwInGb := float64(containerSizeInfo.sizeRw) / float64(1e+9)
 
@@ -84,7 +62,7 @@ func populateContainerInfoBox(containerInfo containerItem) string {
 			addEntry(&res, "SizeRw: ", "Calculating...")
 		}
 
-		containerSizeMap_Mutex.Unlock()
+		containerSizeTracker.mu.Unlock()
 	} else {
 		addEntry(&res, "Root FS Size: ", "Calculating...")
 		addEntry(&res, "SizeRw: ", "Calculating...")

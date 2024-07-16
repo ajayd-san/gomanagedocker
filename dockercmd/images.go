@@ -22,11 +22,11 @@ func (dc *DockerClient) ListImages() []image.Summary {
 	return images
 }
 
-func (dc *DockerClient) RunImage(imageId string) error {
-
+// Runs the image and returns the container ID
+func (dc *DockerClient) RunImage(containerConfig container.Config) (*string, error) {
 	res, err := dc.cli.ContainerCreate(
 		context.Background(),
-		&container.Config{Image: imageId},
+		&containerConfig,
 		nil,
 		nil,
 		nil,
@@ -34,16 +34,16 @@ func (dc *DockerClient) RunImage(imageId string) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = dc.cli.ContainerStart(context.Background(), res.ID, container.StartOptions{})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &res.ID, nil
 }
 
 func (dc *DockerClient) DeleteImage(id string, opts image.RemoveOptions) error {

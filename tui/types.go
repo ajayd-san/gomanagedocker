@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
@@ -33,11 +34,6 @@ var statusMap = map[string]status{
 	"created":    containerStateCreated,
 	"removing":   containerStateRemoving,
 	"dead":       containerStateDead,
-}
-
-type ContainerSize struct {
-	sizeRw int64
-	rootFs int64
 }
 
 type dockerRes interface {
@@ -77,7 +73,7 @@ func (i imageItem) getLabel() string {
 }
 
 func (i imageItem) getName() string {
-	return strings.Join(i.RepoTags, ", ")
+	return transformListNames(i.RepoTags)
 }
 
 // INFO: impl list.Item Interface
@@ -90,7 +86,7 @@ func (i imageItem) Description() string {
 
 	sizeStr := strconv.FormatFloat(i.getSize(), 'f', 2, 64) + "GB"
 
-	return shortId + "\t\t\t\t\t\t\t" + sizeStr
+	return makeDescriptionString(shortId, sizeStr, len(shortId))
 }
 
 func (i imageItem) FilterValue() string { return i.getName() }
@@ -135,7 +131,11 @@ func (c containerItem) getLabel() string {
 }
 
 func (c containerItem) getName() string {
-	return strings.Join(c.Names, ", ")
+	return transformListNames(c.Names)
+}
+
+func (c containerItem) getState() string {
+	return c.State
 }
 
 // INFO: impl list.Item Interface
@@ -160,7 +160,7 @@ func (i containerItem) Description() string {
 		state = containerDeadStyle.Render(state)
 	}
 
-	return shortId + "\t\t\t\t\t\t\t" + state
+	return makeDescriptionString(shortId, state, len(shortId))
 }
 
 func (i containerItem) FilterValue() string { return i.getLabel() }
@@ -182,6 +182,7 @@ func (v VolumeItem) getLabel() string {
 }
 
 func (v VolumeItem) getName() string {
+
 	return v.Name[:min(30, len(v.Name))]
 }
 
@@ -205,6 +206,43 @@ func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
 	sort.Slice(res, func(i, j int) bool {
 		return res[i].getName() < res[j].getName()
 	})
+
+	return res
+}
+
+// util
+
+/*
+This function makes the final description string with white space between the two strings
+using string manipulation, offset is typically the length of the first string.
+The final length of the returned string would be listContainer.Width - offset - 3
+*/
+func makeDescriptionString(str1, str2 string, offset int) string {
+	str2 = lipgloss.PlaceHorizontal(listContainer.GetWidth()-offset-3, lipgloss.Right, str2)
+	return lipgloss.JoinHorizontal(lipgloss.Left, str1, str2)
+}
+
+// This function takes in names associated with objects (e.g: RepoTags in case of Image)
+// and concatenates into a string depending on the width of the list
+func transformListNames(names []string) string {
+	runningLength := 0
+	var maxindex int
+	for index, name := range names {
+		runningLength += len(name)
+		if runningLength > listContainer.GetWidth()-7 {
+			break
+		}
+		if !(index == len(names)-1) {
+			runningLength += 2 // +2 cuz we also append ", " after each element
+		}
+		maxindex = index
+	}
+
+	res := strings.Join(names[:maxindex+1], ", ")
+
+	if len(res) > listContainer.GetWidth()-7 {
+		return res[:listContainer.GetWidth()-7] + "..."
+	}
 
 	return res
 }

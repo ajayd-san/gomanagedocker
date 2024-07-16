@@ -2,17 +2,25 @@ package tui
 
 import (
 	"slices"
+	"time"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	// list always takes up 30% of the screen
+	listWidthRatio float32 = 0.3
+	// duration of the list status message on screen, default: 2s
+	statusMessageDuration time.Duration = 2 * time.Second
+)
+
 type listModel struct {
 	list        list.Model
-	existingIds map[string]struct{}
+	ExistingIds map[string]struct{}
 	tabKind     tabId
+	listEmpty   bool
 }
 
 func (m listModel) Init() tea.Cmd {
@@ -20,13 +28,20 @@ func (m listModel) Init() tea.Cmd {
 }
 
 func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// switch msg := msg.(type) {
-	// case tea.WindowSizeMsg:
-	// 	// h, v := listDocStyle.GetFrameSize()
-	// 	// m.list.SetSize(msg.Width-h, msg.Height-v)
-	// 	// m.list.SetSize(msg.Width, msg.Height)
-	// }
-	// log.Println("here", msg)
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetSize(int(listWidthRatio*float32(msg.Width)), msg.Height-10)
+		listContainer = listContainer.Width(int(listWidthRatio * float32(msg.Width))).Height(msg.Height - 9)
+	case []dockerRes:
+		m.updateTab(msg)
+
+		if len(msg) == 0 {
+			m.listEmpty = true
+		} else {
+			m.listEmpty = false
+		}
+
+	}
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
@@ -34,6 +49,10 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m listModel) View() string {
+	if m.listEmpty {
+		return listContainer.Render(emptyListStyle.Render("No items"))
+	}
+
 	return listContainer.Render(listDocStyle.Render(m.list.View()))
 }
 
@@ -41,25 +60,18 @@ func InitList(tabkind tabId) listModel {
 
 	items := make([]list.Item, 0)
 	m := listModel{
-		list:        list.New(items, list.NewDefaultDelegate(), 10, 30),
-		existingIds: make(map[string]struct{}),
+		list:        list.New(items, list.NewDefaultDelegate(), 60, 30),
+		ExistingIds: make(map[string]struct{}),
 		tabKind:     tabkind,
 	}
 
-	m.list.SetShowTitle(false)
+	m.list.Title = CONFIG_POLLING_TIME.String()
+	m.list.StatusMessageLifetime = statusMessageDuration
 	m.list.DisableQuitKeybindings()
 	m.list.SetShowHelp(false)
 	m.list.KeyMap.NextPage = key.NewBinding(key.WithKeys("]"))
 	m.list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("["))
 
-	switch tabkind {
-	case IMAGES:
-		m.list.AdditionalFullHelpKeys = getImageKeymap
-	case CONTAINERS:
-		m.list.AdditionalFullHelpKeys = getContainerKeymap
-	case VOLUMES:
-		m.list.AdditionalFullHelpKeys = getVolumeKeymap
-	}
 	return m
 }
 
@@ -77,50 +89,10 @@ func makeItems(raw []dockerRes) []list.Item {
 // Util
 
 /*
-This function calls the docker api and repopulates the tab with updated items(if they are any).
+This function  repopulates the tab with updated items(if they are any).
 For now does a linear search if the number of items have not changed to update the list (O(n) time)
-Also, computes storage sizes for newly added containers and maps imageIds to imageNames
-(to display in container infobox) in another go routine
 */
-func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
-	var newlist []dockerRes
-	switch m.tabKind {
-	case IMAGES:
-		newImgs := dockerClient.ListImages()
-		newlist = makeImageItems(newImgs)
-
-		// update imageToName map if there are new images
-		go func() {
-			for _, image := range newlist {
-				if _, keyExists := imageIdToNameMap[image.getId()]; !keyExists {
-					imageIdToNameMap[image.getId()] = image.getName()
-				}
-			}
-		}()
-	case CONTAINERS:
-		newContainers := dockerClient.ListContainers(false)
-		newlist = makeContainerItems(newContainers)
-
-		for _, newContainer := range newlist {
-			id := newContainer.getId()
-			if _, ok := m.existingIds[id]; !ok {
-				go func() {
-					containerInfo, err := dockerClient.InspectContainer(id)
-
-					if err != nil {
-						panic(err)
-					}
-
-					updateContainerSizeMap(containerInfo)
-				}()
-			}
-		}
-	case VOLUMES:
-		// TODO: handle errors
-		newVolumes, _ := dockerClient.ListVolumes()
-		newlist = makeVolumeItem(newVolumes)
-	}
-
+func (m *listModel) updateTab(newlist []dockerRes) {
 	comparisonFunc := func(a dockerRes, b list.Item) bool {
 		switch m.tabKind {
 		case IMAGES:
@@ -152,11 +124,10 @@ func (m listModel) updateTab(dockerClient dockercmd.DockerClient) listModel {
 		go m.updateExistigIds(&newlist)
 	}
 
-	return m
 }
 
 func (m *listModel) updateExistigIds(newlistItems *[]dockerRes) {
 	for _, item := range *newlistItems {
-		m.existingIds[item.getId()] = struct{}{}
+		m.ExistingIds[item.getId()] = struct{}{}
 	}
 }

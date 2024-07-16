@@ -14,4 +14,4 @@ then
     exit 1
 fi 
 
-docker run --rm -v "$PWD":/src -w /src --env GOFLAGS="-buildvcs=false" golang:1-bullseye ./buildRelease.sh $RELEASE
+docker run --rm -v "$PWD":/src -w /src --env GOFLAGS="-buildvcs=false" gmd_builder:latest ./buildRelease.sh $RELEASE

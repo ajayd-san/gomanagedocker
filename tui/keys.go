@@ -24,6 +24,8 @@ type imgKeymap struct {
 	Prune       key.Binding
 	Delete      key.Binding
 	DeleteForce key.Binding
+	CopyId      key.Binding
+	RunAndExec  key.Binding
 }
 
 type contKeymap struct {
@@ -35,11 +37,13 @@ type contKeymap struct {
 	DeleteForce     key.Binding
 	Exec            key.Binding
 	Prune           key.Binding
+	CopyId          key.Binding
 }
 
 type volKeymap struct {
 	Delete key.Binding
 	Prune  key.Binding
+	CopyId key.Binding
 }
 
 var ImageKeymap = imgKeymap{
@@ -71,6 +75,14 @@ var ImageKeymap = imgKeymap{
 		key.WithKeys("p"),
 		key.WithHelp("p", "Prune images"),
 	),
+	CopyId: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy Image ID"),
+	),
+	RunAndExec: key.NewBinding(
+		key.WithKeys("x"),
+		key.WithHelp("x", "Run and exec"),
+	),
 }
 
 func (m imgKeymap) FullHelp() [][]key.Binding {
@@ -83,10 +95,15 @@ func (m imgKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m imgKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.Run,
+	return []key.Binding{
+		m.Run,
 		m.Delete,
 		m.DeleteForce,
-		m.Prune, m.Scout}
+		m.Prune,
+		m.Scout,
+		m.CopyId,
+		m.RunAndExec,
+	}
 
 }
 
@@ -123,6 +140,10 @@ var ContainerKeymap = contKeymap{
 		key.WithKeys("x"),
 		key.WithHelp("x", "exec"),
 	),
+	CopyId: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy Container ID"),
+	),
 }
 
 func (m contKeymap) FullHelp() [][]key.Binding {
@@ -130,7 +151,17 @@ func (m contKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m contKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.ToggleListAll, m.ToggleStartStop, m.Restart, m.TogglePause, m.Delete, m.DeleteForce, m.Prune, m.Exec}
+	return []key.Binding{
+		m.ToggleListAll,
+		m.ToggleStartStop,
+		m.Restart,
+		m.TogglePause,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune,
+		m.Exec,
+		m.CopyId,
+	}
 }
 
 var VolumeKeymap = volKeymap{
@@ -142,6 +173,10 @@ var VolumeKeymap = volKeymap{
 		key.WithKeys("p"),
 		key.WithHelp("p", "prune"),
 	),
+	CopyId: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy Name"),
+	),
 }
 
 func (m volKeymap) FullHelp() [][]key.Binding {
@@ -149,7 +184,7 @@ func (m volKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m volKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.Delete, m.Prune}
+	return []key.Binding{m.Delete, m.Prune, m.CopyId}
 }
 
 var NavKeymap = navigationKeymap{
@@ -197,31 +232,4 @@ func (m navigationKeymap) FullHelp() [][]key.Binding {
 
 func (m navigationKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Enter, m.Quit}
-}
-
-func getVolumeKeymap() []key.Binding {
-	return []key.Binding{
-		VolumeKeymap.Delete,
-		VolumeKeymap.Prune,
-	}
-}
-
-func getImageKeymap() []key.Binding {
-	return []key.Binding{
-		ImageKeymap.Delete,
-		ImageKeymap.DeleteForce,
-		ImageKeymap.Prune,
-		// ImageKeymap.Pull,
-	}
-}
-
-func getContainerKeymap() []key.Binding {
-	return []key.Binding{
-		ContainerKeymap.ToggleListAll,
-		ContainerKeymap.ToggleStartStop,
-		ContainerKeymap.Delete,
-		ContainerKeymap.DeleteForce,
-		ContainerKeymap.Prune,
-		ContainerKeymap.Exec,
-	}
 }
