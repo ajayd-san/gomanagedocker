@@ -27,13 +27,15 @@ import (
 const infoBoxWidthRatio = 0.55
 const infoBoxHeightRatio = 0.6
 
-
+// type for denoting the tab order
 type tabId int
 
 type TickMsg time.Time
 
+// when the main loop gets a variable of this type, it preloads all required tabs. Should change type from `int` to `struct{}`
 type preloadObjects int
 
+// instruction for preload contaienr sizes, when program starts.
 type preloadSizeMap struct{}
 
 type ContainerSize struct {
@@ -41,12 +43,11 @@ type ContainerSize struct {
 	rootFs int64
 }
 
+// this type holds info about container sizes and is meant to be used concurrently.
 type ContainerSizeManager struct {
 	sizeMap map[string]ContainerSize
 	mu      *sync.Mutex
 }
-
-// INFO: holds container size info that is calculated on demand
 
 type MainModel struct {
 	dockerClient        dockercmd.DockerClient
@@ -94,6 +95,7 @@ func (m MainModel) Init() tea.Cmd {
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
 }
 
+// Initializes and returns a new Model instance.
 func NewModel() MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
@@ -129,6 +131,7 @@ func NewModel() MainModel {
 	}
 }
 
+// goMangeDocker main update loop
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
@@ -731,7 +734,6 @@ func (m MainModel) View() string {
 Fetches new data from the docker api and returns []dockerRes, also updates other required fields depending on the tabId passed.
 Passing `wg` is optional and is add is added for the sole purpose of testing.
 */
-
 func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 	var newlist []dockerRes
 	switch tab {
@@ -790,6 +792,7 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 	return newlist
 }
 
+// fetches new docker data and updates the list in the current tab.
 func (m MainModel) updateContent(tab tabId) MainModel {
 	newlist := m.fetchNewData(tab, nil)
 	// m.TabContent[tab] = m.TabContent[tab].updateTab(m.dockerClient)
@@ -798,6 +801,7 @@ func (m MainModel) updateContent(tab tabId) MainModel {
 	return m
 }
 
+// Generates info box for the current list item
 func (m MainModel) populateInfoBox(item list.Item) string {
 	temp, _ := item.(dockerRes)
 	switch m.activeTab {
@@ -839,14 +843,17 @@ func (m *MainModel) prevTab() {
 	}
 }
 
+// Gets currently active tab (type: listModel)
 func (m MainModel) getActiveTab() listModel {
 	return m.TabContent[m.activeTab]
 }
 
+// Gets currently active list (type: list.Model)
 func (m MainModel) getActiveList() *list.Model {
 	return &m.TabContent[m.activeTab].list
 }
 
+// Get list at specified index
 func (m MainModel) getList(index int) *list.Model {
 	if index >= len(m.TabContent) {
 		panic(fmt.Sprintf("Index %d out of bounds", index))
@@ -854,15 +861,18 @@ func (m MainModel) getList(index int) *list.Model {
 	return &m.TabContent[index].list
 }
 
+// Helper function to get current focused item in the list
 func (m MainModel) getSelectedItem() list.Item {
 	return m.TabContent[m.activeTab].list.SelectedItem()
 }
 
+// Copies str to clipboard
 func copyToClipboard(str string) {
 	str = strings.TrimPrefix(str, "sha256:")[:20]
 	clipboard.Write(clipboard.FmtText, []byte(str))
 }
 
+// Prepopulates container size info at the start of the program concurrently
 func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
@@ -874,6 +884,7 @@ func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	}
 }
 
+// Adds size info from containerInfo to containersizeTracker. Meant to be used on demand when new container gets added.
 func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTracker *ContainerSizeManager) {
 	containerSizeTracker.mu.Lock()
 	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
