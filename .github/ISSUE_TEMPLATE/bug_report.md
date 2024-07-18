@@ -21,7 +21,8 @@ If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
  - OS: [e.g. linux mint, arch, MacOS, windows 10]
- - gmd Version: [e.g. 22]
+ - gmd Version: [do `gmd -v` in your terminal]
+- Any other related info
 
 **Additional context**
 Add any other context about the problem here.
