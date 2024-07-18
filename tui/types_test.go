@@ -57,4 +57,11 @@ func TestTransformListNames(t *testing.T) {
 		want := "Zenitsu, best"
 		assert.Equal(t, got, want)
 	})
+
+	t.Run("With empty list", func(t *testing.T) {
+		listContainer = listContainer.Width(20)
+		names := make([]string, 0)
+		// will panic
+		transformListNames(names)
+	})
 }
