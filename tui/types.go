@@ -231,6 +231,10 @@ func makeDescriptionString(str1, str2 string, offset int) string {
 // This function takes in names associated with objects (e.g: RepoTags in case of Image)
 // and concatenates into a string depending on the width of the list
 func transformListNames(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+
 	runningLength := 0
 	var maxindex int
 	for index, name := range names {
@@ -238,7 +242,7 @@ func transformListNames(names []string) string {
 		if runningLength > listContainer.GetWidth()-7 {
 			break
 		}
-		if !(index == len(names)-1) {
+		if index != len(names)-1 {
 			runningLength += 2 // +2 cuz we also append ", " after each element
 		}
 		maxindex = index
