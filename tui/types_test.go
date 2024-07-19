@@ -85,9 +85,14 @@ func TestTransformListNames(t *testing.T) {
 	})
 
 	t.Run("With empty list", func(t *testing.T) {
+		defer func() {
+			if recover() != nil {
+				t.Error("This function should not panic")
+			}
+		}()
 		listContainer = listContainer.Width(20)
 		names := make([]string, 0)
-		// will panic
+		// should not panic
 		transformListNames(names)
 	})
 }
