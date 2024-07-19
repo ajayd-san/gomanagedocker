@@ -52,10 +52,12 @@ type MainModel struct {
 	height              int
 	windowTooSmall      bool
 	windowtoosmallModel WindowTooSmallModel
-	navKeymap           help.Model
-	helpGen             help.Model
-	showDialog          bool
-	activeDialog        tea.Model
+	//  handles navigation keymap generation
+	navKeymap help.Model
+	// handles tab specific keymap generation, i have no idea why I named it `helpGen`
+	helpGen      help.Model
+	showDialog   bool
+	activeDialog tea.Model
 	// we use this to cancel dialog ops when we exit from them
 	dialogOpCancel context.CancelFunc
 	// this maintains a map of container image sizes
@@ -95,7 +97,13 @@ func NewModel() MainModel {
 	firstTab := contents[0].tabKind
 
 	helper := help.New()
+	helper.FullSeparator = " • "
+	helper.ShowAll = true
+
 	NavKeymap := help.New()
+	NavKeymap.FullSeparator = " • "
+	NavKeymap.ShowAll = true
+
 	return MainModel{
 		dockerClient:                   dockercmd.NewDockerClient(),
 		Tabs:                           CONFIG_TAB_ORDERING,
@@ -171,16 +179,23 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		// if window too small set and show windowTooSmall screen
-		if msg.Height < 33 || msg.Width < 169 {
-			m.windowTooSmall = true
-			temp, _ := m.windowtoosmallModel.Update(msg)
-			m.windowtoosmallModel = temp.(WindowTooSmallModel)
-		} else {
-			m.windowTooSmall = false
-		}
+		// if msg.Height < 25 || msg.Width < 80 {
+		// 	// m.helpGen.ShowAll = true
+		// 	// m.navKeymap.ShowAll = true
+		// 	m.windowTooSmall = true
+		// 	temp, _ := m.windowtoosmallModel.Update(msg)
+		// 	m.windowtoosmallModel = temp.(WindowTooSmallModel)
+		// } else {
+		// 	// m.navKeymap.ShowAll = false
+		// 	// m.helpGen.ShowAll = false
+		// 	m.windowTooSmall = false
+		// }
 
 		m.width = msg.Width
 		m.height = msg.Height
+
+		KeymapAvailableWidth = msg.Width - 20
+
 		windowStyle = windowStyle.
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
@@ -668,7 +683,25 @@ func (m MainModel) View() string {
 		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
 	}
 
-	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, "  "+m.navKeymap.View(NavKeymap), "  "+tabSpecificKeyBinds)
+	// we do this cuz the help string is misaligned when it is of more than 2 lines, so we split and add space to align them
+
+	AlignHelpText := func(helpText string) string {
+		substrs := strings.SplitAfter(helpText, "\n")
+		if len(substrs) > 1 {
+			// add space prefix to second substring
+			substrs[1] = "  " + substrs[1]
+			helpText = strings.Join(substrs, "")
+		}
+
+		return helpText
+	}
+
+	navKeyBinds := AlignHelpText(m.navKeymap.View(NavKeymap))
+	tabSpecificKeyBinds = AlignHelpText(tabSpecificKeyBinds)
+
+	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabSpecificKeyBinds)
+	help = lipgloss.PlaceVertical(4, lipgloss.Bottom, help)
+	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, help)
 	body_with_info = windowStyle.Render(body_with_help)
 
 	doc.WriteString(row)

@@ -30,8 +30,8 @@ func (m listModel) Init() tea.Cmd {
 func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.list.SetSize(int(listWidthRatio*float32(msg.Width)), msg.Height-10)
-		listContainer = listContainer.Width(int(listWidthRatio * float32(msg.Width))).Height(msg.Height - 9)
+		m.list.SetSize(int(listWidthRatio*float32(msg.Width)), msg.Height-12)
+		listContainer = listContainer.Width(int(listWidthRatio * float32(msg.Width))).Height(msg.Height - 12)
 	case []dockerRes:
 		m.updateTab(msg)
 
