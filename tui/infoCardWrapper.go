@@ -4,9 +4,10 @@ package tui
 import (
 	"fmt"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	teadialog "github.com/ajayd-san/teaDialog"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/ajayd-san/gomanagedocker/dockercmd"
 )
 
 const customLoadingMessage = "Loading (this may take some time)..."
@@ -34,7 +35,7 @@ func (m InfoCardWrapperModel) Init() tea.Cmd {
 
 func (m InfoCardWrapperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd2 tea.Cmd
-	if m.loaded == false {
+	if !m.loaded {
 		spinner, cmd := m.spinner.Update(msg)
 		m.spinner = spinner.(SpinnerModel)
 		m.inner.Message = fmt.Sprintf("%s %s", m.spinner.View(), customLoadingMessage)
