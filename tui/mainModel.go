@@ -341,38 +341,20 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			} else if m.activeTab == CONTAINERS {
 				// handles an action as background non-blocking task
-				handleBackground := func(operation func(string) error) {
-					curItem := m.getSelectedItem()
-					if curItem == nil {
-						return
-					}
-					containerId := curItem.(dockerRes).getId()
-					m.possibleLongRunningOpErrorChan <- operation(containerId)
-				}
-
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
 
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 					log.Println("s pressed")
-					go handleBackground(m.dockerClient.ToggleStartStopContainer)
+					go m.handleBackground(m.dockerClient.ToggleStartStopContainer)
 
 				case key.Matches(msg, ContainerKeymap.TogglePause):
-					go handleBackground(m.dockerClient.RestartContainer)
+					go m.handleBackground(m.dockerClient.RestartContainer)
 
 				case key.Matches(msg, ContainerKeymap.Restart):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						log.Println("in restart")
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.RestartContainer(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-					}
+					log.Println("in restart")
+					go m.handleBackground(m.dockerClient.RestartContainer)
 
 				case key.Matches(msg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
@@ -384,19 +366,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
-					curItem := m.getSelectedItem()
-					if containerInfo, ok := curItem.(dockerRes); ok {
-						err := m.dockerClient.DeleteContainer(containerInfo.getId(), container.RemoveOptions{
+					deleteForceWithOptions := func(containerID string) error {
+						return m.dockerClient.DeleteContainer(containerID, container.RemoveOptions{
 							RemoveVolumes: false,
 							RemoveLinks:   false,
 							Force:         true,
 						})
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
 					}
+
+					go m.handleBackground(deleteForceWithOptions)
 
 				case key.Matches(msg, ContainerKeymap.Prune):
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))
@@ -847,6 +825,15 @@ func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 			rootFs: info.SizeRootFs,
 		}
 	}
+}
+
+func (m MainModel) handleBackground(operation func(string) error) {
+	curItem := m.getSelectedItem()
+	if curItem == nil {
+		return
+	}
+	containerId := curItem.(dockerRes).getId()
+	m.possibleLongRunningOpErrorChan <- operation(containerId)
 }
 
 func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTracker *ContainerSizeManager) {
