@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	teadialog "github.com/ajayd-san/teaDialog"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -20,15 +19,21 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"golang.design/x/clipboard"
+
+	"github.com/ajayd-san/gomanagedocker/dockercmd"
 )
 
 // dimension ratios for infobox
 const infoBoxWidthRatio = 0.55
+
 const infoBoxHeightRatio = 0.65
 
 type tabId int
+
 type TickMsg time.Time
+
 type preloadObjects int
+
 type preloadSizeMap struct{}
 
 type ContainerSize struct {
@@ -79,7 +84,8 @@ func (m MainModel) Init() tea.Cmd {
 		os.Exit(1)
 	}
 	// initialize clipboard
-	err = clipboard.Init()
+	// TODO: handle error
+	clipboard.Init()
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
