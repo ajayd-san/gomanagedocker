@@ -4,6 +4,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 )
 
+var KeymapAvailableWidth int
+
 type navigationKeymap struct {
 	Enter    key.Binding
 	Back     key.Binding
@@ -17,10 +19,9 @@ type navigationKeymap struct {
 }
 
 type imgKeymap struct {
-	Run    key.Binding
-	Rename key.Binding
-	Scout  key.Binding
-	// Pull        key.Binding
+	Run         key.Binding
+	Rename      key.Binding
+	Scout       key.Binding
 	Prune       key.Binding
 	Delete      key.Binding
 	DeleteForce key.Binding
@@ -65,33 +66,35 @@ var ImageKeymap = imgKeymap{
 	),
 	Scout: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "Scout"),
+		key.WithHelp("s", "scout"),
 	),
-	// Pull: key.NewBinding(
-	// 	key.WithKeys("o"),
-	// 	key.WithHelp("o", "Pull new Image"),
-	// ),
 	Prune: key.NewBinding(
 		key.WithKeys("p"),
-		key.WithHelp("p", "Prune images"),
+		key.WithHelp("p", "prune images"),
 	),
 	CopyId: key.NewBinding(
 		key.WithKeys("c"),
-		key.WithHelp("c", "Copy Image ID"),
+		key.WithHelp("c", "copy Image ID"),
 	),
 	RunAndExec: key.NewBinding(
 		key.WithKeys("x"),
-		key.WithHelp("x", "Run and exec"),
+		key.WithHelp("x", "run and exec"),
 	),
 }
 
 func (m imgKeymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
-		{m.Run,
-			m.Delete,
-			m.DeleteForce,
-			m.Prune},
+	allBindings := []key.Binding{
+		m.Run,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune,
+		m.Scout,
+		m.CopyId,
+		m.RunAndExec,
 	}
+
+	return packKeybindings(allBindings, KeymapAvailableWidth)
+
 }
 
 func (m imgKeymap) ShortHelp() []key.Binding {
@@ -110,19 +113,19 @@ func (m imgKeymap) ShortHelp() []key.Binding {
 var ContainerKeymap = contKeymap{
 	ToggleListAll: key.NewBinding(
 		key.WithKeys("a"),
-		key.WithHelp("a", "Toggle list all"),
+		key.WithHelp("a", "toggle list all"),
 	),
 	ToggleStartStop: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "Toggle Start/Stop"),
+		key.WithHelp("s", "toggle Start/Stop"),
 	),
 	TogglePause: key.NewBinding(
 		key.WithKeys("t"),
-		key.WithHelp("t", "Toggle Pause/unPause"),
+		key.WithHelp("t", "toggle Pause/unPause"),
 	),
 	Restart: key.NewBinding(
 		key.WithKeys("r"),
-		key.WithHelp("r", "Restart"),
+		key.WithHelp("r", "restart"),
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
@@ -142,12 +145,24 @@ var ContainerKeymap = contKeymap{
 	),
 	CopyId: key.NewBinding(
 		key.WithKeys("c"),
-		key.WithHelp("c", "Copy Container ID"),
+		key.WithHelp("c", "copy ID"),
 	),
 }
 
 func (m contKeymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{}
+	allBindings := []key.Binding{
+		m.ToggleListAll,
+		m.ToggleStartStop,
+		m.Restart,
+		m.TogglePause,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune,
+		m.Exec,
+		m.CopyId,
+	}
+
+	return packKeybindings(allBindings, KeymapAvailableWidth)
 }
 
 func (m contKeymap) ShortHelp() []key.Binding {
@@ -175,16 +190,16 @@ var VolumeKeymap = volKeymap{
 	),
 	CopyId: key.NewBinding(
 		key.WithKeys("c"),
-		key.WithHelp("c", "Copy Name"),
+		key.WithHelp("c", "copy Name"),
 	),
 }
 
 func (m volKeymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{}
+	return [][]key.Binding{{m.Delete}, {m.Prune}, {m.CopyId}}
 }
 
 func (m volKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.Delete, m.Prune, m.CopyId}
+	return []key.Binding{}
 }
 
 var NavKeymap = navigationKeymap{
@@ -198,7 +213,7 @@ var NavKeymap = navigationKeymap{
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c", "q"),
-		key.WithHelp("ctrl+c/q", "quit"),
+		key.WithHelp("q", "quit"),
 	),
 	NextTab: key.NewBinding(
 		key.WithKeys("right", "l", "tab"),
@@ -206,7 +221,7 @@ var NavKeymap = navigationKeymap{
 	),
 	PrevTab: key.NewBinding(
 		key.WithKeys("left", "h", "shift+tab"),
-		key.WithHelp("<-/h/shift+tab", "prev"),
+		key.WithHelp("<-/h/S-tab", "prev"),
 	),
 	NextItem: key.NewBinding(
 		key.WithKeys("down", "j"),
@@ -227,9 +242,29 @@ var NavKeymap = navigationKeymap{
 }
 
 func (m navigationKeymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{}
+	allBindings := []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Quit}
+	return packKeybindings(allBindings, KeymapAvailableWidth)
 }
 
 func (m navigationKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Enter, m.Quit}
+	return []key.Binding{}
+}
+
+func packKeybindings(keybindings []key.Binding, width int) [][]key.Binding {
+	res := make([][]key.Binding, len(keybindings))
+
+	i := 0
+	curWidth := width
+	for _, binding := range keybindings {
+		if curWidth < 20 {
+			i = 0
+			curWidth = width
+		}
+
+		res[i] = append(res[i], binding)
+		curWidth -= len(binding.Help().Desc) + len(binding.Help().Key) + 3
+		i += 1
+	}
+
+	return res
 }

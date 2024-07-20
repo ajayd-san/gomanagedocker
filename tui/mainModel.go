@@ -25,8 +25,8 @@ import (
 
 // dimension ratios for infobox
 const infoBoxWidthRatio = 0.55
+const infoBoxHeightRatio = 0.6
 
-const infoBoxHeightRatio = 0.65
 
 type tabId int
 
@@ -56,11 +56,14 @@ type MainModel struct {
 	width               int
 	height              int
 	windowTooSmall      bool
+	displayInfoBox      bool
 	windowtoosmallModel WindowTooSmallModel
-	navKeymap           help.Model
-	helpGen             help.Model
-	showDialog          bool
-	activeDialog        tea.Model
+	//  handles navigation keymap generation
+	navKeymap help.Model
+	// handles tab specific keymap generation, i have no idea why I named it `helpGen`
+	helpGen      help.Model
+	showDialog   bool
+	activeDialog tea.Model
 	// we use this to cancel dialog ops when we exit from them
 	dialogOpCancel context.CancelFunc
 	// this maintains a map of container image sizes
@@ -101,11 +104,18 @@ func NewModel() MainModel {
 	firstTab := contents[0].tabKind
 
 	helper := help.New()
+	helper.FullSeparator = " • "
+	helper.ShowAll = true
+
 	NavKeymap := help.New()
+	NavKeymap.FullSeparator = " • "
+	NavKeymap.ShowAll = true
+
 	return MainModel{
 		dockerClient:                   dockercmd.NewDockerClient(),
 		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
+		displayInfoBox:                 true,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
 		helpGen:                        helper,
@@ -176,8 +186,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.WindowSizeMsg:
-		// if window too small set and show windowTooSmall screen
-		if msg.Height < 33 || msg.Width < 169 {
+		// show windowtoosmallModel if window dimentions are too small
+		if msg.Height < 25 || msg.Width < 65 {
 			m.windowTooSmall = true
 			temp, _ := m.windowtoosmallModel.Update(msg)
 			m.windowtoosmallModel = temp.(WindowTooSmallModel)
@@ -185,8 +195,20 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.windowTooSmall = false
 		}
 
+		// toggle info box if window size goes under a certain threshold
+		if msg.Height <= 31 || msg.Width < 105 {
+			m.displayInfoBox = false
+			listWidthRatio = listWidthRatioWithOutInfoBox
+		} else {
+			listWidthRatio = listWidthRatioWithInfoBox
+			m.displayInfoBox = true
+		}
+
 		m.width = msg.Width
 		m.height = msg.Height
+
+		KeymapAvailableWidth = msg.Width - 10
+
 		windowStyle = windowStyle.
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
@@ -197,7 +219,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		moreInfoStyle = moreInfoStyle.Width(int(infoBoxWidthRatio * float64(m.width)))
 		moreInfoStyle = moreInfoStyle.Height(int(infoBoxHeightRatio * float64(m.height)))
 
-		m.helpGen.Width = msg.Width
+		m.helpGen.Width = msg.Width - 20
+		m.navKeymap.Width = msg.Width - 20
 
 		// change list dimensions when window size changes
 		// TODO: change width
@@ -656,7 +679,7 @@ func (m MainModel) View() string {
 	curItem := m.getSelectedItem()
 
 	infobox := ""
-	if curItem != nil {
+	if curItem != nil && m.displayInfoBox {
 		infobox = m.populateInfoBox(curItem)
 	}
 
@@ -674,7 +697,25 @@ func (m MainModel) View() string {
 		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
 	}
 
-	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, "  "+m.navKeymap.View(NavKeymap), "  "+tabSpecificKeyBinds)
+	// we do this cuz the help string is misaligned when it is of more than 2 lines, so we split and add space to align them
+
+	AlignHelpText := func(helpText string) string {
+		substrs := strings.SplitAfter(helpText, "\n")
+		if len(substrs) > 1 {
+			// add space prefix to second substring
+			substrs[1] = "  " + substrs[1]
+			helpText = strings.Join(substrs, "")
+		}
+
+		return helpText
+	}
+
+	navKeyBinds := AlignHelpText(m.navKeymap.View(NavKeymap))
+	tabSpecificKeyBinds = AlignHelpText(tabSpecificKeyBinds)
+
+	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabSpecificKeyBinds)
+	help = lipgloss.PlaceVertical(5, lipgloss.Bottom, help)
+	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, help)
 	body_with_info = windowStyle.Render(body_with_help)
 
 	doc.WriteString(row)
