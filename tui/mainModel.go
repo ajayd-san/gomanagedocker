@@ -85,11 +85,8 @@ func (m MainModel) Init() tea.Cmd {
 		os.Exit(1)
 	}
 	// initialize clipboard
-	err = clipboard.Init()
-	if err != nil {
-		fmt.Printf("Failed initalising the clipboard. \nInfo: %s\n", err.Error())
-		os.Exit(1)
-	}
+	// TODO: handle error
+	clipboard.Init()
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	return tea.Batch(preloadCmd, doUpdateObjectsTick())
