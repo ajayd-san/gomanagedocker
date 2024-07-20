@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -51,6 +52,7 @@ type MainModel struct {
 	width               int
 	height              int
 	windowTooSmall      bool
+	displayInfoBox      bool
 	windowtoosmallModel WindowTooSmallModel
 	//  handles navigation keymap generation
 	navKeymap help.Model
@@ -108,6 +110,7 @@ func NewModel() MainModel {
 		dockerClient:                   dockercmd.NewDockerClient(),
 		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
+		displayInfoBox:                 true,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
 		helpGen:                        helper,
@@ -178,23 +181,25 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.WindowSizeMsg:
-		// if window too small set and show windowTooSmall screen
-		// if msg.Height < 25 || msg.Width < 80 {
-		// 	// m.helpGen.ShowAll = true
-		// 	// m.navKeymap.ShowAll = true
-		// 	m.windowTooSmall = true
-		// 	temp, _ := m.windowtoosmallModel.Update(msg)
-		// 	m.windowtoosmallModel = temp.(WindowTooSmallModel)
-		// } else {
-		// 	// m.navKeymap.ShowAll = false
-		// 	// m.helpGen.ShowAll = false
-		// 	m.windowTooSmall = false
-		// }
+		log.Println(msg.Width, msg.Height)
+		// if window is less than (33, 101) and do not show infobox
+		if msg.Height < 20 || msg.Width < 101 {
+			m.displayInfoBox = false
+			// m.helpGen.ShowAll = true
+			// m.navKeymap.ShowAll = true
+			// m.windowTooSmall = true
+			// temp, _ := m.windowtoosmallModel.Update(msg)
+			// m.windowtoosmallModel = temp.(WindowTooSmallModel)
+		} else {
+			// m.navKeymap.ShowAll = false
+			// m.helpGen.ShowAll = false
+			m.displayInfoBox = true
+		}
 
 		m.width = msg.Width
 		m.height = msg.Height
 
-		KeymapAvailableWidth = msg.Width - 20
+		KeymapAvailableWidth = msg.Width - 10
 
 		windowStyle = windowStyle.
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
@@ -665,7 +670,7 @@ func (m MainModel) View() string {
 	curItem := m.getSelectedItem()
 
 	infobox := ""
-	if curItem != nil {
+	if curItem != nil && m.displayInfoBox {
 		infobox = m.populateInfoBox(curItem)
 	}
 
