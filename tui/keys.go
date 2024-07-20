@@ -145,7 +145,7 @@ var ContainerKeymap = contKeymap{
 	),
 	CopyId: key.NewBinding(
 		key.WithKeys("c"),
-		key.WithHelp("c", "copy Container ID"),
+		key.WithHelp("c", "copy ID"),
 	),
 }
 

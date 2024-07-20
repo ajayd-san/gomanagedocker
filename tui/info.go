@@ -13,7 +13,9 @@ import (
 
 func populateImageInfoBox(imageinfo imageItem) string {
 	var res strings.Builder
-	addEntry(&res, "id: ", strings.TrimPrefix(imageinfo.ID, "sha256:"))
+	id := strings.TrimPrefix(imageinfo.ID, "sha256:")
+	id = trimToLength(id, moreInfoStyle.GetWidth())
+	addEntry(&res, "id: ", id)
 	addEntry(&res, "Name: ", imageinfo.getName())
 	sizeInGb := float64(imageinfo.getSize())
 	addEntry(&res, "Size: ", strconv.FormatFloat(sizeInGb, 'f', 2, 64)+"GB")
@@ -30,7 +32,9 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 	addEntry(&res, "Name: ", volumeInfo.getName())
 	addEntry(&res, "Created: ", volumeInfo.CreatedAt)
 	addEntry(&res, "Driver: ", volumeInfo.Driver)
-	addEntry(&res, "Mount Point: ", volumeInfo.Mountpoint)
+
+	mntPt := trimToLength(volumeInfo.Mountpoint, moreInfoStyle.GetWidth())
+	addEntry(&res, "Mount Point: ", mntPt)
 
 	if size := volumeInfo.getSize(); size != -1 {
 		addEntry(&res, "Size: ", fmt.Sprintf("%f", size))
@@ -43,7 +47,9 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 
 func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker *ContainerSizeManager, imageIdToNameMap map[string]string) string {
 	var res strings.Builder
-	addEntry(&res, "ID: ", containerInfo.ID)
+
+	id := trimToLength(containerInfo.ID, moreInfoStyle.GetWidth())
+	addEntry(&res, "ID: ", id)
 	addEntry(&res, "Name: ", containerInfo.getName())
 	addEntry(&res, "Image: ", imageIdToNameMap[containerInfo.ImageID])
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
@@ -110,4 +116,8 @@ func mapToString(m map[string]string) string {
 		res.WriteString(fmt.Sprintf("%s: %s", key, value))
 	}
 	return res.String()
+}
+
+func trimToLength(id string, availableWidth int) string {
+	return id[:min(availableWidth-10, len(id))]
 }

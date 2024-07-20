@@ -186,14 +186,88 @@ func TestInfoBoxSize(t *testing.T) {
 
 	t.Run("With (100 width, 100 height)", func(t *testing.T) {
 		model.Update(tea.WindowSizeMsg{Width: 100, Height: 100})
-		assert.Equal(t, moreInfoStyle.GetHeight(), 65)
+		assert.Equal(t, moreInfoStyle.GetHeight(), 60)
 		assert.Equal(t, moreInfoStyle.GetWidth(), 55)
 	})
 
 	t.Run("With (350 width, 200 height)", func(t *testing.T) {
 		model.Update(tea.WindowSizeMsg{Width: 350, Height: 200})
-		assert.Equal(t, moreInfoStyle.GetHeight(), 130)
+		assert.Equal(t, moreInfoStyle.GetHeight(), 120)
 		assert.Equal(t, moreInfoStyle.GetWidth(), 192)
 	})
 
+}
+
+func TestMainModelUpdate(t *testing.T) {
+	api := dockercmd.MockApi{}
+
+	containers := []types.Container{
+		{
+			Names:      []string{"a"},
+			ID:         "1",
+			SizeRw:     1e+9,
+			SizeRootFs: 2e+9,
+			State:      "running",
+			Status:     "",
+		},
+	}
+
+	api.SetMockContainers(containers)
+
+	mockcli := dockercmd.NewMockCli(&api)
+
+	CONTAINERS = 0
+	model := MainModel{
+		dockerClient: mockcli,
+		activeTab:    0,
+		TabContent: []listModel{
+			InitList(0),
+		},
+	}
+
+	//model.windowTooSmall should be true if height < 25 or width < 65
+	t.Run("Assert Window too small with small height", func(t *testing.T) {
+		temp, _ := model.Update(tea.WindowSizeMsg{
+			Width:  100,
+			Height: 24,
+		})
+
+		model = temp.(MainModel)
+
+		assert.Check(t, model.windowTooSmall)
+	})
+
+	t.Run("Assert Window too small with small width", func(t *testing.T) {
+		temp, _ := model.Update(tea.WindowSizeMsg{
+			Width:  64,
+			Height: 100,
+		})
+
+		model = temp.(MainModel)
+
+		assert.Check(t, model.windowTooSmall)
+	})
+
+	// if msg.Height <= 31 || msg.Width < 105 {
+	t.Run("Assert displayInfoBox with small width", func(t *testing.T) {
+		temp, _ := model.Update(tea.WindowSizeMsg{
+			Width:  104,
+			Height: 100,
+		})
+
+		model = temp.(MainModel)
+
+		assert.Check(t, !model.displayInfoBox)
+	})
+
+	t.Run("Assert displayInfoBox with small height", func(t *testing.T) {
+		temp, _ := model.Update(tea.WindowSizeMsg{
+			Width:  105,
+			Height: 31,
+		})
+
+		model = temp.(MainModel)
+
+		assert.Check(t, !model.displayInfoBox)
+	})
 }

@@ -3,7 +3,6 @@ package tui
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -25,7 +24,7 @@ import (
 
 // dimension ratios for infobox
 const infoBoxWidthRatio = 0.55
-const infoBoxHeightRatio = 0.65
+const infoBoxHeightRatio = 0.6
 
 type tabId int
 type TickMsg time.Time
@@ -181,21 +180,21 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, doUpdateObjectsTick())
 
 	case tea.WindowSizeMsg:
-		log.Println(msg.Width, msg.Height)
-		// if window is less than (33, 101) and do not show infobox
-		// 104
-		if msg.Height < 20 || msg.Width < 105 {
+		// show windowtoosmallModel if window dimentions are too small
+		if msg.Height < 25 || msg.Width < 65 {
+			m.windowTooSmall = true
+			temp, _ := m.windowtoosmallModel.Update(msg)
+			m.windowtoosmallModel = temp.(WindowTooSmallModel)
+		} else {
+			m.windowTooSmall = false
+		}
+
+		// toggle info box if window size goes under a certain threshold
+		if msg.Height <= 31 || msg.Width < 105 {
 			m.displayInfoBox = false
 			listWidthRatio = listWidthRatioWithOutInfoBox
-			// m.helpGen.ShowAll = true
-			// m.navKeymap.ShowAll = true
-			// m.windowTooSmall = true
-			// temp, _ := m.windowtoosmallModel.Update(msg)
-			// m.windowtoosmallModel = temp.(WindowTooSmallModel)
 		} else {
 			listWidthRatio = listWidthRatioWithInfoBox
-			// m.navKeymap.ShowAll = false
-			// m.helpGen.ShowAll = false
 			m.displayInfoBox = true
 		}
 
@@ -214,7 +213,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		moreInfoStyle = moreInfoStyle.Width(int(infoBoxWidthRatio * float64(m.width)))
 		moreInfoStyle = moreInfoStyle.Height(int(infoBoxHeightRatio * float64(m.height)))
 
-		m.helpGen.Width = msg.Width
+		m.helpGen.Width = msg.Width - 20
+		m.navKeymap.Width = msg.Width - 20
 
 		// change list dimensions when window size changes
 		// TODO: change width
@@ -708,7 +708,7 @@ func (m MainModel) View() string {
 	tabSpecificKeyBinds = AlignHelpText(tabSpecificKeyBinds)
 
 	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabSpecificKeyBinds)
-	help = lipgloss.PlaceVertical(4, lipgloss.Bottom, help)
+	help = lipgloss.PlaceVertical(5, lipgloss.Bottom, help)
 	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, help)
 	body_with_info = windowStyle.Render(body_with_help)
 
