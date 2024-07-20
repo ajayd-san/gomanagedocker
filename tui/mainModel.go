@@ -3,7 +3,6 @@ package tui
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -340,7 +339,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.dockerClient.ToggleContainerListAll()
 
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
-					log.Println("s pressed")
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerId := curItem.(dockerRes).getId()
@@ -367,7 +365,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ContainerKeymap.Restart):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						log.Println("in restart")
 						containerId := curItem.(dockerRes).getId()
 						err := m.dockerClient.RestartContainer(containerId)
 
@@ -453,7 +450,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if m.activeTab == VOLUMES {
 				switch {
 				case key.Matches(msg, VolumeKeymap.Prune):
-					log.Println("Volume prune called")
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						volumeId := curItem.(dockerRes).getId()
@@ -463,7 +459,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 				case key.Matches(msg, VolumeKeymap.Delete):
-					log.Println("volume delete called")
 
 					curItem := m.getSelectedItem()
 
@@ -492,7 +487,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		dialogRes := msg
 		switch dialogRes.Kind {
 		case dialogRemoveContainer:
-			log.Println("remove container instruction received")
 			userChoice := dialogRes.UserChoices
 
 			opts := container.RemoveOptions{
@@ -503,9 +497,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			containerId := dialogRes.UserStorage["ID"]
 			if containerId != "" {
-				log.Println("removing container: ", dialogRes.UserStorage["ID"])
 				err := m.dockerClient.DeleteContainer(containerId, opts)
-				log.Println("container delete")
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
@@ -513,17 +505,12 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case dialogPruneContainers:
-			log.Println("prune containers called")
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-				log.Println("prune containers confirmed")
-
 				// prune containers on a separate goroutine, since UI gets stuck otherwise(since this may take sometime)
 				go func() {
-					report, err := m.dockerClient.PruneContainers()
-
-					log.Println(report)
+					_, err := m.dockerClient.PruneContainers()
 
 					if err != nil {
 						m.possibleLongRunningOpErrorChan <- err
@@ -532,17 +519,13 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case dialogPruneImages:
-			log.Println("prune images called")
-
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
 				// run on a different go routine, same reason as above (for Prune containers)
 				go func() {
-					report, err := m.dockerClient.PruneImages()
-
+					_, err := m.dockerClient.PruneImages()
 					// TODO: show report on screen
-					log.Println("prune images report", report)
 
 					if err != nil {
 						m.possibleLongRunningOpErrorChan <- err
@@ -551,17 +534,12 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case dialogPruneVolumes:
-			log.Println("prune volumes called")
-
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
 				// same reason as above, again
 				go func() {
-					report, err := m.dockerClient.PruneVolumes()
-
-					log.Println(report)
-
+					_, err := m.dockerClient.PruneVolumes()
 					if err != nil {
 						m.possibleLongRunningOpErrorChan <- err
 					}
@@ -569,7 +547,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case dialogRemoveVolumes:
-			log.Println("remove volume called 2")
 			userChoice := dialogRes.UserChoices
 
 			volumeId := dialogRes.UserStorage["ID"]
@@ -584,7 +561,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case dialogRemoveImage:
-			log.Println("remove image instruction received")
 			userChoice := dialogRes.UserChoices
 
 			imageId := dialogRes.UserStorage["ID"]

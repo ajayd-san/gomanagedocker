@@ -11,6 +11,7 @@ Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go a
 3. [Configuration](#configuration)
 4. [Roadmap](#roadmap)
 5. [Found an issue?](#found-an-issue-)
+6. [Contributing](#contributing)
 
 ## Install Instructions
 
@@ -113,5 +114,11 @@ config:
 ## Found an issue ?
 
 Feel free to open a new issue, I will take a look ASAP.
+
+## Contributing
+
+Please refer [CONTRIBUTING.md](./CONTRIBUTING.md) for more info. 
+
+## Thanks!!
 
 ![image](https://github.com/ajayd-san/gomanagedocker/assets/54715852/61be1ce3-c176-4392-820d-d0e94650ef01)
