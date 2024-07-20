@@ -49,10 +49,14 @@ type imageItem struct {
 }
 
 func makeImageItems(dockerlist []image.Summary) []dockerRes {
-	res := make([]dockerRes, len(dockerlist))
+	res := make([]dockerRes, 0)
 
 	for i := range dockerlist {
-		res[i] = imageItem{Summary: dockerlist[i]}
+		if len(dockerlist[i].RepoTags) == 0 {
+			continue
+		}
+
+		res = append(res, imageItem{Summary: dockerlist[i]})
 	}
 
 	return res
@@ -140,6 +144,7 @@ func (c containerItem) getState() string {
 
 // INFO: impl list.Item Interface
 func (i containerItem) Title() string { return i.getName() }
+
 func (i containerItem) Description() string {
 
 	id := i.getId()
@@ -193,7 +198,8 @@ func (v VolumeItem) getSize() float64 {
 	return float64(v.UsageData.Size)
 }
 
-func (i VolumeItem) Title() string       { return i.getName() }
+func (i VolumeItem) Title() string { return i.getName() }
+
 func (i VolumeItem) Description() string { return "" }
 
 func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
@@ -225,6 +231,10 @@ func makeDescriptionString(str1, str2 string, offset int) string {
 // This function takes in names associated with objects (e.g: RepoTags in case of Image)
 // and concatenates into a string depending on the width of the list
 func transformListNames(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+
 	runningLength := 0
 	var maxindex int
 	for index, name := range names {
@@ -232,7 +242,7 @@ func transformListNames(names []string) string {
 		if runningLength > listContainer.GetWidth()-7 {
 			break
 		}
-		if !(index == len(names)-1) {
+		if index != len(names)-1 {
 			runningLength += 2 // +2 cuz we also append ", " after each element
 		}
 		maxindex = index
