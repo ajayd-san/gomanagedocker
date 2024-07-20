@@ -49,10 +49,14 @@ type imageItem struct {
 }
 
 func makeImageItems(dockerlist []image.Summary) []dockerRes {
-	res := make([]dockerRes, len(dockerlist))
+	res := make([]dockerRes, 0)
 
 	for i := range dockerlist {
-		res[i] = imageItem{Summary: dockerlist[i]}
+		if len(dockerlist[i].RepoTags) == 0 {
+			continue
+		}
+
+		res = append(res, imageItem{Summary: dockerlist[i]})
 	}
 
 	return res
@@ -140,6 +144,7 @@ func (c containerItem) getState() string {
 
 // INFO: impl list.Item Interface
 func (i containerItem) Title() string { return i.getName() }
+
 func (i containerItem) Description() string {
 
 	id := i.getId()
@@ -193,7 +198,8 @@ func (v VolumeItem) getSize() float64 {
 	return float64(v.UsageData.Size)
 }
 
-func (i VolumeItem) Title() string       { return i.getName() }
+func (i VolumeItem) Title() string { return i.getName() }
+
 func (i VolumeItem) Description() string { return "" }
 
 func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {

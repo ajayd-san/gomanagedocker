@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	teadialog "github.com/ajayd-san/teaDialog"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -21,15 +20,21 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"golang.design/x/clipboard"
+
+	"github.com/ajayd-san/gomanagedocker/dockercmd"
 )
 
 // dimension ratios for infobox
 const infoBoxWidthRatio = 0.55
+
 const infoBoxHeightRatio = 0.65
 
 type tabId int
+
 type TickMsg time.Time
+
 type preloadObjects int
+
 type preloadSizeMap struct{}
 
 type ContainerSize struct {
@@ -335,47 +340,22 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 			} else if m.activeTab == CONTAINERS {
+				// handles an action as background non-blocking task
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
 
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 					log.Println("s pressed")
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.ToggleStartStopContainer(containerId)
+					go m.handleBackground(m.dockerClient.ToggleStartStopContainer)
 
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-					}
 				case key.Matches(msg, ContainerKeymap.TogglePause):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
+					go m.handleBackground(m.dockerClient.RestartContainer)
 
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.TogglePauseResume(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-					}
 				case key.Matches(msg, ContainerKeymap.Restart):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						log.Println("in restart")
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.RestartContainer(containerId)
+					log.Println("in restart")
+					go m.handleBackground(m.dockerClient.RestartContainer)
 
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-					}
 				case key.Matches(msg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if containerInfo, ok := curItem.(dockerRes); ok {
@@ -386,19 +366,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
-					curItem := m.getSelectedItem()
-					if containerInfo, ok := curItem.(dockerRes); ok {
-						err := m.dockerClient.DeleteContainer(containerInfo.getId(), container.RemoveOptions{
+					deleteForceWithOptions := func(containerID string) error {
+						return m.dockerClient.DeleteContainer(containerID, container.RemoveOptions{
 							RemoveVolumes: false,
 							RemoveLinks:   false,
 							Force:         true,
 						})
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
 					}
+
+					go m.handleBackground(deleteForceWithOptions)
 
 				case key.Matches(msg, ContainerKeymap.Prune):
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))
@@ -849,6 +825,15 @@ func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 			rootFs: info.SizeRootFs,
 		}
 	}
+}
+
+func (m MainModel) handleBackground(operation func(string) error) {
+	curItem := m.getSelectedItem()
+	if curItem == nil {
+		return
+	}
+	containerId := curItem.(dockerRes).getId()
+	m.possibleLongRunningOpErrorChan <- operation(containerId)
 }
 
 func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTracker *ContainerSizeManager) {
