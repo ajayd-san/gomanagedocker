@@ -183,14 +183,17 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		log.Println(msg.Width, msg.Height)
 		// if window is less than (33, 101) and do not show infobox
-		if msg.Height < 20 || msg.Width < 101 {
+		// 104
+		if msg.Height < 20 || msg.Width < 105 {
 			m.displayInfoBox = false
+			listWidthRatio = listWidthRatioWithOutInfoBox
 			// m.helpGen.ShowAll = true
 			// m.navKeymap.ShowAll = true
 			// m.windowTooSmall = true
 			// temp, _ := m.windowtoosmallModel.Update(msg)
 			// m.windowtoosmallModel = temp.(WindowTooSmallModel)
 		} else {
+			listWidthRatio = listWidthRatioWithInfoBox
 			// m.navKeymap.ShowAll = false
 			// m.helpGen.ShowAll = false
 			m.displayInfoBox = true

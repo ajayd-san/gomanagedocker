@@ -9,9 +9,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const (
-	// list always takes up 30% of the screen
-	listWidthRatio float32 = 0.3
+const listWidthRatioWithInfoBox = 0.3
+const listWidthRatioWithOutInfoBox = 0.85
+
+var (
+	// list always takes up 30% of the screen by default
+	listWidthRatio float32 = listWidthRatioWithInfoBox
 	// duration of the list status message on screen, default: 2s
 	statusMessageDuration time.Duration = 2 * time.Second
 )
