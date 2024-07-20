@@ -213,7 +213,7 @@ var NavKeymap = navigationKeymap{
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c", "q"),
-		key.WithHelp("ctrl+c/q", "quit"),
+		key.WithHelp("q", "quit"),
 	),
 	NextTab: key.NewBinding(
 		key.WithKeys("right", "l", "tab"),
@@ -221,7 +221,7 @@ var NavKeymap = navigationKeymap{
 	),
 	PrevTab: key.NewBinding(
 		key.WithKeys("left", "h", "shift+tab"),
-		key.WithHelp("<-/h/shift+tab", "prev"),
+		key.WithHelp("<-/h/S-tab", "prev"),
 	),
 	NextItem: key.NewBinding(
 		key.WithKeys("down", "j"),
@@ -242,7 +242,7 @@ var NavKeymap = navigationKeymap{
 }
 
 func (m navigationKeymap) FullHelp() [][]key.Binding {
-	allBindings := []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Enter, m.Quit}
+	allBindings := []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Quit}
 	return packKeybindings(allBindings, KeymapAvailableWidth)
 }
 
