@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types/image"
 	"gotest.tools/v3/assert"
 )
 
@@ -15,6 +16,31 @@ func TestMakeDescriptionString(t *testing.T) {
 	want := str1 + strings.Repeat(" ", listContainerWidth-len(str1)-len(str2)-3) + str2
 
 	assert.Equal(t, got, want)
+}
+
+func TestMakeImageItems(t *testing.T) {
+	dockerList := []image.Summary{
+		{
+			ID:       "#1",
+			RepoTags: []string{"latest", "tag1", "tag2"},
+		}, {
+			ID:       "#2",
+			RepoTags: []string{},
+		},
+	}
+
+	t.Run("Should only return non dangling items", func(t *testing.T) {
+		// for dangling items the repo tags would be an empty slice
+		got := makeImageItems(dockerList)
+		assert.Equal(t, len(got), 1)
+
+		for _, item := range got {
+			imgItem, ok := item.(imageItem)
+			assert.Equal(t, ok, true)
+			assert.Assert(t, len(imgItem.RepoTags) != 0)
+		}
+	})
+
 }
 
 func TestTransformListNames(t *testing.T) {
@@ -56,5 +82,17 @@ func TestTransformListNames(t *testing.T) {
 		got := transformListNames(names)
 		want := "Zenitsu, best"
 		assert.Equal(t, got, want)
+	})
+
+	t.Run("With empty list", func(t *testing.T) {
+		defer func() {
+			if recover() != nil {
+				t.Error("This function should not panic")
+			}
+		}()
+		listContainer = listContainer.Width(20)
+		names := make([]string, 0)
+		// should not panic
+		transformListNames(names)
 	})
 }
