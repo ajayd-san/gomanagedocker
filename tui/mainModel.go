@@ -73,6 +73,9 @@ type MainModel struct {
 	imageIdToNameMap map[string]string
 	// we use this error channel to report error for possibly long running tasks, like pruning
 	possibleLongRunningOpErrorChan chan error
+
+	// Channels for sending and receiving notifications, we use these to update list status messages
+	notificationChan chan notificationMetadata
 }
 
 // this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
@@ -87,6 +90,7 @@ func (m MainModel) Init() tea.Cmd {
 		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s\n", err.Error())
 		os.Exit(1)
 	}
+
 	// initialize clipboard
 	// TODO: handle error
 	clipboard.Init()
@@ -128,6 +132,7 @@ func NewModel() MainModel {
 			mu:      &sync.Mutex{},
 		},
 		imageIdToNameMap: make(map[string]string),
+		notificationChan: make(chan notificationMetadata, 10),
 	}
 }
 
@@ -135,6 +140,17 @@ func NewModel() MainModel {
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmds []tea.Cmd
+
+notificationLoop:
+	for {
+		select {
+		case notifcation := <-m.notificationChan:
+			cmd := (&m.TabContent[notifcation.listId].list).NewStatusMessage(notifcation.msg)
+			cmds = append(cmds, cmd)
+		default:
+			break notificationLoop
+		}
+	}
 
 	//check if error exists on error channel, if yes show the error in new dialog
 	select {
@@ -263,6 +279,11 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
 							}
+
+							// send notification
+							imageId = strings.TrimPrefix(imageId, "sha256:")
+							notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
+							m.notificationChan <- NewNotification(m.activeTab, notificationMsg)
 						}()
 					}
 				case key.Matches(msg, ImageKeymap.Delete):
@@ -280,10 +301,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
+						imageId := curItem.(dockerRes).getId()
 
-						if containerId != "" {
-							err := m.dockerClient.DeleteImage(containerId, image.RemoveOptions{
+						if imageId != "" {
+							err := m.dockerClient.DeleteImage(imageId, image.RemoveOptions{
 								Force:         true,
 								PruneChildren: false,
 							})
@@ -292,6 +313,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 								m.showDialog = true
 							}
+							// send notification
+							imageId = strings.TrimPrefix(imageId, "sha256:")
+							msg := fmt.Sprintf("Deleted %s", imageId[:8])
+							m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 						}
 					}
 
@@ -334,6 +359,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						copyToClipboard(id)
 						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
 						cmds = append(cmds, timeout_cmd)
+
+						// send notification
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("ID Copied"))
 					}
 
 				case key.Matches(msg, ImageKeymap.RunAndExec):
@@ -370,10 +398,13 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
 					m.dockerClient.ToggleContainerListAll()
 
+					// m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(""))
+
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
+						containerInfo := curItem.(containerItem)
+						containerId := containerInfo.getId()
 						err := m.dockerClient.ToggleStartStopContainer(containerId)
 
 						if err != nil {
@@ -381,19 +412,41 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.showDialog = true
 						}
 
+						// send notification
+						msg := ""
+						if containerInfo.getState() == "running" {
+							msg = fmt.Sprintf("Stopped %s", containerId[:8])
+						} else {
+							msg = fmt.Sprintf("Started %s", containerId[:8])
+						}
+
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 					}
+
 				case key.Matches(msg, ContainerKeymap.TogglePause):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 
-						containerId := curItem.(dockerRes).getId()
+						containerInfo := curItem.(containerItem)
+						containerId := containerInfo.getId()
 						err := m.dockerClient.TogglePauseResume(containerId)
 
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
 						}
+
+						// send notification
+						msg := ""
+						if containerInfo.getState() == "running" {
+							msg = "Paused " + containerId[:8]
+						} else {
+							msg = "Resumed " + containerId[:8]
+						}
+
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 					}
+
 				case key.Matches(msg, ContainerKeymap.Restart):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
@@ -404,7 +457,11 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
 						}
+
+						msg := fmt.Sprintf("Restarted %s", containerId[:8])
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 					}
+
 				case key.Matches(msg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if containerInfo, ok := curItem.(dockerRes); ok {
@@ -427,6 +484,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
 						}
+
+						msg := fmt.Sprintf("Deleted %s", containerInfo.getId()[:8])
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
@@ -474,8 +534,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						id := dres.getId()
 						copyToClipboard(id)
 
-						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
-						cmds = append(cmds, timeout_cmd)
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Copied ID"))
 					}
 				}
 
@@ -508,8 +567,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						dres := currentItem.(dockerRes)
 						name := dres.getId()
 						copyToClipboard(name)
-						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
-						cmds = append(cmds, timeout_cmd)
+						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Copied ID"))
 					}
 				}
 			}
@@ -534,6 +592,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
 				}
+
+				msg := fmt.Sprintf("Deleted %s", containerId[:8])
+				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 			}
 
 		case dialogPruneContainers:
@@ -542,11 +603,16 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if userChoice["confirm"] == "Yes" {
 				// prune containers on a separate goroutine, since UI gets stuck otherwise(since this may take sometime)
 				go func() {
-					_, err := m.dockerClient.PruneContainers()
+					report, err := m.dockerClient.PruneContainers()
 
 					if err != nil {
 						m.possibleLongRunningOpErrorChan <- err
+						return
 					}
+
+					// send notification
+					msg := fmt.Sprintf("Pruned %d containers", len(report.ContainersDeleted))
+					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 				}()
 			}
 
@@ -556,12 +622,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if userChoice["confirm"] == "Yes" {
 				// run on a different go routine, same reason as above (for Prune containers)
 				go func() {
-					_, err := m.dockerClient.PruneImages()
-					// TODO: show report on screen
+					report, err := m.dockerClient.PruneImages()
 
 					if err != nil {
 						m.possibleLongRunningOpErrorChan <- err
+						return
 					}
+
+					msg := fmt.Sprintf("Pruned %d images", len(report.ImagesDeleted))
+					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 				}()
 			}
 
@@ -571,10 +640,14 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if userChoice["confirm"] == "Yes" {
 				// same reason as above, again
 				go func() {
-					_, err := m.dockerClient.PruneVolumes()
+					report, err := m.dockerClient.PruneVolumes()
 					if err != nil {
 						m.possibleLongRunningOpErrorChan <- err
+						return
 					}
+
+					msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
+					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 				}()
 			}
 
@@ -590,6 +663,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
 				}
+
+				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Deleted"))
 			}
 
 		case dialogRemoveImage:
@@ -608,6 +683,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
 				}
+				imageId = strings.TrimPrefix(imageId, "sha256:")
+				msg := fmt.Sprintf("Deleted %s", imageId[:8])
+				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 			}
 		}
 
