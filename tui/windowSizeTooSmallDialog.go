@@ -25,7 +25,12 @@ func (m WindowTooSmallModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m WindowTooSmallModel) View() string {
-	return windowTooSmallStyle.Render(fmt.Sprintf("Window size too small (%d x %d)\n\nConsider going fullscreen for optimal experience.", m.height, m.width))
+	return windowTooSmallStyle.Render(fmt.Sprintf(
+		"Window size too small (%d x %d)\n\n"+
+			"Minimum dimensions needed - Width: 65, Height: 25\n\n"+
+			"Consider going fullscreen for optimal experience.",
+		m.width, m.height,
+	))
 }
 
 func MakeNewWindowTooSmallModel() WindowTooSmallModel {
