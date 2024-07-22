@@ -13,6 +13,7 @@ const (
 	dialogPruneVolumes
 	dialogRemoveVolumes
 	dialogImageScout
+	dialogImageBuild
 )
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
@@ -81,4 +82,14 @@ func getPruneVolumesDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	return teadialog.InitDialogWithPrompt("Prune Containers: ", prompts, dialogPruneVolumes, storage)
+}
+
+func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		// teadialog.NewFilePicker("browser"),
+		// NewFilePicker("filepicker"),
+		teadialog.MakeTextInputPrompt("image_tags", "Image Tags:"),
+	}
+
+	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
 }

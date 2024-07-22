@@ -21,6 +21,7 @@ type navigationKeymap struct {
 type imgKeymap struct {
 	Run         key.Binding
 	Rename      key.Binding
+	Build       key.Binding
 	Scout       key.Binding
 	Prune       key.Binding
 	Delete      key.Binding
@@ -55,6 +56,10 @@ var ImageKeymap = imgKeymap{
 	Rename: key.NewBinding(
 		key.WithKeys("R"),
 		key.WithHelp("r", "rename"),
+	),
+	Build: key.NewBinding(
+		key.WithKeys("b"),
+		key.WithHelp("b", "build"),
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("d"),

@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -174,7 +176,8 @@ notificationLoop:
 			m.activeDialog = d
 		}
 
-		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
+		// if keymsg is <Esc> then close dialog
+		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Back) {
 			if m.dialogOpCancel != nil {
 				m.dialogOpCancel()
 				// this might be required, in the future
@@ -391,6 +394,10 @@ notificationLoop:
 							return nil
 						}))
 					}
+				case key.Matches(msg, ImageKeymap.Build):
+					m.activeDialog = getBuildImageDialog(make(map[string]string))
+					m.showDialog = true
+					cmds = append(cmds, m.activeDialog.Init())
 				}
 
 			} else if m.activeTab == CONTAINERS {
@@ -573,8 +580,11 @@ notificationLoop:
 			}
 
 		}
-	case teadialog.DialogSelectionResult:
-		dialogRes := msg
+
+	case teadialog.CloseDialog:
+		m.showDialog = false
+		dialogRes := m.activeDialog.(teadialog.Dialog).GetUserChoices()
+
 		switch dialogRes.Kind {
 		case dialogRemoveContainer:
 			userChoice := dialogRes.UserChoices
@@ -686,6 +696,29 @@ notificationLoop:
 				imageId = strings.TrimPrefix(imageId, "sha256:")
 				msg := fmt.Sprintf("Deleted %s", imageId[:8])
 				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+			}
+
+		case dialogImageBuild:
+			userChoice := dialogRes.UserChoices
+			tagsStr := userChoice["image_tags"].(string)
+			tags := strings.Split(tagsStr, ",")
+
+			buildContext, _ := os.Getwd()
+			options := types.ImageBuildOptions{
+				Tags:       tags,
+				Dockerfile: "Dockerfile",
+			}
+			res, err := m.dockerClient.BuildImage(buildContext, options)
+
+			if err != nil {
+				m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
+				m.showDialog = true
+				break
+			}
+			// no-op, must wait till this finishes
+			reader := bufio.NewScanner(res.Body)
+			for reader.Scan() {
+				log.Println(reader.Text())
 			}
 		}
 

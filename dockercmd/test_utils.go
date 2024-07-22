@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"slices"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -226,6 +228,19 @@ func (mo *MockApi) VolumesPrune(ctx context.Context, pruneFilter filters.Args) (
 	panic("not implemented") // TODO: Implement
 }
 
+func (mo *MockApi) ImageBuild(ctx context.Context, context io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error) {
+	newImg := dimage.Summary{
+		ID:       randStr(10),
+		RepoTags: options.Tags,
+	}
+
+	mo.mockImages = append(mo.mockImages, newImg)
+	return types.ImageBuildResponse{
+		Body:   io.NopCloser(strings.NewReader("built image!")),
+		OSType: "linux",
+	}, nil
+}
+
 func (m *MockApi) ImageList(ctx context.Context, options dimage.ListOptions) ([]dimage.Summary, error) {
 	return m.mockImages, nil
 }
@@ -267,4 +282,13 @@ func (te *MockApi) ImagesPrune(ctx context.Context, pruneFilter filters.Args) (t
 
 	return types.ImagesPruneReport{}, nil
 
+}
+
+// util
+func randStr(length uint) string {
+	bytes := make([]byte, int(length))
+	for i := uint(0); i < length; i++ {
+		bytes[i] = byte('!' + rand.Intn('~'-'!'))
+	}
+	return string(bytes)
 }
