@@ -2,6 +2,7 @@ package tui
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -320,4 +321,15 @@ func TestRunBackground(t *testing.T) {
 			t.Errorf("Should recieve a notification")
 		}
 	})
+}
+
+func TestGetRegexMatch(t *testing.T) {
+
+	reg := regexp.MustCompile(`Step.*:\s(.*)`)
+	str := "Step 4/4 : RUN echo \"alpine\""
+
+	ok, matches := getRegexMatch(reg, str)
+	assert.Assert(t, ok)
+	assert.DeepEqual(t, matches, []string{"Step 4/4 : RUN echo \"alpine\"", "RUN echo \"alpine\""})
+
 }

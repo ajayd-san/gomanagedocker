@@ -1,12 +1,15 @@
 package tui
 
 import (
-	"bufio"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +23,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
@@ -583,7 +587,14 @@ notificationLoop:
 
 	case teadialog.CloseDialog:
 		m.showDialog = false
-		dialogRes := m.activeDialog.(teadialog.Dialog).GetUserChoices()
+		dialog, ok := m.activeDialog.(teadialog.Dialog)
+
+		// if the m.active dialog is not a `teadialog.Dialog` (i.e could be `teadialog.ErrorDialog`), then do not proceed forward.
+		if !ok {
+			break
+		}
+
+		dialogRes := dialog.GetUserChoices()
 
 		switch dialogRes.Kind {
 		case dialogRemoveContainer:
@@ -708,18 +719,46 @@ notificationLoop:
 				Tags:       tags,
 				Dockerfile: "Dockerfile",
 			}
-			res, err := m.dockerClient.BuildImage(buildContext, options)
 
-			if err != nil {
-				m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-				m.showDialog = true
-				break
+			loadingModel := NewLoadingModel()
+			buildInfoCard := getBuildProgress(loadingModel)
+			m.activeDialog = buildInfoCard
+			m.showDialog = true
+
+			cmds = append(cmds, buildInfoCard.Init())
+
+			op := func() error {
+				res, err := m.dockerClient.BuildImage(buildContext, options)
+
+				if err != nil {
+					return err
+				}
+				// no-op, must wait till this finishes
+				// reader := bufio.NewScanner(res.Body)
+				decoder := json.NewDecoder(res.Body)
+
+				reg := regexp.MustCompile(`Step.*:\s(.*)`)
+
+				var status jsonmessage.JSONMessage
+				for {
+					if err := decoder.Decode(&status); errors.Is(err, io.EOF) {
+						break
+					}
+
+					if ok, matches := getRegexMatch(reg, status.Stream); ok {
+						log.Println(matches)
+						loadingModel.progressChan <- UpdateInfo{kind: UTInProgress, msg: matches[1]}
+					}
+
+				}
+				loadingModel.progressChan <- UpdateInfo{kind: UTLoaded, msg: "Build Complete!"}
+
+				return nil
 			}
-			// no-op, must wait till this finishes
-			reader := bufio.NewScanner(res.Body)
-			for reader.Scan() {
-				log.Println(reader.Text())
-			}
+
+			notif := NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
+
+			go m.runBackground(op, &notif)
 		}
 
 	}
@@ -1014,4 +1053,8 @@ func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTra
 		rootFs: *containerInfo.SizeRootFs,
 	}
 	containerSizeTracker.mu.Unlock()
+}
+
+func getRegexMatch(regex *regexp.Regexp, raw string) (bool, []string) {
+	return regex.MatchString(raw), regex.FindStringSubmatch(raw)
 }

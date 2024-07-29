@@ -14,6 +14,7 @@ const (
 	dialogRemoveVolumes
 	dialogImageScout
 	dialogImageBuild
+	dialogImageBuildProgress
 )
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
@@ -92,4 +93,20 @@ func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
+}
+
+func getBuildProgress(loading loadingModel) buildProgressModel {
+
+	infoCard := teadialog.InitInfoCard(
+		"Image Scout",
+		"",
+		dialogImageBuildProgress,
+		teadialog.WithMinHeight(8),
+		teadialog.WithMinWidth(100),
+	)
+
+	return buildProgressModel{
+		loading: loading,
+		inner:   &infoCard,
+	}
 }
