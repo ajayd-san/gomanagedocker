@@ -736,6 +736,17 @@ notificationLoop:
 	return m, tea.Batch(cmds...)
 }
 
+func (m MainModel) runBackground(op func() error, notif *notificationMetadata) {
+	if err := op(); err != nil {
+		m.possibleLongRunningOpErrorChan <- err
+		return
+	}
+
+	if notif != nil {
+		m.notificationChan <- *notif
+	}
+}
+
 func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	border := lipgloss.RoundedBorder()
 	border.BottomLeft = left
