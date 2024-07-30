@@ -1,12 +1,13 @@
 package tui
 
 import (
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type buildProgressModel struct {
-	loading loadingModel
+	loading components.LoadingModel
 	inner   *teadialog.InfoCard
 }
 
@@ -16,9 +17,9 @@ func (m buildProgressModel) Init() tea.Cmd {
 
 func (m buildProgressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd2 tea.Cmd
-	if !m.loading.loaded {
+	if !m.loading.Loaded {
 		spinner, cmd := m.loading.Update(msg)
-		m.loading = spinner.(loadingModel)
+		m.loading = spinner.(components.LoadingModel)
 		m.inner.Message = m.loading.View()
 		cmd2 = cmd
 	}

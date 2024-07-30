@@ -27,6 +27,7 @@ import (
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
 // dimension ratios for infobox
@@ -720,7 +721,7 @@ notificationLoop:
 				Dockerfile: "Dockerfile",
 			}
 
-			loadingModel := NewLoadingModel()
+			loadingModel := components.NewLoadingModel()
 			buildInfoCard := getBuildProgress(loadingModel)
 			m.activeDialog = buildInfoCard
 			m.showDialog = true
@@ -747,11 +748,11 @@ notificationLoop:
 
 					if ok, matches := getRegexMatch(reg, status.Stream); ok {
 						log.Println(matches)
-						loadingModel.progressChan <- UpdateInfo{kind: UTInProgress, msg: matches[1]}
+						loadingModel.ProgressChan <- components.UpdateInfo{Kind: components.UTInProgress, Msg: matches[1]}
 					}
 
 				}
-				loadingModel.progressChan <- UpdateInfo{kind: UTLoaded, msg: "Build Complete!"}
+				loadingModel.ProgressChan <- components.UpdateInfo{Kind: components.UTLoaded, Msg: "Build Complete!"}
 
 				return nil
 			}

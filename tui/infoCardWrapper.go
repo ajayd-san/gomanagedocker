@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
 const customLoadingMessage = "Loading (this may take some time)..."
@@ -15,7 +16,7 @@ const customLoadingMessage = "Loading (this may take some time)..."
 type InfoCardWrapperModel struct {
 	tableChan  chan *TableModel
 	loaded     bool
-	spinner    SpinnerModel
+	spinner    components.SpinnerModel
 	tableModel *TableModel
 	inner      *teadialog.InfoCard
 	f          func() (*dockercmd.ScoutData, error)
@@ -37,7 +38,7 @@ func (m InfoCardWrapperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd2 tea.Cmd
 	if !m.loaded {
 		spinner, cmd := m.spinner.Update(msg)
-		m.spinner = spinner.(SpinnerModel)
+		m.spinner = spinner.(components.SpinnerModel)
 		m.inner.Message = fmt.Sprintf("%s %s", m.spinner.View(), customLoadingMessage)
 		cmd2 = cmd
 

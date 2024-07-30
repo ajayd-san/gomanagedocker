@@ -1,4 +1,4 @@
-package tui
+package components
 
 import (
 	"fmt"
@@ -7,11 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type loadingModel struct {
+type LoadingModel struct {
 	spinner      SpinnerModel
-	loaded       bool
+	Loaded       bool
 	msg          string
-	progressChan chan UpdateInfo
+	ProgressChan chan UpdateInfo
 	Help         help.Model
 }
 
@@ -23,25 +23,25 @@ const (
 )
 
 type UpdateInfo struct {
-	kind updateType
-	msg  string
+	Kind updateType
+	Msg  string
 }
 
-func (m loadingModel) Init() tea.Cmd {
+func (m LoadingModel) Init() tea.Cmd {
 	return m.spinner.Init()
 }
 
-func (m loadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m LoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	select {
-	case update := <-m.progressChan:
-		if update.kind == UTLoaded {
-			m.loaded = true
+	case update := <-m.ProgressChan:
+		if update.Kind == UTLoaded {
+			m.Loaded = true
 		}
-		m.msg = update.msg
+		m.msg = update.Msg
 	default:
 	}
 
-	if !m.loaded {
+	if !m.Loaded {
 		spinner, cmd := m.spinner.Update(msg)
 		m.spinner = spinner.(SpinnerModel)
 		return m, cmd
@@ -50,14 +50,14 @@ func (m loadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m loadingModel) View() string {
+func (m LoadingModel) View() string {
 	return fmt.Sprintf("%s %s", m.spinner.View(), m.msg)
 }
 
-func NewLoadingModel() loadingModel {
-	return loadingModel{
-		spinner:      initialModel(),
-		progressChan: make(chan UpdateInfo),
+func NewLoadingModel() LoadingModel {
+	return LoadingModel{
+		spinner:      InitialModel(),
+		ProgressChan: make(chan UpdateInfo),
 		Help:         help.Model{},
 	}
 }

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 )
 
@@ -29,7 +30,7 @@ func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapper
 		tableChan: make(chan *TableModel),
 		inner:     &infoCard,
 		f:         f,
-		spinner:   initialModel(),
+		spinner:   components.InitialModel(),
 	}
 }
 
@@ -95,7 +96,7 @@ func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
 	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
 }
 
-func getBuildProgress(loading loadingModel) buildProgressModel {
+func getBuildProgress(loading components.LoadingModel) buildProgressModel {
 
 	infoCard := teadialog.InitInfoCard(
 		"Image Scout",
