@@ -6,10 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -178,6 +176,10 @@ notificationLoop:
 		}
 
 		if d, ok := update.(InfoCardWrapperModel); ok {
+			m.activeDialog = d
+		}
+
+		if d, ok := update.(buildProgressModel); ok {
 			m.activeDialog = d
 		}
 
@@ -721,8 +723,8 @@ notificationLoop:
 				Dockerfile: "Dockerfile",
 			}
 
-			loadingModel := components.NewLoadingModel()
-			buildInfoCard := getBuildProgress(loadingModel)
+			progressModel := components.NewProgressBar()
+			buildInfoCard := getBuildProgress(progressModel)
 			m.activeDialog = buildInfoCard
 			m.showDialog = true
 
@@ -734,25 +736,28 @@ notificationLoop:
 				if err != nil {
 					return err
 				}
-				// no-op, must wait till this finishes
-				// reader := bufio.NewScanner(res.Body)
+
 				decoder := json.NewDecoder(res.Body)
 
-				reg := regexp.MustCompile(`Step.*:\s(.*)`)
-
 				var status jsonmessage.JSONMessage
+
 				for {
 					if err := decoder.Decode(&status); errors.Is(err, io.EOF) {
 						break
 					}
 
-					if ok, matches := getRegexMatch(reg, status.Stream); ok {
-						log.Println(matches)
-						loadingModel.ProgressChan <- components.UpdateInfo{Kind: components.UTInProgress, Msg: matches[1]}
+					if status.Error != nil {
+						return errors.New(status.Error.Message)
 					}
 
+					buildInfoCard.progressChan <- status.Stream
 				}
-				loadingModel.ProgressChan <- components.UpdateInfo{Kind: components.UTLoaded, Msg: "Build Complete!"}
+
+				/*
+					HACK: I add `Step 1/1 : ` becuz we do regex matching in buildProgress.Update to extract current Step
+					and calculate progress bar completion, adding `1/1` will enable the progress bar to show 100%
+				*/
+				buildInfoCard.progressChan <- "Step 1/1 : Build Complete!"
 
 				return nil
 			}
@@ -1054,8 +1059,4 @@ func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTra
 		rootFs: *containerInfo.SizeRootFs,
 	}
 	containerSizeTracker.mu.Unlock()
-}
-
-func getRegexMatch(regex *regexp.Regexp, raw string) (bool, []string) {
-	return regex.MatchString(raw), regex.FindStringSubmatch(raw)
 }

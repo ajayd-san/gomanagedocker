@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"regexp"
+
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
@@ -96,18 +98,22 @@ func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
 	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
 }
 
-func getBuildProgress(loading components.LoadingModel) buildProgressModel {
+func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 
 	infoCard := teadialog.InitInfoCard(
-		"Image Scout",
+		"Image Build",
 		"",
 		dialogImageBuildProgress,
 		teadialog.WithMinHeight(8),
 		teadialog.WithMinWidth(100),
 	)
 
+	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+
 	return buildProgressModel{
-		loading: loading,
-		inner:   &infoCard,
+		progressChan: make(chan string, 10),
+		regex:        reg,
+		progressBar:  progressBar,
+		inner:        &infoCard,
 	}
 }

@@ -90,6 +90,7 @@ var ImageKeymap = imgKeymap{
 func (m imgKeymap) FullHelp() [][]key.Binding {
 	allBindings := []key.Binding{
 		m.Run,
+		m.Build,
 		m.Delete,
 		m.DeleteForce,
 		m.Prune,
