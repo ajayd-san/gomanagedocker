@@ -171,17 +171,7 @@ notificationLoop:
 	if m.showDialog {
 
 		update, cmd := m.activeDialog.Update(msg)
-		if d, ok := update.(teadialog.Dialog); ok {
-			m.activeDialog = d
-		}
-
-		if d, ok := update.(InfoCardWrapperModel); ok {
-			m.activeDialog = d
-		}
-
-		if d, ok := update.(buildProgressModel); ok {
-			m.activeDialog = d
-		}
+		m.activeDialog = update
 
 		// if keymsg is <Esc> then close dialog
 		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Back) {
