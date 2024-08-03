@@ -68,9 +68,15 @@ func (dc DockerClient) PingDocker() error {
 	return err
 }
 
+// used for testing only
 func NewMockCli(cli *MockApi) DockerClient {
 	return DockerClient{
 		cli:               cli,
 		containerListArgs: container.ListOptions{},
 	}
+}
+
+// util
+func (dc DockerClient) GetListOptions() *container.ListOptions {
+	return &dc.containerListArgs
 }
