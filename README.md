@@ -8,10 +8,11 @@ Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go a
 
 1. [Install Instructions](#install-instructions)
 2. [Features](#features)
-3. [Configuration](#configuration)
-4. [Roadmap](#roadmap)
-5. [Found an issue?](#found-an-issue-)
-6. [Contributing](#contributing)
+3. [Keybinds](#keybinds)
+4. [Configuration](#configuration)
+5. [Roadmap](#roadmap)
+6. [Found an issue?](#found-an-issue-)
+7. [Contributing](#contributing)
 
 ## Install Instructions
 
@@ -87,6 +88,51 @@ Now, **goManageDocker 😏!!**
 6. Filter objects with `/`
    
    ![search](vhs/gifs/search.gif)
+
+## Keybinds
+
+### Navigation
+| Operation | Key                                                                 |
+|-----------|---------------------------------------------------------------------|
+| Back      | <kbd>Esc</kbd>                                                      |
+| Quit      | <kbd>Ctrl</kbd> + <kbd>c</kbd> / <kbd>q</kbd>                       |
+| Next Tab  | <kbd>→</kbd> / <kbd>l</kbd> / <kbd>Tab</kbd>                        |
+| Prev Tab  | <kbd>←</kbd> / <kbd>h</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>     |
+| Next Item | <kbd>↓</kbd> / <kbd>j</kbd>                                         |
+| Prev Item | <kbd>↑</kbd> / <kbd>k</kbd>                                         |
+| Next Page | <kbd>[</kbd>                                                        |
+| Prev Page | <kbd>]</kbd>                                                        |
+
+### Image
+| Operation         | Key                                                           |
+|-------------------|---------------------------------------------------------------|
+| Run               | <kbd>r</kbd>                                                  |
+| Scout             | <kbd>s</kbd>                                                  |
+| Prune             | <kbd>p</kbd>                                                  |
+| Delete            | <kbd>d</kbd>                                                  |
+| Delete (Force)    | <kbd>D</kbd>                                                  |
+| Copy ID           | <kbd>c</kbd>                                                  |
+| Run and Exec      | <kbd>x</kbd>                                                  |
+
+### Container
+| Operation         | Key                                                           |
+|-------------------|---------------------------------------------------------------|
+| Toggle List All   | <kbd>a</kbd>                                                  |
+| Toggle Start/Stop | <kbd>s</kbd>                                                  |
+| Toggle Pause      | <kbd>t</kbd>                                                  |
+| Restart           | <kbd>r</kbd>                                                  |
+| Delete            | <kbd>d</kbd>                                                  |
+| Delete (Force)    | <kbd>D</kbd>                                                  |
+| Exec              | <kbd>x</kbd>                                                  |
+| Prune             | <kbd>p</kbd>                                                  |
+| Copy ID           | <kbd>c</kbd>                                                  |
+
+### Volume
+| Operation         | Key                                                           |
+|-------------------|---------------------------------------------------------------|
+| Delete            | <kbd>d</kbd>                                                  |
+| Prune             | <kbd>p</kbd>                                                  |
+| Copy Volume Name  | <kbd>c</kbd>                                                  |
 
 ## Configuration
 
