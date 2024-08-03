@@ -271,21 +271,23 @@ notificationLoop:
 							we run on a different go routine since it may take sometime to run an image(rare case)
 							and we do not want to hang the main thread
 						*/
-						go func() {
+
+						op := func() error {
 							config := container.Config{
 								Image: imageId,
 							}
 							_, err := m.dockerClient.RunImage(config)
-							if err != nil {
-								m.possibleLongRunningOpErrorChan <- err
-							}
+							return err
+						}
 
-							// send notification
-							imageId = strings.TrimPrefix(imageId, "sha256:")
-							notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
-							m.notificationChan <- NewNotification(m.activeTab, notificationMsg)
-						}()
+						// send notification
+						imageId = strings.TrimPrefix(imageId, "sha256:")
+						notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
+
+						notif := NewNotification(m.activeTab, notificationMsg)
+						go m.runBackground(op, &notif)
 					}
+
 				case key.Matches(msg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
@@ -630,18 +632,21 @@ notificationLoop:
 
 			if userChoice["confirm"] == "Yes" {
 				// prune containers on a separate goroutine, since UI gets stuck otherwise(since this may take sometime)
-				go func() {
+				op := func() error {
 					report, err := m.dockerClient.PruneContainers()
 
 					if err != nil {
-						m.possibleLongRunningOpErrorChan <- err
-						return
+						return err
 					}
 
-					// send notification
+					// we send notification directly from go routine since the main goroutine does not have access to `report`
 					msg := fmt.Sprintf("Pruned %d containers", len(report.ContainersDeleted))
 					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-				}()
+
+					return nil
+				}
+
+				go m.runBackground(op, nil)
 			}
 
 		case dialogPruneImages:
@@ -649,17 +654,19 @@ notificationLoop:
 
 			if userChoice["confirm"] == "Yes" {
 				// run on a different go routine, same reason as above (for Prune containers)
-				go func() {
+				op := func() error {
 					report, err := m.dockerClient.PruneImages()
 
 					if err != nil {
-						m.possibleLongRunningOpErrorChan <- err
-						return
+						return err
 					}
 
 					msg := fmt.Sprintf("Pruned %d images", len(report.ImagesDeleted))
 					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-				}()
+					return nil
+				}
+
+				go m.runBackground(op, nil)
 			}
 
 		case dialogPruneVolumes:
@@ -667,16 +674,18 @@ notificationLoop:
 
 			if userChoice["confirm"] == "Yes" {
 				// same reason as above, again
-				go func() {
+				op := func() error {
 					report, err := m.dockerClient.PruneVolumes()
 					if err != nil {
-						m.possibleLongRunningOpErrorChan <- err
-						return
+						return err
 					}
 
 					msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
 					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-				}()
+					return nil
+				}
+
+				go m.runBackground(op, nil)
 			}
 
 		case dialogRemoveVolumes:
@@ -761,7 +770,7 @@ notificationLoop:
 
 				/*
 					HACK: I add `Step 2/1 : ` becuz we do regex matching in buildProgress.Update to extract current Step
-					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image 
+					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image
 					is done building
 				*/
 				buildInfoCard.progressChan <- "Step 2/1 : Build Complete!"
