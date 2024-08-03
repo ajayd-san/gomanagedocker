@@ -591,6 +591,11 @@ notificationLoop:
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
+					/*
+						INFO: break from switch statement if there is an error, not doing so will continue exectuion
+						and send a notification, which is not valid behaviour
+					*/
+					break
 				}
 
 				msg := fmt.Sprintf("Deleted %s", containerId[:8])
@@ -662,6 +667,7 @@ notificationLoop:
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
+					break
 				}
 
 				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Deleted"))
@@ -682,6 +688,7 @@ notificationLoop:
 				if err != nil {
 					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 					m.showDialog = true
+					break
 				}
 				imageId = strings.TrimPrefix(imageId, "sha256:")
 				msg := fmt.Sprintf("Deleted %s", imageId[:8])
