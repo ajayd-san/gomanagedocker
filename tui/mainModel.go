@@ -744,10 +744,11 @@ notificationLoop:
 				}
 
 				/*
-					HACK: I add `Step 1/1 : ` becuz we do regex matching in buildProgress.Update to extract current Step
-					and calculate progress bar completion, adding `1/1` will enable the progress bar to show 100%
+					HACK: I add `Step 2/1 : ` becuz we do regex matching in buildProgress.Update to extract current Step
+					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image 
+					is done building
 				*/
-				buildInfoCard.progressChan <- "Step 1/1 : Build Complete!"
+				buildInfoCard.progressChan <- "Step 2/1 : Build Complete!"
 
 				return nil
 			}

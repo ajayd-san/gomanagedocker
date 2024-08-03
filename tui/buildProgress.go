@@ -35,7 +35,12 @@ loop:
 				TotalSteps, _ := strconv.ParseFloat(matches[2], 64)
 				m.currentStep = matches[3]
 
-				progressBarIncrement := currentStep / TotalSteps
+				/*
+					HACK: we do `-1` since `currentStep` is the current ongoing step, it is not finished yet.
+					when currentStep == TotalSteps, the progress bar would show 100% even when the build process is not finished
+					which is not the right behaviour
+				*/
+				progressBarIncrement := (currentStep - 1) / TotalSteps
 
 				bar, cmd := m.progressBar.Update(components.UpdateProgress(progressBarIncrement))
 				cmds = append(cmds, cmd)
