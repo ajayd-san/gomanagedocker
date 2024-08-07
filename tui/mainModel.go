@@ -362,13 +362,8 @@ notificationLoop:
 
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
-						id := dres.getId()
-						copyToClipboard(id)
-						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
-						cmds = append(cmds, timeout_cmd)
-
-						// send notification
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("ID Copied"))
+						op := copyIdToClipboard(dres, m.activeTab, m.notificationChan)
+						op()
 					}
 
 				case key.Matches(msg, ImageKeymap.RunAndExec):
@@ -502,11 +497,10 @@ notificationLoop:
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
-						dres := currentItem.(dockerRes)
-						id := dres.getId()
-						copyToClipboard(id)
+						object := currentItem.(dockerRes)
+						op := copyIdToClipboard(object, m.activeTab, m.notificationChan)
 
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Copied ID"))
+						op()
 					}
 				}
 
@@ -537,9 +531,8 @@ notificationLoop:
 
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
-						name := dres.getId()
-						copyToClipboard(name)
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Copied ID"))
+						op := copyIdToClipboard(dres, m.activeTab, m.notificationChan)
+						op()
 					}
 				}
 			}

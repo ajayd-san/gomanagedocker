@@ -7,8 +7,11 @@ package tui
 import (
 	"fmt"
 
+	"strings"
+
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/docker/docker/api/types/container"
+	"golang.design/x/clipboard"
 )
 
 type Operation func() error
@@ -95,6 +98,19 @@ func containerDeleteForce(client dockercmd.DockerClient, containerInfo container
 
 		msg := fmt.Sprintf("Deleted %s", containerInfo.getId()[:8])
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		return nil
+	}
+}
+
+func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		id := object.getId()
+		id = strings.TrimPrefix(id, "sha256:")
+		id = id[:min(len(id), 20)]
+		clipboard.Write(clipboard.FmtText, []byte(id))
+
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render("ID copied!"))
+
 		return nil
 	}
 }
