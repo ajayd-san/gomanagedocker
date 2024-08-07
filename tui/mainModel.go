@@ -28,6 +28,10 @@ import (
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
+func UNUSED(...any) {
+
+}
+
 // dimension ratios for infobox
 const infoBoxWidthRatio = 0.55
 const infoBoxHeightRatio = 0.6
@@ -285,7 +289,8 @@ notificationLoop:
 						notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
 
 						notif := NewNotification(m.activeTab, notificationMsg)
-						go m.runBackground(op, &notif)
+						UNUSED(notif)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ImageKeymap.Delete):
@@ -419,47 +424,16 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
-						containerId := containerInfo.getId()
-						err := m.dockerClient.ToggleStartStopContainer(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						// send notification
-						msg := ""
-						if containerInfo.getState() == "running" {
-							msg = fmt.Sprintf("Stopped %s", containerId[:8])
-						} else {
-							msg = fmt.Sprintf("Started %s", containerId[:8])
-						}
-
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						op := toggleStartStopContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.TogglePause):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-
 						containerInfo := curItem.(containerItem)
-						containerId := containerInfo.getId()
-						err := m.dockerClient.TogglePauseResume(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						// send notification
-						msg := ""
-						if containerInfo.getState() == "running" {
-							msg = "Paused " + containerId[:8]
-						} else {
-							msg = "Resumed " + containerId[:8]
-						}
-
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						op := togglePauseResumeContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Restart):
@@ -646,7 +620,7 @@ notificationLoop:
 					return nil
 				}
 
-				go m.runBackground(op, nil)
+				go m.runBackground(op)
 			}
 
 		case dialogPruneImages:
@@ -666,7 +640,7 @@ notificationLoop:
 					return nil
 				}
 
-				go m.runBackground(op, nil)
+				go m.runBackground(op)
 			}
 
 		case dialogPruneVolumes:
@@ -685,7 +659,7 @@ notificationLoop:
 					return nil
 				}
 
-				go m.runBackground(op, nil)
+				go m.runBackground(op)
 			}
 
 		case dialogRemoveVolumes:
@@ -779,8 +753,9 @@ notificationLoop:
 			}
 
 			notif := NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
+			UNUSED(notif)
 
-			go m.runBackground(op, &notif)
+			go m.runBackground(op)
 		}
 
 	}
@@ -797,14 +772,9 @@ notificationLoop:
 	return m, tea.Batch(cmds...)
 }
 
-func (m MainModel) runBackground(op func() error, notif *notificationMetadata) {
+func (m MainModel) runBackground(op Operation) {
 	if err := op(); err != nil {
 		m.possibleLongRunningOpErrorChan <- err
-		return
-	}
-
-	if notif != nil {
-		m.notificationChan <- *notif
 	}
 }
 

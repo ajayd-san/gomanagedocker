@@ -87,7 +87,7 @@ func (m *MockApi) ContainerList(ctx context.Context, options container.ListOptio
 	final := []types.Container{}
 
 	for _, cont := range m.mockContainers {
-		if cont.State == "running" || options.All {
+		if cont.State == "running" || cont.State == "paused" || options.All {
 			if !options.Size {
 				cont.SizeRw = -1
 				cont.SizeRootFs = -1
