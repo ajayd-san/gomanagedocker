@@ -289,23 +289,10 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						imageId := curItem.(dockerRes).getId()
+						imageInfo := curItem.(imageItem)
 
-						if imageId != "" {
-							err := m.dockerClient.DeleteImage(imageId, image.RemoveOptions{
-								Force:         true,
-								PruneChildren: false,
-							})
-
-							if err != nil {
-								m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-								m.showDialog = true
-							}
-							// send notification
-							imageId = strings.TrimPrefix(imageId, "sha256:")
-							msg := fmt.Sprintf("Deleted %s", imageId[:8])
-							m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-						}
+						op := imageDeleteForce(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ImageKeymap.Prune):

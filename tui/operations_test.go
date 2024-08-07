@@ -327,3 +327,76 @@ func TestCopyIdToClipboard(t *testing.T) {
 	got := clipboard.Read(clipboard.FmtText)
 	assert.Equal(t, string(got), target.ID)
 }
+
+func TestImageDeleteForce(t *testing.T) {
+	tests := []struct {
+		target    image.Summary
+		notifWant string
+		errorStr  string
+	}{
+		{
+			target: image.Summary{
+				Containers: 0,
+				ID:         "0bbbbbbbb",
+				RepoTags:   []string{"a"},
+			},
+
+			notifWant: listStatusMessageStyle.Render("Deleted 0bbbbbbb"),
+		},
+		{
+			target: image.Summary{
+				Containers: 0,
+				ID:         "0bbbbbbbb",
+				RepoTags:   []string{"a"},
+			},
+			notifWant: "",
+			errorStr:  "No such image:",
+		},
+	}
+
+	mock := setupTest(t)
+	mock.ToggleContainerListAll()
+
+	for _, testCase := range tests {
+		t.Run("Force Delete Exising image", func(t *testing.T) {
+			target := imageItem{testCase.target}
+
+			notifChan := make(chan notificationMetadata, 10)
+			op := imageDeleteForce(mock, target, 2, notifChan)
+
+			err := op()
+
+			// test for error
+			if testCase.errorStr != "" {
+				assert.ErrorContains(t, err, testCase.errorStr)
+				// if there is an error, return early so that we do not perform other subtests
+				return
+			}
+
+			t.Run("Confirm image deleted", func(t *testing.T) {
+				images := mock.ListImages()
+
+				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+					if elem.ID == target.ID {
+						return true
+					}
+					return false
+				})
+
+				assert.Assert(t, !exists)
+			})
+
+			t.Run("Assert Notification", func(t *testing.T) {
+				select {
+				case notif := <-notifChan:
+					assert.Equal(t, notif, notificationMetadata{
+						listId: 2,
+						msg:    testCase.notifWant,
+					})
+				default:
+					t.Errorf("No notification received")
+				}
+			})
+		})
+	}
+}

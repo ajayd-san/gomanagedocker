@@ -264,6 +264,10 @@ func (m *MockApi) ImageRemove(ctx context.Context, image string, options dimage.
 		return false
 	})
 
+	if index == -1 {
+		return nil, errors.New("No such image:")
+	}
+
 	if !options.Force && m.mockImages[index].Containers > 0 {
 		return nil, errors.New(fmt.Sprintf("unable to delete %s (must be forced) - image is ...", m.mockImages[index].ID))
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"golang.design/x/clipboard"
 )
 
@@ -102,6 +103,7 @@ func containerDeleteForce(client dockercmd.DockerClient, containerInfo container
 	}
 }
 
+// Copies ID of an object to clipboard and send notification to `notificationChan`
 func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		id := object.getId()
@@ -115,6 +117,7 @@ func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan 
 	}
 }
 
+// Runs image and sends notification to `notificationChan`
 func runImage(client dockercmd.DockerClient, imageInfo imageItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		imageId := imageInfo.getId()
@@ -135,4 +138,29 @@ func runImage(client dockercmd.DockerClient, imageInfo imageItem, activeTab tabI
 
 		return nil
 	}
+}
+
+// Deletes image(FORCE) and sends notification to `notificationChan`
+func imageDeleteForce(client dockercmd.DockerClient, imageInfo imageItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		imageId := imageInfo.getId()
+		err := client.DeleteImage(imageId, image.RemoveOptions{
+			Force:         true,
+			PruneChildren: false,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		// send notification
+		imageId = strings.TrimPrefix(imageId, "sha256:")
+		msg := fmt.Sprintf("Deleted %s", imageId[:8])
+
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+
+		return nil
+
+	}
+
 }
