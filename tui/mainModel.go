@@ -439,16 +439,9 @@ notificationLoop:
 				case key.Matches(msg, ContainerKeymap.Restart):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.RestartContainer(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						msg := fmt.Sprintf("Restarted %s", containerId[:8])
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						containerInfo := curItem.(containerItem)
+						op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Delete):

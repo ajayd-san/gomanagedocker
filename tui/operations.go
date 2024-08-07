@@ -61,3 +61,20 @@ func togglePauseResumeContainer(client dockercmd.DockerClient, containerInfo con
 		return nil
 	}
 }
+
+// Calls dockercmd api to restart container and sends notification to notificationChan
+func toggleRestartContainer(client dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		containerId := containerInfo.getId()
+		err := client.RestartContainer(containerId)
+
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Restarted %s", containerId[:8])
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+
+		return nil
+	}
+}
