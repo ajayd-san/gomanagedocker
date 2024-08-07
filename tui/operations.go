@@ -84,20 +84,16 @@ func toggleRestartContainer(client dockercmd.DockerClient, containerInfo contain
 	}
 }
 
-// Returns func that calls dockercmd api to deletes container FORCEFULLY and sends notification to notificationChan
-func containerDeleteForce(client dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+// Returns func that calls dockercmd api to deletes container using `opts` as options and sends notification to notificationChan
+func containerDelete(client dockercmd.DockerClient, containerId string, opts container.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
-		err := client.DeleteContainer(containerInfo.getId(), container.RemoveOptions{
-			RemoveVolumes: false,
-			RemoveLinks:   false,
-			Force:         true,
-		})
+		err := client.DeleteContainer(containerId, opts)
 
 		if err != nil {
 			return err
 		}
 
-		msg := fmt.Sprintf("Deleted %s", containerInfo.getId()[:8])
+		msg := fmt.Sprintf("Deleted %s", containerId[:8])
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 	}
@@ -160,7 +156,5 @@ func imageDeleteForce(client dockercmd.DockerClient, imageInfo imageItem, active
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 
 		return nil
-
 	}
-
 }

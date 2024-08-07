@@ -419,8 +419,15 @@ notificationLoop:
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						containerInfo := curItem.(containerItem)
-						op := containerDeleteForce(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						containerId := curItem.(containerItem).getId()
+						deleteOpts := container.RemoveOptions{
+							RemoveVolumes: false,
+							RemoveLinks:   false,
+							Force:         true,
+						}
+
+						op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
+
 						m.runBackground(op)
 					}
 
@@ -530,19 +537,9 @@ notificationLoop:
 
 			containerId := dialogRes.UserStorage["ID"]
 			if containerId != "" {
-				err := m.dockerClient.DeleteContainer(containerId, opts)
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					/*
-						INFO: break from switch statement if there is an error, not doing so will continue exectuion
-						and send a notification, which is not valid behaviour
-					*/
-					break
-				}
+				op := containerDelete(m.dockerClient, containerId, opts, m.activeTab, m.notificationChan)
 
-				msg := fmt.Sprintf("Deleted %s", containerId[:8])
-				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+				go m.runBackground(op)
 			}
 
 		case dialogPruneContainers:

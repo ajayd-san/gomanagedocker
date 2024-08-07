@@ -7,6 +7,7 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"golang.design/x/clipboard"
 	"gotest.tools/v3/assert"
@@ -43,7 +44,7 @@ func setupTest(t *testing.T) dockercmd.DockerClient {
 			ID:         "4aaaaaaaa",
 			SizeRw:     203,
 			SizeRootFs: 403,
-			State:      "running",
+			State:      "stopped",
 		},
 	}
 
@@ -232,30 +233,33 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 	}
 }
 
-func TestContainerDeleteForce(t *testing.T) {
+func TestContainerDelete(t *testing.T) {
 	tests := []struct {
-		target    types.Container
+		ID        string
 		notifWant string
 		errorStr  string
+		opts      container.RemoveOptions
 	}{
 		{
-			target: types.Container{
-				Names:      []string{"b"},
-				ID:         "2aaaaaaaa",
-				SizeRw:     201,
-				SizeRootFs: 401,
-				State:      "running",
-			},
+			ID:        "2aaaaaaaa",
 			notifWant: listStatusMessageStyle.Render("Deleted 2aaaaaaa"),
+			opts: container.RemoveOptions{
+				RemoveVolumes: false,
+				RemoveLinks:   false,
+				Force:         true,
+			},
 		},
 		{
-			target: types.Container{
-				Names:      []string{"xyz"},
-				ID:         "this container does not exist",
-				SizeRw:     201,
-				SizeRootFs: 401,
-				State:      "running",
-			},
+			ID:        "4aaaaaaaa",
+			notifWant: listStatusMessageStyle.Render("Deleted 4aaaaaaa"),
+		},
+		{
+			ID:        "3aaaaaaaa",
+			notifWant: listStatusMessageStyle.Render("Deleted 3aaaaaaa"),
+			errorStr:  "container is running",
+		},
+		{
+			ID:        "this container does not exist",
 			notifWant: "",
 			errorStr:  "No such container:",
 		},
@@ -266,10 +270,9 @@ func TestContainerDeleteForce(t *testing.T) {
 
 	for _, testCase := range tests {
 		t.Run("Force Delete Exising Container", func(t *testing.T) {
-			target := containerItem{testCase.target}
 
 			notifChan := make(chan notificationMetadata, 10)
-			op := containerDeleteForce(mock, target, 2, notifChan)
+			op := containerDelete(mock, testCase.ID, testCase.opts, 2, notifChan)
 
 			err := op()
 
@@ -284,7 +287,7 @@ func TestContainerDeleteForce(t *testing.T) {
 				containers := mock.ListContainers(false)
 
 				exists := slices.ContainsFunc(containers, func(elem types.Container) bool {
-					if elem.ID == target.ID {
+					if elem.ID == testCase.ID {
 						return true
 					}
 					return false
