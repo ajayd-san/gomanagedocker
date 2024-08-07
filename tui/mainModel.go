@@ -154,7 +154,7 @@ notificationLoop:
 	for {
 		select {
 		case notifcation := <-m.notificationChan:
-			cmd := (&m.TabContent[notifcation.listId].list).NewStatusMessage(notifcation.msg)
+			cmd := (m.TabContent[notifcation.listId].list).NewStatusMessage(notifcation.msg)
 			cmds = append(cmds, cmd)
 		default:
 			break notificationLoop
@@ -269,27 +269,8 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						imageId := curItem.(dockerRes).getId()
-
-						/*
-							we run on a different go routine since it may take sometime to run an image(rare case)
-							and we do not want to hang the main thread
-						*/
-
-						op := func() error {
-							config := container.Config{
-								Image: imageId,
-							}
-							_, err := m.dockerClient.RunImage(config)
-							return err
-						}
-
-						// send notification
-						imageId = strings.TrimPrefix(imageId, "sha256:")
-						notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
-
-						notif := NewNotification(m.activeTab, notificationMsg)
-						UNUSED(notif)
+						imageInfo := curItem.(imageItem)
+						op := runImage(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
 						go m.runBackground(op)
 					}
 

@@ -114,3 +114,25 @@ func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan 
 		return nil
 	}
 }
+
+func runImage(client dockercmd.DockerClient, imageInfo imageItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		imageId := imageInfo.getId()
+
+		config := container.Config{
+			Image: imageId,
+		}
+		_, err := client.RunImage(config)
+
+		if err != nil {
+			return err
+		}
+
+		imageId = strings.TrimPrefix(imageId, "sha256:")
+		notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
+
+		notificationChan <- NewNotification(activeTab, notificationMsg)
+
+		return nil
+	}
+}
