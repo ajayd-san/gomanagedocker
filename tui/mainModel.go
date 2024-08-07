@@ -289,9 +289,13 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						imageInfo := curItem.(imageItem)
+						imageId := curItem.(imageItem).getId()
 
-						op := imageDeleteForce(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
+						deleteOpts := image.RemoveOptions{
+							Force:         true,
+							PruneChildren: false,
+						}
+						op := imageDelete(m.dockerClient, imageId, deleteOpts, m.activeTab, m.notificationChan)
 						go m.runBackground(op)
 					}
 
@@ -631,15 +635,8 @@ notificationLoop:
 					PruneChildren: userChoice["pruneChildren"].(bool),
 				}
 
-				err := m.dockerClient.DeleteImage(imageId, opts)
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					break
-				}
-				imageId = strings.TrimPrefix(imageId, "sha256:")
-				msg := fmt.Sprintf("Deleted %s", imageId[:8])
-				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+				op := imageDelete(m.dockerClient, imageId, opts, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
 			}
 
 		case dialogImageBuild:

@@ -331,29 +331,30 @@ func TestCopyIdToClipboard(t *testing.T) {
 	assert.Equal(t, string(got), target.ID)
 }
 
-func TestImageDeleteForce(t *testing.T) {
+func TestImageDelete(t *testing.T) {
 	tests := []struct {
-		target    image.Summary
+		ID        string
 		notifWant string
 		errorStr  string
+		opts      image.RemoveOptions
 	}{
 		{
-			target: image.Summary{
-				Containers: 0,
-				ID:         "0bbbbbbbb",
-				RepoTags:   []string{"a"},
-			},
-
+			ID:        "0bbbbbbbb",
 			notifWant: listStatusMessageStyle.Render("Deleted 0bbbbbbb"),
+			opts: image.RemoveOptions{
+				Force:         false,
+				PruneChildren: false,
+			},
 		},
 		{
-			target: image.Summary{
-				Containers: 0,
-				ID:         "0bbbbbbbb",
-				RepoTags:   []string{"a"},
-			},
+			ID:        "0bbbbbbbb",
 			notifWant: "",
 			errorStr:  "No such image:",
+		},
+		// Should fail, since the image running with this ID has active containers assosicated
+		{
+			ID:       "2bbbbbbbb",
+			errorStr: "unable to delete",
 		},
 	}
 
@@ -362,10 +363,9 @@ func TestImageDeleteForce(t *testing.T) {
 
 	for _, testCase := range tests {
 		t.Run("Force Delete Exising image", func(t *testing.T) {
-			target := imageItem{testCase.target}
 
 			notifChan := make(chan notificationMetadata, 10)
-			op := imageDeleteForce(mock, target, 2, notifChan)
+			op := imageDelete(mock, testCase.ID, testCase.opts, 2, notifChan)
 
 			err := op()
 
@@ -380,7 +380,68 @@ func TestImageDeleteForce(t *testing.T) {
 				images := mock.ListImages()
 
 				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
-					if elem.ID == target.ID {
+					if elem.ID == testCase.ID {
+						return true
+					}
+					return false
+				})
+
+				assert.Assert(t, !exists)
+			})
+
+			t.Run("Assert Notification", func(t *testing.T) {
+				select {
+				case notif := <-notifChan:
+					assert.Equal(t, notif, notificationMetadata{
+						listId: 2,
+						msg:    testCase.notifWant,
+					})
+				default:
+					t.Errorf("No notification received")
+				}
+			})
+		})
+	}
+}
+
+// I do relise, this is not an exhaustive test. I don't understand how the delete mechanism works for volumes yet.
+func TestDeleteVolume(t *testing.T) {
+	tests := []struct {
+		Id        string
+		notifWant string
+		errorStr  string
+		force     bool
+	}{
+		{
+			Id:        "1",
+			notifWant: listStatusMessageStyle.Render("Deleted"),
+			force:     false,
+		},
+	}
+
+	mock := setupTest(t)
+	mock.ToggleContainerListAll()
+
+	for _, testCase := range tests {
+		t.Run("Force Delete Exising image", func(t *testing.T) {
+
+			notifChan := make(chan notificationMetadata, 10)
+			op := volumeDelete(mock, testCase.Id, testCase.force, 2, notifChan)
+
+			err := op()
+
+			// test for error
+			if testCase.errorStr != "" {
+				assert.ErrorContains(t, err, testCase.errorStr)
+				// if there is an error, return early so that we do not perform other subtests
+				return
+			}
+
+			t.Run("Confirm image deleted", func(t *testing.T) {
+				images := mock.ListImages()
+
+				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+					if elem.ID == testCase.Id {
 						return true
 					}
 					return false

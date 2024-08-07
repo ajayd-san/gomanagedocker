@@ -136,14 +136,10 @@ func runImage(client dockercmd.DockerClient, imageInfo imageItem, activeTab tabI
 	}
 }
 
-// Deletes image(FORCE) and sends notification to `notificationChan`
-func imageDeleteForce(client dockercmd.DockerClient, imageInfo imageItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+// Deletes image with `opts` and sends notification to `notificationChan`
+func imageDelete(client dockercmd.DockerClient, imageId string, opts image.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
-		imageId := imageInfo.getId()
-		err := client.DeleteImage(imageId, image.RemoveOptions{
-			Force:         true,
-			PruneChildren: false,
-		})
+		err := client.DeleteImage(imageId, opts)
 
 		if err != nil {
 			return err
