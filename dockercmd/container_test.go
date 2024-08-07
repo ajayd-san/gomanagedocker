@@ -259,10 +259,12 @@ func TestDeleteContainer(t *testing.T) {
 		{
 			ID:    "1",
 			State: "running",
+			Names: []string{"certified loverboy"},
 		},
 		{
 			ID:    "2",
 			State: "stopped",
+			Names: []string{"certified *********"},
 		},
 	}
 

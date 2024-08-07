@@ -230,3 +230,79 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 
 	}
 }
+
+func TestContainerDeleteForce(t *testing.T) {
+	tests := []struct {
+		target    types.Container
+		notifWant string
+		errorStr  string
+	}{
+		{
+			target: types.Container{
+				Names:      []string{"b"},
+				ID:         "2aaaaaaaa",
+				SizeRw:     201,
+				SizeRootFs: 401,
+				State:      "running",
+			},
+			notifWant: listStatusMessageStyle.Render("Deleted 2aaaaaaa"),
+		},
+		{
+			target: types.Container{
+				Names:      []string{"xyz"},
+				ID:         "this container does not exist",
+				SizeRw:     201,
+				SizeRootFs: 401,
+				State:      "running",
+			},
+			notifWant: "",
+			errorStr:  "No such container:",
+		},
+	}
+
+	mock := setupTest(t)
+	mock.ToggleContainerListAll()
+
+	for _, testCase := range tests {
+		t.Run("Force Delete Exising Container", func(t *testing.T) {
+			target := containerItem{testCase.target}
+
+			notifChan := make(chan notificationMetadata, 10)
+			op := containerDeleteForce(mock, target, 2, notifChan)
+
+			err := op()
+
+			// test for error
+			if testCase.errorStr != "" {
+				assert.ErrorContains(t, err, testCase.errorStr)
+				// if there is an error, return early so that we do not perform other subtests
+				return
+			}
+
+			t.Run("Confirm container deleted", func(t *testing.T) {
+				containers := mock.ListContainers(false)
+
+				exists := slices.ContainsFunc(containers, func(elem types.Container) bool {
+					if elem.ID == target.ID {
+						return true
+					}
+					return false
+				})
+
+				assert.Assert(t, !exists)
+			})
+
+			t.Run("Assert Notification", func(t *testing.T) {
+				select {
+				case notif := <-notifChan:
+					assert.Equal(t, notif, notificationMetadata{
+						listId: 2,
+						msg:    testCase.notifWant,
+					})
+				default:
+					t.Errorf("No notification received")
+				}
+			})
+		})
+	}
+}

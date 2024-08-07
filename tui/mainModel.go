@@ -455,20 +455,10 @@ notificationLoop:
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
-					if containerInfo, ok := curItem.(dockerRes); ok {
-						err := m.dockerClient.DeleteContainer(containerInfo.getId(), container.RemoveOptions{
-							RemoveVolumes: false,
-							RemoveLinks:   false,
-							Force:         true,
-						})
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						msg := fmt.Sprintf("Deleted %s", containerInfo.getId()[:8])
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+					if curItem != nil {
+						containerInfo := curItem.(containerItem)
+						op := containerDeleteForce(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
