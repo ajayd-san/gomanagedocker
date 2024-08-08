@@ -572,19 +572,7 @@ notificationLoop:
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-				// run on a different go routine, same reason as above (for Prune containers)
-				op := func() error {
-					report, err := m.dockerClient.PruneImages()
-
-					if err != nil {
-						return err
-					}
-
-					msg := fmt.Sprintf("Pruned %d images", len(report.ImagesDeleted))
-					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-					return nil
-				}
-
+				op := imagePrune(m.dockerClient, m.activeTab, m.notificationChan)
 				go m.runBackground(op)
 			}
 
