@@ -581,17 +581,7 @@ notificationLoop:
 
 			if userChoice["confirm"] == "Yes" {
 				// same reason as above, again
-				op := func() error {
-					report, err := m.dockerClient.PruneVolumes()
-					if err != nil {
-						return err
-					}
-
-					msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
-					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-					return nil
-				}
-
+				op := volumePrune(m.dockerClient, m.activeTab, m.notificationChan)
 				go m.runBackground(op)
 			}
 

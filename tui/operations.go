@@ -182,3 +182,17 @@ func imagePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan
 		return nil
 	}
 }
+
+func volumePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		report, err := client.PruneVolumes()
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		return nil
+
+	}
+}
