@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/volume"
 	"golang.design/x/clipboard"
 	"gotest.tools/v3/assert"
 )
@@ -72,8 +73,21 @@ func setupTest(t *testing.T) dockercmd.DockerClient {
 		},
 	}
 
+	vols := []*volume.Volume{
+		{
+			Name: "1",
+		},
+		{
+			Name: "2",
+		},
+		{
+			Name: "3",
+		},
+	}
+
 	api.SetMockContainers(containers)
 	api.SetMockImages(imgs)
+	api.SetMockVolumes(vols)
 
 	mock := dockercmd.NewMockCli(&api)
 	return mock

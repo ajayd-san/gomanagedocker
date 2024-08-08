@@ -154,3 +154,16 @@ func imageDelete(client dockercmd.DockerClient, imageId string, opts image.Remov
 		return nil
 	}
 }
+
+func volumeDelete(client dockercmd.DockerClient, volumeId string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		err := client.DeleteVolume(volumeId, force)
+
+		if err != nil {
+			return err
+		}
+
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render("Deleted"))
+		return nil
+	}
+}

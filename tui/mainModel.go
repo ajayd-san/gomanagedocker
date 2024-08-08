@@ -609,19 +609,11 @@ notificationLoop:
 
 		case dialogRemoveVolumes:
 			userChoice := dialogRes.UserChoices
-
 			volumeId := dialogRes.UserStorage["ID"]
 
 			if volumeId != "" {
-				err := m.dockerClient.DeleteVolume(volumeId, userChoice["force"].(bool))
-
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					break
-				}
-
-				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Deleted"))
+				op := volumeDelete(m.dockerClient, volumeId, userChoice["force"].(bool), m.activeTab, m.notificationChan)
+				go m.runBackground(op)
 			}
 
 		case dialogRemoveImage:
