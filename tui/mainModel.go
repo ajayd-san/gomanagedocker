@@ -370,18 +370,7 @@ notificationLoop:
 			} else if m.activeTab == CONTAINERS {
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
-					m.dockerClient.ToggleContainerListAll()
-
-					listOpts := m.dockerClient.GetListOptions()
-
-					notifMsg := ""
-					if listOpts.All {
-						notifMsg = "List all enabled!"
-					} else {
-						notifMsg = "List all disabled!"
-					}
-
-					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(notifMsg))
+					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
 
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 					curItem := m.getSelectedItem()

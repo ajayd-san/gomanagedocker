@@ -17,6 +17,21 @@ import (
 
 type Operation func() error
 
+// Hides/shows existed containers and sends notification to `notificationChan`
+func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) {
+	client.ToggleContainerListAll()
+	listOpts := client.GetListOptions()
+
+	notifMsg := ""
+	if listOpts.All {
+		notifMsg = "List all enabled!"
+	} else {
+		notifMsg = "List all disabled!"
+	}
+
+	notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(notifMsg))
+}
+
 // Returns func that calls dockercmd api to toggle start/stop container, and sends notification to `notificaitonChan`
 func toggleStartStopContainer(cli dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notifcationChan chan notificationMetadata) Operation {
 
