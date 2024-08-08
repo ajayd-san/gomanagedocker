@@ -8,6 +8,10 @@ var (
 )
 
 var (
+	successForeground = lipgloss.NewStyle().Foreground(statusGreen)
+)
+
+var (
 	inactiveTabBorder = tabBorderWithBottom("┴", "─", "┴")
 	activeTabBorder   = tabBorderWithBottom("┘", " ", "└")
 	// The outer most container, this just applies padding to the Window

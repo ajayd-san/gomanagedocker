@@ -28,10 +28,6 @@ import (
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
-func UNUSED(...any) {
-
-}
-
 // dimension ratios for infobox
 const infoBoxWidthRatio = 0.55
 const infoBoxHeightRatio = 0.6
@@ -655,13 +651,17 @@ notificationLoop:
 					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image
 					is done building
 				*/
-				buildInfoCard.progressChan <- "Step 2/1 : Build Complete!"
+
+				/*
+				 FIX: this doesn't get colored, mostly prolly because buildInfoCard.Update uses regex to split string into groups,
+				 so ANSI color codes are lost
+				*/
+				buildInfoCard.progressChan <- successForeground.Render("Step 2/1 : Build Complete!")
+
+				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
 
 				return nil
 			}
-
-			notif := NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
-			UNUSED(notif)
 
 			go m.runBackground(op)
 		}
