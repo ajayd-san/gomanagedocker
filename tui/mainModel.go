@@ -388,7 +388,7 @@ notificationLoop:
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
 						op := toggleStartStopContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-						m.runBackground(op)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.TogglePause):
@@ -396,7 +396,7 @@ notificationLoop:
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
 						op := togglePauseResumeContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-						m.runBackground(op)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Restart):
@@ -404,7 +404,7 @@ notificationLoop:
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
 						op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-						m.runBackground(op)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Delete):
@@ -428,7 +428,7 @@ notificationLoop:
 
 						op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
 
-						m.runBackground(op)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
