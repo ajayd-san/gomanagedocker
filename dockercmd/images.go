@@ -10,7 +10,22 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/pkg/archive"
 )
+
+// builds a docker image from `options` and `buildContext`
+func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
+	tar, err := archive.TarWithOptions(buildContext, &archive.TarOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+	defer tar.Close()
+
+	res, err := dc.cli.ImageBuild(context.Background(), tar, options)
+
+	return &res, err
+}
 
 func (dc *DockerClient) ListImages() []image.Summary {
 	images, err := dc.cli.ImageList(context.Background(), image.ListOptions{ContainerCount: true})

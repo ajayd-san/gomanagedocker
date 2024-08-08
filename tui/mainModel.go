@@ -2,7 +2,10 @@ package tui
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,9 +21,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
 // dimension ratios for infobox
@@ -166,15 +171,10 @@ notificationLoop:
 	if m.showDialog {
 
 		update, cmd := m.activeDialog.Update(msg)
-		if d, ok := update.(teadialog.Dialog); ok {
-			m.activeDialog = d
-		}
+		m.activeDialog = update
 
-		if d, ok := update.(InfoCardWrapperModel); ok {
-			m.activeDialog = d
-		}
-
-		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Enter) || key.Matches(msg, NavKeymap.Back) {
+		// if keymsg is <Esc> then close dialog
+		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Back) {
 			if m.dialogOpCancel != nil {
 				m.dialogOpCancel()
 				// this might be required, in the future
@@ -391,6 +391,10 @@ notificationLoop:
 							return nil
 						}))
 					}
+				case key.Matches(msg, ImageKeymap.Build):
+					m.activeDialog = getBuildImageDialog(make(map[string]string))
+					m.showDialog = true
+					cmds = append(cmds, m.activeDialog.Init())
 				}
 
 			} else if m.activeTab == CONTAINERS {
@@ -582,8 +586,18 @@ notificationLoop:
 			}
 
 		}
-	case teadialog.DialogSelectionResult:
-		dialogRes := msg
+
+	case teadialog.CloseDialog:
+		m.showDialog = false
+		dialog, ok := m.activeDialog.(teadialog.Dialog)
+
+		// if the m.active dialog is not a `teadialog.Dialog` (i.e could be `teadialog.ErrorDialog`), then do not proceed forward.
+		if !ok {
+			break
+		}
+
+		dialogRes := dialog.GetUserChoices()
+
 		switch dialogRes.Kind {
 		case dialogRemoveContainer:
 			userChoice := dialogRes.UserChoices
@@ -703,6 +717,61 @@ notificationLoop:
 				msg := fmt.Sprintf("Deleted %s", imageId[:8])
 				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 			}
+
+		case dialogImageBuild:
+			userChoice := dialogRes.UserChoices
+			tagsStr := userChoice["image_tags"].(string)
+			tags := strings.Split(tagsStr, ",")
+
+			buildContext, _ := os.Getwd()
+			options := types.ImageBuildOptions{
+				Tags:       tags,
+				Dockerfile: "Dockerfile",
+			}
+
+			progressModel := components.NewProgressBar()
+			buildInfoCard := getBuildProgress(progressModel)
+			m.activeDialog = buildInfoCard
+			m.showDialog = true
+
+			cmds = append(cmds, buildInfoCard.Init())
+
+			op := func() error {
+				res, err := m.dockerClient.BuildImage(buildContext, options)
+
+				if err != nil {
+					return err
+				}
+
+				decoder := json.NewDecoder(res.Body)
+
+				var status jsonmessage.JSONMessage
+
+				for {
+					if err := decoder.Decode(&status); errors.Is(err, io.EOF) {
+						break
+					}
+
+					if status.Error != nil {
+						return errors.New(status.Error.Message)
+					}
+
+					buildInfoCard.progressChan <- status.Stream
+				}
+
+				/*
+					HACK: I add `Step 2/1 : ` becuz we do regex matching in buildProgress.Update to extract current Step
+					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image 
+					is done building
+				*/
+				buildInfoCard.progressChan <- "Step 2/1 : Build Complete!"
+
+				return nil
+			}
+
+			notif := NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
+
+			go m.runBackground(op, &notif)
 		}
 
 	}
@@ -717,6 +786,17 @@ notificationLoop:
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m MainModel) runBackground(op func() error, notif *notificationMetadata) {
+	if err := op(); err != nil {
+		m.possibleLongRunningOpErrorChan <- err
+		return
+	}
+
+	if notif != nil {
+		m.notificationChan <- *notif
+	}
 }
 
 func tabBorderWithBottom(left, middle, right string) lipgloss.Border {

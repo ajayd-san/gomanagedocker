@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"errors"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -270,4 +272,62 @@ func TestMainModelUpdate(t *testing.T) {
 
 		assert.Check(t, !model.displayInfoBox)
 	})
+}
+
+func TestRunBackground(t *testing.T) {
+	model := MainModel{
+		possibleLongRunningOpErrorChan: make(chan error, 10),
+		notificationChan:               make(chan notificationMetadata, 10),
+	}
+
+	t.Run("Gets error, should not send notification", func(t *testing.T) {
+		op := func() error {
+			return errors.New("error")
+		}
+
+		notif := NewNotification(1, "Test notification")
+		model.runBackground(op, &notif)
+
+		select {
+		case <-model.possibleLongRunningOpErrorChan:
+		default:
+			t.Errorf("Should recieve an error")
+		}
+
+		select {
+		case <-model.notificationChan:
+			t.Errorf("Should not recieve a notification")
+		default:
+		}
+	})
+
+	t.Run("Does not get an error, should send notification", func(t *testing.T) {
+		op := func() error {
+			return nil
+		}
+
+		notif := NewNotification(1, "Test notification")
+		model.runBackground(op, &notif)
+
+		select {
+		case <-model.possibleLongRunningOpErrorChan:
+			t.Errorf("Should not recieve an error")
+		default:
+		}
+
+		select {
+		case <-model.notificationChan:
+		default:
+			t.Errorf("Should recieve a notification")
+		}
+	})
+}
+
+func TestGetRegexMatch(t *testing.T) {
+	str := "Step 4/4 : RUN echo \"alpine\""
+	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+
+	matches := reg.FindStringSubmatch(str)
+	assert.DeepEqual(t, matches, []string{str, "4", "4", "RUN echo \"alpine\""})
+
 }

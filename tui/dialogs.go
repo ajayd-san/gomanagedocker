@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"regexp"
+
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 )
 
@@ -13,6 +16,8 @@ const (
 	dialogPruneVolumes
 	dialogRemoveVolumes
 	dialogImageScout
+	dialogImageBuild
+	dialogImageBuildProgress
 )
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
@@ -27,7 +32,7 @@ func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapper
 		tableChan: make(chan *TableModel),
 		inner:     &infoCard,
 		f:         f,
-		spinner:   initialModel(),
+		spinner:   components.InitialModel(),
 	}
 }
 
@@ -81,4 +86,34 @@ func getPruneVolumesDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	return teadialog.InitDialogWithPrompt("Prune Containers: ", prompts, dialogPruneVolumes, storage)
+}
+
+func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		// teadialog.NewFilePicker("browser"),
+		// NewFilePicker("filepicker"),
+		teadialog.MakeTextInputPrompt("image_tags", "Image Tags:"),
+	}
+
+	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
+}
+
+func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
+
+	infoCard := teadialog.InitInfoCard(
+		"Image Build",
+		"",
+		dialogImageBuildProgress,
+		teadialog.WithMinHeight(8),
+		teadialog.WithMinWidth(100),
+	)
+
+	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+
+	return buildProgressModel{
+		progressChan: make(chan string, 10),
+		regex:        reg,
+		progressBar:  progressBar,
+		inner:        &infoCard,
+	}
 }
