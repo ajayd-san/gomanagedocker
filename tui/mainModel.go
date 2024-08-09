@@ -150,7 +150,7 @@ notificationLoop:
 	for {
 		select {
 		case notifcation := <-m.notificationChan:
-			cmd := (&m.TabContent[notifcation.listId].list).NewStatusMessage(notifcation.msg)
+			cmd := (m.TabContent[notifcation.listId].list).NewStatusMessage(notifcation.msg)
 			cmds = append(cmds, cmd)
 		default:
 			break notificationLoop
@@ -265,27 +265,11 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						imageId := curItem.(dockerRes).getId()
-
-						/*
-							we run on a different go routine since it may take sometime to run an image(rare case)
-							and we do not want to hang the main thread
-						*/
-						go func() {
-							config := container.Config{
-								Image: imageId,
-							}
-							_, err := m.dockerClient.RunImage(config)
-							if err != nil {
-								m.possibleLongRunningOpErrorChan <- err
-							}
-
-							// send notification
-							imageId = strings.TrimPrefix(imageId, "sha256:")
-							notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
-							m.notificationChan <- NewNotification(m.activeTab, notificationMsg)
-						}()
+						imageInfo := curItem.(imageItem)
+						op := runImage(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
+
 				case key.Matches(msg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
@@ -301,23 +285,14 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						imageId := curItem.(dockerRes).getId()
+						imageId := curItem.(imageItem).getId()
 
-						if imageId != "" {
-							err := m.dockerClient.DeleteImage(imageId, image.RemoveOptions{
-								Force:         true,
-								PruneChildren: false,
-							})
-
-							if err != nil {
-								m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-								m.showDialog = true
-							}
-							// send notification
-							imageId = strings.TrimPrefix(imageId, "sha256:")
-							msg := fmt.Sprintf("Deleted %s", imageId[:8])
-							m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						deleteOpts := image.RemoveOptions{
+							Force:         true,
+							PruneChildren: false,
 						}
+						op := imageDelete(m.dockerClient, imageId, deleteOpts, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ImageKeymap.Prune):
@@ -355,13 +330,8 @@ notificationLoop:
 
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
-						id := dres.getId()
-						copyToClipboard(id)
-						timeout_cmd := m.getActiveList().NewStatusMessage(listStatusMessageStyle.Render("ID copied!"))
-						cmds = append(cmds, timeout_cmd)
-
-						// send notification
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("ID Copied"))
+						op := copyIdToClipboard(dres, m.activeTab, m.notificationChan)
+						op()
 					}
 
 				case key.Matches(msg, ImageKeymap.RunAndExec):
@@ -400,79 +370,30 @@ notificationLoop:
 			} else if m.activeTab == CONTAINERS {
 				switch {
 				case key.Matches(msg, ContainerKeymap.ToggleListAll):
-					m.dockerClient.ToggleContainerListAll()
-
-					listOpts := m.dockerClient.GetListOptions()
-
-					notifMsg := ""
-					if listOpts.All {
-						notifMsg = "List all enabled!"
-					} else {
-						notifMsg = "List all disabled!"
-					}
-
-					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(notifMsg))
+					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
 
 				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
-						containerId := containerInfo.getId()
-						err := m.dockerClient.ToggleStartStopContainer(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						// send notification
-						msg := ""
-						if containerInfo.getState() == "running" {
-							msg = fmt.Sprintf("Stopped %s", containerId[:8])
-						} else {
-							msg = fmt.Sprintf("Started %s", containerId[:8])
-						}
-
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						op := toggleStartStopContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.TogglePause):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-
 						containerInfo := curItem.(containerItem)
-						containerId := containerInfo.getId()
-						err := m.dockerClient.TogglePauseResume(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						// send notification
-						msg := ""
-						if containerInfo.getState() == "running" {
-							msg = "Paused " + containerId[:8]
-						} else {
-							msg = "Resumed " + containerId[:8]
-						}
-
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						op := togglePauseResumeContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Restart):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						containerId := curItem.(dockerRes).getId()
-						err := m.dockerClient.RestartContainer(containerId)
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
-						}
-
-						msg := fmt.Sprintf("Restarted %s", containerId[:8])
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						containerInfo := curItem.(containerItem)
+						op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Delete):
@@ -486,20 +407,17 @@ notificationLoop:
 
 				case key.Matches(msg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
-					if containerInfo, ok := curItem.(dockerRes); ok {
-						err := m.dockerClient.DeleteContainer(containerInfo.getId(), container.RemoveOptions{
+					if curItem != nil {
+						containerId := curItem.(containerItem).getId()
+						deleteOpts := container.RemoveOptions{
 							RemoveVolumes: false,
 							RemoveLinks:   false,
 							Force:         true,
-						})
-
-						if err != nil {
-							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-							m.showDialog = true
 						}
 
-						msg := fmt.Sprintf("Deleted %s", containerInfo.getId()[:8])
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+						op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
+
+						go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ContainerKeymap.Prune):
@@ -543,11 +461,10 @@ notificationLoop:
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
-						dres := currentItem.(dockerRes)
-						id := dres.getId()
-						copyToClipboard(id)
+						object := currentItem.(dockerRes)
+						op := copyIdToClipboard(object, m.activeTab, m.notificationChan)
 
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Copied ID"))
+						op()
 					}
 				}
 
@@ -578,9 +495,8 @@ notificationLoop:
 
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
-						name := dres.getId()
-						copyToClipboard(name)
-						m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Copied ID"))
+						op := copyIdToClipboard(dres, m.activeTab, m.notificationChan)
+						op()
 					}
 				}
 			}
@@ -610,19 +526,9 @@ notificationLoop:
 
 			containerId := dialogRes.UserStorage["ID"]
 			if containerId != "" {
-				err := m.dockerClient.DeleteContainer(containerId, opts)
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					/*
-						INFO: break from switch statement if there is an error, not doing so will continue exectuion
-						and send a notification, which is not valid behaviour
-					*/
-					break
-				}
+				op := containerDelete(m.dockerClient, containerId, opts, m.activeTab, m.notificationChan)
 
-				msg := fmt.Sprintf("Deleted %s", containerId[:8])
-				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+				go m.runBackground(op)
 			}
 
 		case dialogPruneContainers:
@@ -630,36 +536,29 @@ notificationLoop:
 
 			if userChoice["confirm"] == "Yes" {
 				// prune containers on a separate goroutine, since UI gets stuck otherwise(since this may take sometime)
-				go func() {
+				op := func() error {
 					report, err := m.dockerClient.PruneContainers()
 
 					if err != nil {
-						m.possibleLongRunningOpErrorChan <- err
-						return
+						return err
 					}
 
-					// send notification
+					// we send notification directly from go routine since the main goroutine does not have access to `report`
 					msg := fmt.Sprintf("Pruned %d containers", len(report.ContainersDeleted))
 					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-				}()
+
+					return nil
+				}
+
+				go m.runBackground(op)
 			}
 
 		case dialogPruneImages:
 			userChoice := dialogRes.UserChoices
 
 			if userChoice["confirm"] == "Yes" {
-				// run on a different go routine, same reason as above (for Prune containers)
-				go func() {
-					report, err := m.dockerClient.PruneImages()
-
-					if err != nil {
-						m.possibleLongRunningOpErrorChan <- err
-						return
-					}
-
-					msg := fmt.Sprintf("Pruned %d images", len(report.ImagesDeleted))
-					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-				}()
+				op := imagePrune(m.dockerClient, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
 			}
 
 		case dialogPruneVolumes:
@@ -667,33 +566,17 @@ notificationLoop:
 
 			if userChoice["confirm"] == "Yes" {
 				// same reason as above, again
-				go func() {
-					report, err := m.dockerClient.PruneVolumes()
-					if err != nil {
-						m.possibleLongRunningOpErrorChan <- err
-						return
-					}
-
-					msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
-					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
-				}()
+				op := volumePrune(m.dockerClient, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
 			}
 
 		case dialogRemoveVolumes:
 			userChoice := dialogRes.UserChoices
-
 			volumeId := dialogRes.UserStorage["ID"]
 
 			if volumeId != "" {
-				err := m.dockerClient.DeleteVolume(volumeId, userChoice["force"].(bool))
-
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					break
-				}
-
-				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Deleted"))
+				op := volumeDelete(m.dockerClient, volumeId, userChoice["force"].(bool), m.activeTab, m.notificationChan)
+				go m.runBackground(op)
 			}
 
 		case dialogRemoveImage:
@@ -707,15 +590,8 @@ notificationLoop:
 					PruneChildren: userChoice["pruneChildren"].(bool),
 				}
 
-				err := m.dockerClient.DeleteImage(imageId, opts)
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					break
-				}
-				imageId = strings.TrimPrefix(imageId, "sha256:")
-				msg := fmt.Sprintf("Deleted %s", imageId[:8])
-				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
+				op := imageDelete(m.dockerClient, imageId, opts, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
 			}
 
 		case dialogImageBuild:
@@ -761,17 +637,22 @@ notificationLoop:
 
 				/*
 					HACK: I add `Step 2/1 : ` becuz we do regex matching in buildProgress.Update to extract current Step
-					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image 
+					and calculate progress bar completion, adding `2/1` will enable the progress bar to show 100% when image
 					is done building
 				*/
-				buildInfoCard.progressChan <- "Step 2/1 : Build Complete!"
+
+				/*
+				 FIX: this doesn't get colored, mostly prolly because buildInfoCard.Update uses regex to split string into groups,
+				 so ANSI color codes are lost
+				*/
+				buildInfoCard.progressChan <- successForeground.Render("Step 2/1 : Build Complete!")
+
+				m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
 
 				return nil
 			}
 
-			notif := NewNotification(m.activeTab, listStatusMessageStyle.Render("Build Complete!"))
-
-			go m.runBackground(op, &notif)
+			go m.runBackground(op)
 		}
 
 	}
@@ -788,14 +669,9 @@ notificationLoop:
 	return m, tea.Batch(cmds...)
 }
 
-func (m MainModel) runBackground(op func() error, notif *notificationMetadata) {
+func (m MainModel) runBackground(op Operation) {
 	if err := op(); err != nil {
 		m.possibleLongRunningOpErrorChan <- err
-		return
-	}
-
-	if notif != nil {
-		m.notificationChan <- *notif
 	}
 }
 

@@ -285,19 +285,12 @@ func TestRunBackground(t *testing.T) {
 			return errors.New("error")
 		}
 
-		notif := NewNotification(1, "Test notification")
-		model.runBackground(op, &notif)
+		model.runBackground(op)
 
 		select {
 		case <-model.possibleLongRunningOpErrorChan:
 		default:
 			t.Errorf("Should recieve an error")
-		}
-
-		select {
-		case <-model.notificationChan:
-			t.Errorf("Should not recieve a notification")
-		default:
 		}
 	})
 
@@ -306,19 +299,12 @@ func TestRunBackground(t *testing.T) {
 			return nil
 		}
 
-		notif := NewNotification(1, "Test notification")
-		model.runBackground(op, &notif)
+		model.runBackground(op)
 
 		select {
 		case <-model.possibleLongRunningOpErrorChan:
 			t.Errorf("Should not recieve an error")
 		default:
-		}
-
-		select {
-		case <-model.notificationChan:
-		default:
-			t.Errorf("Should recieve a notification")
 		}
 	})
 }

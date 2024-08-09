@@ -87,7 +87,7 @@ func (m *MockApi) ContainerList(ctx context.Context, options container.ListOptio
 	final := []types.Container{}
 
 	for _, cont := range m.mockContainers {
-		if cont.State == "running" || options.All {
+		if cont.State == "running" || cont.State == "paused" || options.All {
 			if !options.Size {
 				cont.SizeRw = -1
 				cont.SizeRootFs = -1
@@ -129,9 +129,16 @@ func (mo *MockApi) ContainerRemove(ctx context.Context, container string, option
 		return false
 	})
 
-	if mo.mockContainers[index].State == "running" {
+	if index == -1 {
+		return errors.New(fmt.Sprintf("No such container: %s", container))
+	}
+
+	if mo.mockContainers[index].State == "running" && !options.Force {
 		//not exact error but works for now
-		return errors.New("container is running")
+		return errors.New(fmt.Sprintf(
+			"cannot remove container \"%s\": container is running: stop the container before removing or force remove",
+			mo.mockContainers[index].Names[0],
+		))
 	}
 
 	mo.mockContainers = slices.Delete(mo.mockContainers, index, index+1)
@@ -256,6 +263,10 @@ func (m *MockApi) ImageRemove(ctx context.Context, image string, options dimage.
 
 		return false
 	})
+
+	if index == -1 {
+		return nil, errors.New("No such image:")
+	}
 
 	if !options.Force && m.mockImages[index].Containers > 0 {
 		return nil, errors.New(fmt.Sprintf("unable to delete %s (must be forced) - image is ...", m.mockImages[index].ID))
