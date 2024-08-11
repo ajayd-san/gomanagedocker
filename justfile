@@ -14,3 +14,11 @@ build:
 # run race detector
 race: 
     go run -race main.go --debug 2> race.log
+
+# start debug server
+debug-server: 
+    dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 . -- --debug
+
+# connect to debug server
+debug-connect:
+     dlv connect 127.0.0.1:43000
