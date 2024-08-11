@@ -13,12 +13,23 @@ const (
 	dialogPruneContainers
 	dialogRemoveImage
 	dialogPruneImages
+	dialogRunImage
 	dialogPruneVolumes
 	dialogRemoveVolumes
 	dialogImageScout
 	dialogImageBuild
 	dialogImageBuildProgress
 )
+
+func getRunImageDialog(storage map[string]string) teadialog.Dialog {
+	prompt := []teadialog.Prompt{
+		teadialog.MakeTextInputPrompt("port", "Port mappings"),
+		teadialog.MakeTextInputPrompt("name", "Name"),
+		teadialog.MakeTextInputPrompt("env", "Environment variables"),
+	}
+
+	return teadialog.InitDialogWithPrompt("Run Image", prompt, dialogRunImage, storage)
+}
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
 	infoCard := teadialog.InitInfoCard(
@@ -98,6 +109,7 @@ func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
 	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
 }
 
+// Gets the build progress bar info card/dialog
 func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 
 	infoCard := teadialog.InitInfoCard(

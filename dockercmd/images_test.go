@@ -251,3 +251,37 @@ func TestBuildImage(t *testing.T) {
 		t.Error("Could not find built image")
 	}
 }
+
+func TestSepPortMapping(t *testing.T) {
+	t.Run("Clean string, test mapping", func(t *testing.T) {
+		// format is host:container
+		testStr := "8080:80/tcp,1123:112,6969:9696/udp"
+		want := []PortBinding{
+			{
+				HostPort:      "8080",
+				ContainerPort: "80",
+				Proto:         "tcp",
+			},
+			{
+				"1123",
+				"112",
+				"tcp",
+			},
+			{
+				"6969",
+				"9696",
+				"udp",
+			},
+		}
+
+		got, _ := GetPortMappingFromStr(testStr)
+
+		assert.DeepEqual(t, got, want)
+	})
+
+	t.Run("Invalid mapping, should throw error", func(t *testing.T) {
+		testStr := "8080:878:9/tcp"
+		_, err := GetPortMappingFromStr(testStr)
+		assert.Error(t, err, "Port Mapping 8080:878:9/tcp is invalid")
+	})
+}

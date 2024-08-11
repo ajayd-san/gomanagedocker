@@ -22,6 +22,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/docker/go-connections/nat"
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
@@ -266,8 +267,12 @@ notificationLoop:
 
 					if curItem != nil {
 						imageInfo := curItem.(imageItem)
-						op := runImage(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
-						go m.runBackground(op)
+						storage := map[string]string{"ID": imageInfo.getId()}
+						m.activeDialog = getRunImageDialog(storage)
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+						// op := runImage(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
+						// go m.runBackground(op)
 					}
 
 				case key.Matches(msg, ImageKeymap.Delete):
@@ -349,7 +354,7 @@ notificationLoop:
 							Image:        id,
 						}
 
-						containerId, err := m.dockerClient.RunImage(config)
+						containerId, err := m.dockerClient.RunImage(&config, nil, "")
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
@@ -552,6 +557,57 @@ notificationLoop:
 
 				go m.runBackground(op)
 			}
+
+		case dialogRunImage:
+			userChoices := dialogRes.UserChoices
+			storage := dialogRes.UserStorage
+
+			portMappingStr := userChoices["port"]
+			portMappings, err := dockercmd.GetPortMappingFromStr(portMappingStr.(string))
+
+			if err != nil {
+				m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
+				m.showDialog = true
+				break
+			}
+
+			exposedPortsContainer := make(map[nat.Port]struct{}, len(portMappings))
+			portBindings := make(nat.PortMap)
+
+			for _, portBind := range portMappings {
+				port, err := nat.NewPort(portBind.Proto, portBind.ContainerPort)
+				if err != nil {
+					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
+					m.showDialog = true
+					break
+				}
+				exposedPortsContainer[port] = struct{}{}
+				portBindings[port] = []nat.PortBinding{
+					{
+						HostIP:   "::1",
+						HostPort: portBind.HostPort,
+					},
+				}
+			}
+
+			envVars := strings.Split(userChoices["env"].(string), ",")
+
+			config := container.Config{
+				ExposedPorts: exposedPortsContainer,
+				Env:          envVars,
+				Image:        storage["ID"],
+				Volumes:      map[string]struct{}{},
+			}
+
+			hostConfig := container.HostConfig{
+				PortBindings: portBindings,
+			}
+
+			containerName := userChoices["name"].(string)
+
+			op := runImage(m.dockerClient, &config, &hostConfig, containerName, m.activeTab, m.notificationChan)
+
+			go m.runBackground(op)
 
 		case dialogPruneImages:
 			userChoice := dialogRes.UserChoices
