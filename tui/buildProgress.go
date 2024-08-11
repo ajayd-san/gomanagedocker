@@ -56,6 +56,11 @@ loop:
 	m.inner.Message = fmt.Sprintf("%s\n\n%s", m.progressBar.View(), m.currentStep)
 	cmds = append(cmds, cmd)
 
+	update, cmd := m.inner.Update(msg)
+	cmds = append(cmds, cmd)
+	infoCard := update.(teadialog.InfoCard)
+	m.inner = &infoCard
+
 	return m, tea.Batch(cmds...)
 }
 

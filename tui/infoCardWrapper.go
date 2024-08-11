@@ -35,12 +35,12 @@ func (m InfoCardWrapperModel) Init() tea.Cmd {
 }
 
 func (m InfoCardWrapperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd2 tea.Cmd
+	var cmds []tea.Cmd
 	if !m.loaded {
 		spinner, cmd := m.spinner.Update(msg)
 		m.spinner = spinner.(components.SpinnerModel)
 		m.inner.Message = fmt.Sprintf("%s %s", m.spinner.View(), customLoadingMessage)
-		cmd2 = cmd
+		cmds = append(cmds, cmd)
 
 		select {
 		case m.tableModel = <-m.tableChan:
@@ -50,7 +50,13 @@ func (m InfoCardWrapperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m, cmd2
+	update, cmd := m.inner.Update(msg)
+	infoCard := update.(teadialog.InfoCard)
+	m.inner = &infoCard
+
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 // View renders the program's UI, which is just a string. The view is
