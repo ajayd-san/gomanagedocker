@@ -471,6 +471,22 @@ notificationLoop:
 
 						op()
 					}
+
+				case key.Matches(msg, ContainerKeymap.ShowLogs):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil {
+						dres := currentItem.(dockerRes)
+						id := dres.getId()
+						cmd := exec.Command("docker", "logs", "--follow", id)
+						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+							if err.Error() != "exit status 1" {
+								m.possibleLongRunningOpErrorChan <- err
+							}
+							return nil
+						}))
+
+					}
 				}
 
 			} else if m.activeTab == VOLUMES {
