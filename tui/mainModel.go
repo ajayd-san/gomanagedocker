@@ -571,7 +571,9 @@ notificationLoop:
 				break
 			}
 
+			// this is just a list of exposed ports and is used in containerConfig
 			exposedPortsContainer := make(map[nat.Port]struct{}, len(portMappings))
+			// this is a port mapping from host to container and is used in hostConfig
 			portBindings := make(nat.PortMap)
 
 			for _, portBind := range portMappings {
@@ -590,7 +592,10 @@ notificationLoop:
 				}
 			}
 
-			envVars := strings.Split(userChoices["env"].(string), ",")
+			var envVars []string
+			if userChoices["env"].(string) != "" {
+				envVars = strings.Split(userChoices["env"].(string), ",")
+			}
 
 			config := container.Config{
 				ExposedPorts: exposedPortsContainer,

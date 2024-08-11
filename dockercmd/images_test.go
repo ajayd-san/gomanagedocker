@@ -274,9 +274,17 @@ func TestSepPortMapping(t *testing.T) {
 			},
 		}
 
-		got, _ := GetPortMappingFromStr(testStr)
+		got, err := GetPortMappingFromStr(testStr)
+
+		assert.NilError(t, err)
 
 		assert.DeepEqual(t, got, want)
+	})
+
+	t.Run("Empty port string", func(t *testing.T) {
+		testStr := ""
+		_, err := GetPortMappingFromStr(testStr)
+		assert.NilError(t, err)
 	})
 
 	t.Run("Invalid mapping, should throw error", func(t *testing.T) {

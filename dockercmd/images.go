@@ -137,6 +137,10 @@ func GetPortMappingFromStr(portStr string) ([]PortBinding, error) {
 	portMappingStrs := strings.Split(portStr, ",")
 
 	for _, mappingStr := range portMappingStrs {
+		mappingStr = strings.Trim(mappingStr, " ")
+		if mappingStr == "" {
+			continue
+		}
 		substr := strings.Split(mappingStr, ":")
 		if len(substr) != 2 {
 			return nil, errors.New(fmt.Sprintf("Port Mapping %s is invalid", mappingStr))
