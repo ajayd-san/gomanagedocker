@@ -3,7 +3,9 @@ package dockercmd
 import (
 	"context"
 	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 
 	"github.com/docker/docker/api/types"
@@ -15,7 +17,14 @@ import (
 
 // builds a docker image from `options` and `buildContext`
 func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
-	tar, err := archive.TarWithOptions(buildContext, &archive.TarOptions{})
+	dockerignoreFile, err := os.Open(filepath.Join(buildContext, ".dockerignore"))
+
+	opts := archive.TarOptions{}
+	if err == nil {
+		opts.ExcludePatterns = getDockerIgnorePatterns(dockerignoreFile)
+	}
+
+	tar, err := archive.TarWithOptions(buildContext, &opts)
 
 	if err != nil {
 		return nil, err
