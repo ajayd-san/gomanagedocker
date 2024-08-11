@@ -22,13 +22,30 @@ const (
 )
 
 func getRunImageDialog(storage map[string]string) teadialog.Dialog {
+	// MGS nerds will prolly like this
 	prompt := []teadialog.Prompt{
-		teadialog.MakeTextInputPrompt("port", "Port mappings"),
-		teadialog.MakeTextInputPrompt("name", "Name"),
-		teadialog.MakeTextInputPrompt("env", "Environment variables"),
+		teadialog.MakeTextInputPrompt(
+			"port",
+			"Port mappings",
+			teadialog.WithPlaceHolder("Ex: 1011:2016,226:1984/udp"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"name",
+			"Name",
+			teadialog.WithPlaceHolder("prologueAwakening"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"env",
+			"Environment variables",
+			teadialog.WithPlaceHolder("VENOM=AHAB,DD=goodDoggo"),
+			teadialog.WithTextWidth(30),
+		),
 	}
 
-	return teadialog.InitDialogWithPrompt("Run Image", prompt, dialogRunImage, storage)
+	title := "Run Image\n(Leave inputs blank for defaults)"
+	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage)
 }
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
