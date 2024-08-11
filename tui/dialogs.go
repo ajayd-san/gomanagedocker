@@ -48,7 +48,7 @@ func getRunImageDialog(storage map[string]string) teadialog.Dialog {
 	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage)
 }
 
-func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
+func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) DockerScoutInfoCard {
 	infoCard := teadialog.InitInfoCard(
 		"Image Scout",
 		"",
@@ -56,7 +56,7 @@ func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapper
 		teadialog.WithMinHeight(13),
 		teadialog.WithMinWidth(130),
 	)
-	return InfoCardWrapperModel{
+	return DockerScoutInfoCard{
 		tableChan: make(chan *TableModel),
 		inner:     &infoCard,
 		f:         f,

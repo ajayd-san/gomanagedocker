@@ -13,7 +13,7 @@ import (
 
 const customLoadingMessage = "Loading (this may take some time)..."
 
-type InfoCardWrapperModel struct {
+type DockerScoutInfoCard struct {
 	tableChan  chan *TableModel
 	loaded     bool
 	spinner    components.SpinnerModel
@@ -22,7 +22,7 @@ type InfoCardWrapperModel struct {
 	f          func() (*dockercmd.ScoutData, error)
 }
 
-func (m InfoCardWrapperModel) Init() tea.Cmd {
+func (m DockerScoutInfoCard) Init() tea.Cmd {
 	go func() {
 		ScoutData, err := m.f()
 		if err != nil {
@@ -34,7 +34,7 @@ func (m InfoCardWrapperModel) Init() tea.Cmd {
 	return m.spinner.Init()
 }
 
-func (m InfoCardWrapperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m DockerScoutInfoCard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	if !m.loaded {
 		spinner, cmd := m.spinner.Update(msg)
@@ -61,6 +61,6 @@ func (m InfoCardWrapperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the program's UI, which is just a string. The view is
 // rendered after every Update.
-func (m InfoCardWrapperModel) View() string {
+func (m DockerScoutInfoCard) View() string {
 	return dialogContainerStyle.Render(m.inner.View())
 }
