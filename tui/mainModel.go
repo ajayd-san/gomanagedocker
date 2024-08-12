@@ -38,7 +38,8 @@ type tabId int
 
 type TickMsg time.Time
 
-// when the main loop gets a variable of this type, it preloads all required tabs. Should change type from `int` to `struct{}`
+// when the main loop gets a variable of this type, it preloads all required tabs.
+// TODO: Should change type from `int` to `struct{}`
 type preloadObjects int
 
 // instruction for preload contaienr sizes, when program starts.
@@ -187,7 +188,7 @@ notificationLoop:
 		cmds = append(cmds, cmd)
 	}
 
-	switch msg := msg.(type) {
+	switch assertedMsg := msg.(type) {
 	// fetches container size info in a separate go routine
 	case preloadSizeMap:
 		go m.prepopulateContainerSizeMapConcurrently()
@@ -207,16 +208,16 @@ notificationLoop:
 
 	case tea.WindowSizeMsg:
 		// show windowtoosmallModel if window dimentions are too small
-		if msg.Height < 25 || msg.Width < 65 {
+		if assertedMsg.Height < 25 || assertedMsg.Width < 65 {
 			m.windowTooSmall = true
-			temp, _ := m.windowtoosmallModel.Update(msg)
+			temp, _ := m.windowtoosmallModel.Update(assertedMsg)
 			m.windowtoosmallModel = temp.(WindowTooSmallModel)
 		} else {
 			m.windowTooSmall = false
 		}
 
 		// toggle info box if window size goes under a certain threshold
-		if msg.Height <= 31 || msg.Width < 105 {
+		if assertedMsg.Height <= 31 || assertedMsg.Width < 105 {
 			m.displayInfoBox = false
 			listWidthRatio = listWidthRatioWithOutInfoBox
 		} else {
@@ -224,45 +225,53 @@ notificationLoop:
 			m.displayInfoBox = true
 		}
 
-		m.width = msg.Width
-		m.height = msg.Height
+		m.width = assertedMsg.Width
+		m.height = assertedMsg.Height
 
-		KeymapAvailableWidth = msg.Width - 10
+		KeymapAvailableWidth = assertedMsg.Width - 10
 
 		windowStyle = windowStyle.
 			Width(m.width - listDocStyle.GetHorizontalFrameSize() - 2).
 			Height(m.height - listDocStyle.GetVerticalFrameSize() - 3)
 
-		dialogContainerStyle = dialogContainerStyle.Width(msg.Width).Height(msg.Height)
+		dialogContainerStyle = dialogContainerStyle.Width(assertedMsg.Width).Height(assertedMsg.Height)
 
 		// dynamically resizes the dimentions of infobox depending on the window size
 		moreInfoStyle = moreInfoStyle.Width(int(infoBoxWidthRatio * float64(m.width)))
 		moreInfoStyle = moreInfoStyle.Height(int(infoBoxHeightRatio * float64(m.height)))
 
-		m.helpGen.Width = msg.Width - 20
-		m.navKeymap.Width = msg.Width - 20
+		m.helpGen.Width = assertedMsg.Width - 20
+		m.navKeymap.Width = assertedMsg.Width - 20
 
 		// change list dimensions when window size changes
 		// TODO: change width
 		for index := range m.TabContent {
-			listM, _ := m.TabContent[index].Update(msg)
+			listM, _ := m.TabContent[index].Update(assertedMsg)
 			m.TabContent[index] = listM.(listModel)
 		}
 
 	case tea.KeyMsg:
 		if !m.getActiveList().SettingFilter() && !m.showDialog {
 			switch {
-			case key.Matches(msg, NavKeymap.Quit):
+			case key.Matches(assertedMsg, NavKeymap.Quit):
 				return m, tea.Quit
-			case key.Matches(msg, NavKeymap.NextTab):
+			case key.Matches(assertedMsg, NavKeymap.NextTab):
 				m.nextTab()
-			case key.Matches(msg, NavKeymap.PrevTab):
+			case key.Matches(assertedMsg, NavKeymap.PrevTab):
 				m.prevTab()
+			case key.Matches(assertedMsg, NavKeymap.Select):
+				msg = itemSelect{}
+				break
+			case key.Matches(assertedMsg, NavKeymap.Back):
+				if m.getActiveTab().inSelectionMode() {
+					msg = clearSelection{}
+					break
+				}
 			}
 
 			if m.activeTab == IMAGES {
 				switch {
-				case key.Matches(msg, ImageKeymap.Run):
+				case key.Matches(assertedMsg, ImageKeymap.Run):
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
@@ -275,7 +284,7 @@ notificationLoop:
 						// go m.runBackground(op)
 					}
 
-				case key.Matches(msg, ImageKeymap.Delete):
+				case key.Matches(assertedMsg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						imageId := curItem.(dockerRes).getId()
@@ -286,7 +295,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(msg, ImageKeymap.DeleteForce):
+				case key.Matches(assertedMsg, ImageKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
@@ -300,12 +309,12 @@ notificationLoop:
 						go m.runBackground(op)
 					}
 
-				case key.Matches(msg, ImageKeymap.Prune):
+				case key.Matches(assertedMsg, ImageKeymap.Prune):
 					m.activeDialog = getPruneImagesDialog(make(map[string]string))
 					m.showDialog = true
 					cmds = append(cmds, m.activeDialog.Init())
 
-				case key.Matches(msg, ImageKeymap.Scout):
+				case key.Matches(assertedMsg, ImageKeymap.Scout):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						dockerRes := curItem.(dockerRes)
@@ -330,7 +339,7 @@ notificationLoop:
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
-				case key.Matches(msg, ImageKeymap.CopyId):
+				case key.Matches(assertedMsg, ImageKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
@@ -339,7 +348,7 @@ notificationLoop:
 						op()
 					}
 
-				case key.Matches(msg, ImageKeymap.RunAndExec):
+				case key.Matches(assertedMsg, ImageKeymap.RunAndExec):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
@@ -366,7 +375,7 @@ notificationLoop:
 							return nil
 						}))
 					}
-				case key.Matches(msg, ImageKeymap.Build):
+				case key.Matches(assertedMsg, ImageKeymap.Build):
 					m.activeDialog = getBuildImageDialog(make(map[string]string))
 					m.showDialog = true
 					cmds = append(cmds, m.activeDialog.Init())
@@ -374,10 +383,10 @@ notificationLoop:
 
 			} else if m.activeTab == CONTAINERS {
 				switch {
-				case key.Matches(msg, ContainerKeymap.ToggleListAll):
+				case key.Matches(assertedMsg, ContainerKeymap.ToggleListAll):
 					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
 
-				case key.Matches(msg, ContainerKeymap.ToggleStartStop):
+				case key.Matches(assertedMsg, ContainerKeymap.ToggleStartStop):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
@@ -385,7 +394,7 @@ notificationLoop:
 						go m.runBackground(op)
 					}
 
-				case key.Matches(msg, ContainerKeymap.TogglePause):
+				case key.Matches(assertedMsg, ContainerKeymap.TogglePause):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
@@ -393,7 +402,7 @@ notificationLoop:
 						go m.runBackground(op)
 					}
 
-				case key.Matches(msg, ContainerKeymap.Restart):
+				case key.Matches(assertedMsg, ContainerKeymap.Restart):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerInfo := curItem.(containerItem)
@@ -401,7 +410,7 @@ notificationLoop:
 						go m.runBackground(op)
 					}
 
-				case key.Matches(msg, ContainerKeymap.Delete):
+				case key.Matches(assertedMsg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if containerInfo, ok := curItem.(dockerRes); ok {
 						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.getId()})
@@ -410,7 +419,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(msg, ContainerKeymap.DeleteForce):
+				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						containerId := curItem.(containerItem).getId()
@@ -425,12 +434,12 @@ notificationLoop:
 						go m.runBackground(op)
 					}
 
-				case key.Matches(msg, ContainerKeymap.Prune):
+				case key.Matches(assertedMsg, ContainerKeymap.Prune):
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))
 					m.showDialog = true
 					cmds = append(cmds, m.activeDialog.Init())
 
-				case key.Matches(msg, ContainerKeymap.Exec):
+				case key.Matches(assertedMsg, ContainerKeymap.Exec):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						container := curItem.(containerItem)
@@ -462,7 +471,7 @@ notificationLoop:
 						}
 					}
 
-				case key.Matches(msg, ContainerKeymap.CopyId):
+				case key.Matches(assertedMsg, ContainerKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
@@ -472,7 +481,7 @@ notificationLoop:
 						op()
 					}
 
-				case key.Matches(msg, ContainerKeymap.ShowLogs):
+				case key.Matches(assertedMsg, ContainerKeymap.ShowLogs):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {
@@ -491,7 +500,7 @@ notificationLoop:
 
 			} else if m.activeTab == VOLUMES {
 				switch {
-				case key.Matches(msg, VolumeKeymap.Prune):
+				case key.Matches(assertedMsg, VolumeKeymap.Prune):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
 						volumeId := curItem.(dockerRes).getId()
@@ -500,7 +509,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(msg, VolumeKeymap.Delete):
+				case key.Matches(assertedMsg, VolumeKeymap.Delete):
 
 					curItem := m.getSelectedItem()
 
@@ -511,7 +520,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(msg, VolumeKeymap.CopyId):
+				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil {

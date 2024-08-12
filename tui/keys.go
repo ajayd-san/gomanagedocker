@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 var KeymapAvailableWidth int
@@ -10,6 +11,7 @@ type navigationKeymap struct {
 	Enter    key.Binding
 	Back     key.Binding
 	Quit     key.Binding
+	Select   key.Binding
 	NextTab  key.Binding
 	PrevTab  key.Binding
 	NextItem key.Binding
@@ -162,7 +164,7 @@ var ContainerKeymap = contKeymap{
 }
 
 func (m contKeymap) FullHelp() [][]key.Binding {
-	allBindings := []key.Binding{
+	bindings := []key.Binding{
 		m.ToggleListAll,
 		m.ToggleStartStop,
 		m.Restart,
@@ -175,7 +177,7 @@ func (m contKeymap) FullHelp() [][]key.Binding {
 		m.ShowLogs,
 	}
 
-	return packKeybindings(allBindings, KeymapAvailableWidth)
+	return packKeybindings(bindings, KeymapAvailableWidth)
 }
 
 func (m contKeymap) ShortHelp() []key.Binding {
@@ -228,6 +230,10 @@ var NavKeymap = navigationKeymap{
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c", "q"),
 		key.WithHelp("q", "quit"),
+	),
+	Select: key.NewBinding(
+		key.WithKeys(tea.KeySpace.String()),
+		key.WithHelp("<space>", "Select"),
 	),
 	NextTab: key.NewBinding(
 		key.WithKeys("right", "l", "tab"),
