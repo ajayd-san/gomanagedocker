@@ -16,18 +16,19 @@ func TestReadConfig(t *testing.T) {
 	}{
 		{
 			UserConfig: "",
-			Want:       map[string]any{"config.Polling-Time": 500, "config.Tab-Order": []any{"images", "containers", "volumes"}},
+			Want:       map[string]any{"config.Polling-Time": 500, "config.Tab-Order": []any{"images", "containers", "volumes"}, "config.notification-timeout": 2000},
 		},
 		{
 			UserConfig: `config:
   Polling-Time: 100`,
-			Want: map[string]any{"config.Polling-Time": 100, "config.Tab-Order": []any{"images", "containers", "volumes"}},
+			Want: map[string]any{"config.Polling-Time": 100, "config.Tab-Order": []any{"images", "containers", "volumes"}, "config.notification-timeout": 2000},
 		},
 		{
 			UserConfig: `config:
   Polling-Time: 200
-  Tab-Order: [containers, volumes]`,
-			Want: map[string]any{"config.Polling-Time": 200, "config.Tab-Order": []any{"containers", "volumes"}},
+  Tab-Order: [containers, volumes]
+  notification-timeout: 10000`,
+			Want: map[string]any{"config.Polling-Time": 200, "config.Tab-Order": []any{"containers", "volumes"}, "config.notification-timeout": 10000},
 		},
 	}
 

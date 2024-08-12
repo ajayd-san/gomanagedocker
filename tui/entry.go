@@ -24,6 +24,7 @@ var (
 
 var CONFIG_POLLING_TIME time.Duration
 var CONFIG_TAB_ORDERING []string
+var CONFIG_NOTIFICATION_TIMEOUT time.Duration
 
 var globalConfig = koanf.New(".")
 
@@ -35,7 +36,8 @@ func StartTUI(debug bool) error {
 		log.SetOutput(io.Discard)
 	}
 
-	readAndLoadConfig()
+	readConfig()
+	loadConfig()
 
 	m := NewModel()
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
@@ -45,7 +47,7 @@ func StartTUI(debug bool) error {
 	return nil
 }
 
-func readAndLoadConfig() {
+func readConfig() {
 	configPath, err := os.UserConfigDir()
 
 	if err != nil {
@@ -53,11 +55,11 @@ func readAndLoadConfig() {
 	}
 
 	config.ReadConfig(globalConfig, configPath+xdgPathTail)
-	loadConfig()
 }
 
 func loadConfig() {
 	CONFIG_POLLING_TIME = globalConfig.Duration("config.Polling-Time") * time.Millisecond
+	CONFIG_NOTIFICATION_TIMEOUT = globalConfig.Duration("config.notification-timeout") * time.Millisecond
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
 	CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order")
 	setTabConstants(CONFIG_TAB_ORDERING)
