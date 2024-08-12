@@ -3,8 +3,8 @@ package tui
 import (
 	"slices"
 
+	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

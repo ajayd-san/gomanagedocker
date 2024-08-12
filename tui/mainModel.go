@@ -15,7 +15,8 @@ import (
 	teadialog "github.com/ajayd-san/teaDialog"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
+
+	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
