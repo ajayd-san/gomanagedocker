@@ -19,8 +19,8 @@ type DefaultItemStyles struct {
 	NormalDesc  lipgloss.Style
 
 	// The selected item state.
-	SelectedTitle lipgloss.Style
-	SelectedDesc  lipgloss.Style
+	CursorOnTitle lipgloss.Style
+	CursorOnDesc  lipgloss.Style
 
 	// The dimmed state, for when the filter input is initially activated.
 	DimmedTitle lipgloss.Style
@@ -30,7 +30,8 @@ type DefaultItemStyles struct {
 	FilterMatch lipgloss.Style
 
 	//selected item
-	SelectedItem lipgloss.Style
+	SelectedItemTitle lipgloss.Style
+	SelectedItemDesc  lipgloss.Style
 }
 
 // NewDefaultItemStyles returns style definitions for a default item. See
@@ -43,13 +44,13 @@ func NewDefaultItemStyles() (s DefaultItemStyles) {
 	s.NormalDesc = s.NormalTitle.Copy().
 		Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
 
-	s.SelectedTitle = lipgloss.NewStyle().
+	s.CursorOnTitle = lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), false, false, false, true).
 		BorderForeground(lipgloss.AdaptiveColor{Light: "#F793FF", Dark: "#AD58B4"}).
 		Foreground(lipgloss.AdaptiveColor{Light: "#EE6FF8", Dark: "#EE6FF8"}).
 		Padding(0, 0, 0, 1)
 
-	s.SelectedDesc = s.SelectedTitle.Copy().
+	s.CursorOnDesc = s.CursorOnTitle.Copy().
 		Foreground(lipgloss.AdaptiveColor{Light: "#F793FF", Dark: "#AD58B4"})
 
 	s.DimmedTitle = lipgloss.NewStyle().
@@ -61,15 +62,25 @@ func NewDefaultItemStyles() (s DefaultItemStyles) {
 
 	s.FilterMatch = lipgloss.NewStyle().Underline(true)
 
-	// TODO: CHANGE THIS LATER
-	s.SelectedItem = lipgloss.NewStyle().Foreground(lipgloss.Color("#A95C68"))
+	// Selected Items styles
+	s.SelectedItemDesc = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), false, false, false, true).
+		BorderForeground(lipgloss.AdaptiveColor{Light: "#F793FF", Dark: "#FFEA00"}).
+		Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"}).
+		Padding(0, 0, 0, 1)
 
+	s.SelectedItemTitle = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), false, false, false, true).
+		BorderForeground(lipgloss.AdaptiveColor{Light: "#F793FF", Dark: "#FFEA00"}).
+		Foreground(lipgloss.AdaptiveColor{Light: "#1a1a1a", Dark: "#dddddd"}).
+		Padding(0, 0, 0, 1)
 	return s
 }
 
 // DefaultItem describes an items designed to work with DefaultDelegate.
 type DefaultItem interface {
 	Item
+	GetId() string
 	Title() string
 	Description() string
 }
@@ -143,14 +154,15 @@ func (d DefaultDelegate) Update(msg tea.Msg, m *Model) tea.Cmd {
 // Render prints an item.
 func (d DefaultDelegate) Render(w io.Writer, m Model, index int, item Item) {
 	var (
-		title, desc  string
-		matchedRunes []int
-		s            = &d.Styles
+		title, desc, Id string
+		matchedRunes    []int
+		s               = &d.Styles
 	)
 
 	if i, ok := item.(DefaultItem); ok {
 		title = i.Title()
 		desc = i.Description()
+		Id = i.GetId()
 	} else {
 		return
 	}
@@ -176,9 +188,9 @@ func (d DefaultDelegate) Render(w io.Writer, m Model, index int, item Item) {
 
 	// Conditions
 	var (
-		isSelected  = index == m.Index()
-		emptyFilter = m.FilterState() == Filtering && m.FilterValue() == ""
-		isFiltered  = m.FilterState() == Filtering || m.FilterState() == FilterApplied
+		isCursorOnCurrentItem = index == m.Index()
+		emptyFilter           = m.FilterState() == Filtering && m.FilterValue() == ""
+		isFiltered            = m.FilterState() == Filtering || m.FilterState() == FilterApplied
 	)
 
 	if isFiltered && index < len(m.filteredItems) {
@@ -189,15 +201,15 @@ func (d DefaultDelegate) Render(w io.Writer, m Model, index int, item Item) {
 	if emptyFilter {
 		title = s.DimmedTitle.Render(title)
 		desc = s.DimmedDesc.Render(desc)
-	} else if isSelected && m.FilterState() != Filtering {
+	} else if isCursorOnCurrentItem && m.FilterState() != Filtering {
 		if isFiltered {
 			// Highlight matches
-			unmatched := s.SelectedTitle.Inline(true)
+			unmatched := s.CursorOnTitle.Inline(true)
 			matched := unmatched.Copy().Inherit(s.FilterMatch)
 			title = lipgloss.StyleRunes(title, matchedRunes, matched, unmatched)
 		}
-		title = s.SelectedTitle.Render(title)
-		desc = s.SelectedDesc.Render(desc)
+		title = s.CursorOnTitle.Render(title)
+		desc = s.CursorOnDesc.Render(desc)
 	} else {
 		if isFiltered {
 			// Highlight matches
@@ -205,15 +217,22 @@ func (d DefaultDelegate) Render(w io.Writer, m Model, index int, item Item) {
 			matched := unmatched.Copy().Inherit(s.FilterMatch)
 			title = lipgloss.StyleRunes(title, matchedRunes, matched, unmatched)
 		}
-		title = s.NormalTitle.Render(title)
-		desc = s.NormalDesc.Render(desc)
+		if _, ok := m.selectedItems[Id]; ok {
+			title = s.SelectedItemTitle.Render(title)
+			desc = s.SelectedItemDesc.Render(desc)
+
+		} else {
+			title = s.NormalTitle.Render(title)
+			desc = s.NormalDesc.Render(desc)
+		}
 	}
 
+	res := fmt.Sprintf("%s", title)
 	if d.ShowDescription {
-		fmt.Fprintf(w, "%s\n%s", title, desc)
-		return
+		res = fmt.Sprintf("%s\n%s", title, desc)
 	}
-	fmt.Fprintf(w, "%s", title)
+
+	fmt.Fprintf(w, "%s", res)
 }
 
 // ShortHelp returns the delegate's short help.

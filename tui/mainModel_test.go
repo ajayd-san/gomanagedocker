@@ -115,7 +115,7 @@ func TestFetchNewData(t *testing.T) {
 
 			assert.Equal(t, len(newlist), len(want))
 			for i := range len(newlist) {
-				assert.Equal(t, newlist[i].getId(), want[i].ID)
+				assert.Equal(t, newlist[i].GetId(), want[i].ID)
 				assert.Equal(t, newlist[i].getName(), strings.Join(want[i].Names, ","))
 			}
 		})

@@ -277,7 +277,7 @@ notificationLoop:
 
 					if curItem != nil {
 						imageInfo := curItem.(imageItem)
-						storage := map[string]string{"ID": imageInfo.getId()}
+						storage := map[string]string{"ID": imageInfo.GetId()}
 						m.activeDialog = getRunImageDialog(storage)
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
@@ -288,7 +288,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						imageId := curItem.(dockerRes).getId()
+						imageId := curItem.(dockerRes).GetId()
 						storage := map[string]string{"ID": imageId}
 						m.activeDialog = getRemoveImageDialog(storage)
 						m.showDialog = true
@@ -300,7 +300,7 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						imageId := curItem.(imageItem).getId()
+						imageId := curItem.(imageItem).GetId()
 
 						deleteOpts := image.RemoveOptions{
 							Force:         true,
@@ -354,7 +354,7 @@ notificationLoop:
 
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
-						id := dres.getId()
+						id := dres.GetId()
 
 						config := container.Config{
 							AttachStdin:  true,
@@ -414,7 +414,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
 					if containerInfo, ok := curItem.(dockerRes); ok {
-						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.getId()})
+						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.GetId()})
 						m.activeDialog = dialog
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
@@ -423,7 +423,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						containerId := curItem.(containerItem).getId()
+						containerId := curItem.(containerItem).GetId()
 						deleteOpts := container.RemoveOptions{
 							RemoveVolumes: false,
 							RemoveLinks:   false,
@@ -461,7 +461,7 @@ notificationLoop:
 							m.showDialog = true
 							cmds = append(cmds, m.activeDialog.Init())
 						} else {
-							containerId := container.getId()
+							containerId := container.GetId()
 							// execs into the default shell of the container (got from lazydocker)
 							cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 
@@ -487,7 +487,7 @@ notificationLoop:
 
 					if currentItem != nil {
 						dres := currentItem.(dockerRes)
-						id := dres.getId()
+						id := dres.GetId()
 						cmd := exec.Command("docker", "logs", "--follow", id)
 						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 							if err.Error() != "exit status 1" {
@@ -504,7 +504,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, VolumeKeymap.Prune):
 					curItem := m.getSelectedItem()
 					if curItem != nil {
-						volumeId := curItem.(dockerRes).getId()
+						volumeId := curItem.(dockerRes).GetId()
 						m.activeDialog = getPruneVolumesDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
@@ -515,7 +515,7 @@ notificationLoop:
 					curItem := m.getSelectedItem()
 
 					if curItem != nil {
-						volumeId := curItem.(dockerRes).getId()
+						volumeId := curItem.(dockerRes).GetId()
 						m.activeDialog = getRemoveVolumeDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
@@ -888,8 +888,8 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 				defer wg.Done()
 			}
 			for _, image := range newlist {
-				if _, keyExists := m.imageIdToNameMap[image.getId()]; !keyExists {
-					m.imageIdToNameMap[image.getId()] = image.getName()
+				if _, keyExists := m.imageIdToNameMap[image.GetId()]; !keyExists {
+					m.imageIdToNameMap[image.GetId()] = image.getName()
 				}
 			}
 		}()
@@ -899,7 +899,7 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 		newlist = makeContainerItems(newContainers)
 
 		for _, newContainer := range newlist {
-			id := newContainer.getId()
+			id := newContainer.GetId()
 			if _, ok := m.TabContent[CONTAINERS].ExistingIds[id]; !ok {
 
 				if wg != nil {

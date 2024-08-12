@@ -186,7 +186,7 @@ type Model struct {
 	items []Item
 
 	// Selected items
-	selectedItems map[string]Item
+	selectedItems map[string]DefaultItem
 
 	// Filtered items we're currently displaying. Filtering, toggles and so on
 	// will alter this slice so we can show what is relevant. For that reason,
@@ -236,7 +236,7 @@ func New(items []Item, delegate ItemDelegate, width, height int) Model {
 		height:        height,
 		delegate:      delegate,
 		items:         items,
-		selectedItems: make(map[string]Item),
+		selectedItems: make(map[string]DefaultItem),
 		Paginator:     p,
 		spinner:       sp,
 		Help:          help.New(),
@@ -247,10 +247,24 @@ func New(items []Item, delegate ItemDelegate, width, height int) Model {
 	return m
 }
 
-func (m *Model) ToggleSelectedItem() {
-	cur := m.SelectedItem().(tui.DockerRes)
-	m.selectedItems[]
+func (m *Model) ToggleSelect() {
+	cur := m.SelectedItem().(DefaultItem)
+
+	if _, ok := m.selectedItems[cur.GetId()]; ok {
+		delete(m.selectedItems, cur.GetId())
+	} else {
+		m.selectedItems[cur.GetId()] = cur
+	}
 }
+
+func (m *Model) ClearSelection() {
+	clear(m.selectedItems)
+}
+
+func (m Model) GetSelected() map[string]DefaultItem {
+	return m.selectedItems
+}
+
 // NewModel returns a new model with sensible defaults.
 //
 // Deprecated: use [New] instead.

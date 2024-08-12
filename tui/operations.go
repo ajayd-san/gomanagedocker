@@ -36,7 +36,7 @@ func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, no
 func toggleStartStopContainer(cli dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notifcationChan chan notificationMetadata) Operation {
 
 	return func() error {
-		containerId := containerInfo.getId()
+		containerId := containerInfo.GetId()
 		err := cli.ToggleStartStopContainer(containerId)
 
 		if err != nil {
@@ -61,7 +61,7 @@ func toggleStartStopContainer(cli dockercmd.DockerClient, containerInfo containe
 // Returns func that calls dockercmd api to toggle pause/resume container, and sends notification to `notificaitonChan`
 func togglePauseResumeContainer(client dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
-		containerId := containerInfo.getId()
+		containerId := containerInfo.GetId()
 		err := client.TogglePauseResume(containerId)
 
 		if err != nil {
@@ -85,7 +85,7 @@ func togglePauseResumeContainer(client dockercmd.DockerClient, containerInfo con
 // Returns func that calls dockercmd api to restart container and sends notification to notificationChan
 func toggleRestartContainer(client dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
-		containerId := containerInfo.getId()
+		containerId := containerInfo.GetId()
 		err := client.RestartContainer(containerId)
 
 		if err != nil {
@@ -117,7 +117,7 @@ func containerDelete(client dockercmd.DockerClient, containerId string, opts con
 // Copies ID of an object to clipboard and send notification to `notificationChan`
 func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
-		id := object.getId()
+		id := object.GetId()
 		id = strings.TrimPrefix(id, "sha256:")
 		id = id[:min(len(id), 20)]
 		clipboard.Write(clipboard.FmtText, []byte(id))

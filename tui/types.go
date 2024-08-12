@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
+	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
@@ -38,7 +38,7 @@ var statusMap = map[string]status{
 
 type dockerRes interface {
 	list.Item
-	getId() string
+	list.DefaultItem
 	getSize() float64
 	getLabel() string
 	getName() string
@@ -63,7 +63,7 @@ func makeImageItems(dockerlist []image.Summary) []dockerRes {
 }
 
 // INFO: impl dockerRes Interface
-func (i imageItem) getId() string {
+func (i imageItem) GetId() string {
 	return i.ID
 }
 
@@ -84,7 +84,7 @@ func (i imageItem) getName() string {
 func (i imageItem) Title() string { return i.getName() }
 
 func (i imageItem) Description() string {
-	id := i.getId()
+	id := i.GetId()
 	id = strings.TrimPrefix(id, "sha256:")
 	shortId := id[:15]
 
@@ -122,7 +122,7 @@ func makeContainerItems(dockerlist []types.Container) []dockerRes {
 }
 
 // INFO: impl dockerRes Interface
-func (c containerItem) getId() string {
+func (c containerItem) GetId() string {
 	return c.ID
 }
 
@@ -147,7 +147,7 @@ func (i containerItem) Title() string { return i.getName() }
 
 func (i containerItem) Description() string {
 
-	id := i.getId()
+	id := i.GetId()
 	id = strings.TrimPrefix(id, "sha256:")
 	shortId := id[:15]
 
@@ -175,10 +175,10 @@ type VolumeItem struct {
 }
 
 func (v VolumeItem) FilterValue() string {
-	return v.getId()
+	return v.GetId()
 }
 
-func (v VolumeItem) getId() string {
+func (v VolumeItem) GetId() string {
 	return v.Name
 }
 
