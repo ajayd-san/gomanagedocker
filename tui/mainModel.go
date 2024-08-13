@@ -435,21 +435,23 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
-					for _, item := range selectedItems {
-						if item != nil {
-							containerId := item.(containerItem).GetId()
-							deleteOpts := container.RemoveOptions{
-								RemoveVolumes: false,
-								RemoveLinks:   false,
-								Force:         true,
-							}
-
-							op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
-							go m.runBackground(op)
-
-							cmds = append(cmds, clearSelectionCmd())
-						}
+					deleteOpts := container.RemoveOptions{
+						RemoveVolumes: false,
+						RemoveLinks:   false,
+						Force:         true,
 					}
+
+					op := containerDeleteBulk(
+						m.dockerClient,
+						selectedItems,
+						deleteOpts,
+						m.activeTab,
+						m.notificationChan,
+						m.possibleLongRunningOpErrorChan,
+					)
+					go m.runBackground(op)
+
+					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, ContainerKeymap.Prune):
 					m.activeDialog = getPruneContainersDialog(make(map[string]string))

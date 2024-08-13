@@ -221,6 +221,49 @@ func containerDelete(client dockercmd.DockerClient, containerId string, opts con
 	}
 }
 
+// bulk deletes `containers`
+func containerDeleteBulk(
+	client dockercmd.DockerClient,
+	containers []dockerRes,
+	opts container.RemoveOptions,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, containerInfo := range containers {
+
+			wg.Add(1)
+			go func() {
+				containerId := containerInfo.GetId()
+				err := client.DeleteContainer(containerId, opts)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Deleted %s", containerId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		if successCounter.Load() > 1 {
+			msg := fmt.Sprintf("Deleted %d containers", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
+		return nil
+	}
+}
+
 // Copies ID of an object to clipboard and send notification to `notificationChan`
 func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
