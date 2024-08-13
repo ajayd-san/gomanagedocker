@@ -141,11 +141,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 			t.Run("Test Stopping", func(t *testing.T) {
 				containers := mock.ListContainers(false)
 				index := slices.IndexFunc(containers, func(elem types.Container) bool {
-					if elem.ID == target.ID {
-						return true
-					}
-
-					return false
+					return elem.ID == target.ID
 				})
 
 				got := containers[index]
@@ -412,6 +408,132 @@ func TestImageDelete(t *testing.T) {
 					})
 				default:
 					t.Errorf("No notification received")
+				}
+			})
+		})
+	}
+}
+func TestImageDeleteBulk(t *testing.T) {
+	tests := []struct {
+		imgs   []dockerRes
+		notifs []string
+		errors []string
+		opts   image.RemoveOptions
+	}{
+		{
+			imgs: []dockerRes{
+				imageItem{
+					image.Summary{
+						Containers: 0,
+						ID:         "0bbbbbbbb",
+						RepoTags:   []string{"a"},
+					},
+				},
+
+				imageItem{
+					image.Summary{
+						Containers: 0,
+						ID:         "1bbbbbbbb",
+						RepoTags:   []string{"b"},
+					},
+				},
+			},
+			notifs: []string{
+				listStatusMessageStyle.Render("Deleted 0bbbbbbb"),
+				listStatusMessageStyle.Render("Deleted 1bbbbbbb"),
+				listStatusMessageStyle.Render("Deleted 2 images"),
+			},
+			opts: image.RemoveOptions{
+				Force:         true,
+				PruneChildren: false,
+			},
+		},
+		{
+			imgs: []dockerRes{
+				imageItem{
+					image.Summary{
+						Containers: 0,
+						ID:         "this does not exist",
+						RepoTags:   []string{"a"},
+					},
+				},
+
+				imageItem{
+					image.Summary{
+						Containers: 0,
+						ID:         "1bbbbbbbb",
+						RepoTags:   []string{"b"},
+					},
+				},
+			},
+			notifs: []string{
+				listStatusMessageStyle.Render("Deleted 1bbbbbbb"),
+			},
+			opts: image.RemoveOptions{
+				Force:         true,
+				PruneChildren: false,
+			},
+		},
+	}
+
+	for _, testCase := range tests {
+		mock := setupTest(t)
+		mock.ToggleContainerListAll()
+		t.Run("Force Delete Exising image", func(t *testing.T) {
+
+			notifChan := make(chan notificationMetadata, 10)
+			erroChan := make(chan error, 10)
+			op := imageDeleteBulk(mock, testCase.imgs, testCase.opts, 2, notifChan, erroChan)
+
+			_ = op()
+
+			// test for error
+			if testCase.errors != nil {
+				for range testCase.errors {
+					select {
+					case err := <-erroChan:
+						slices.ContainsFunc(testCase.errors, func(elem string) bool {
+							return err.Error() == elem
+						})
+
+					default:
+					}
+				}
+			}
+
+			t.Run("Confirm image deleted", func(t *testing.T) {
+				images := mock.ListImages()
+
+				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+					for _, dres := range testCase.imgs {
+						if elem.ID == dres.GetId() {
+							return true
+						}
+					}
+					return false
+				})
+
+				assert.Assert(t, !exists)
+			})
+
+			t.Run("Assert Notifications", func(t *testing.T) {
+				/*
+					its easier to just check for length, since the order received could be different
+					depending on which go routien finished first
+				*/
+				assert.Equal(t, len(notifChan), len(testCase.notifs))
+
+				for range testCase.notifs {
+					select {
+					case notif := <-notifChan:
+						found := slices.ContainsFunc(testCase.notifs, func(elem string) bool {
+							return elem == notif.msg
+						})
+
+						assert.Check(t, found)
+					default:
+						t.Errorf("No notification received")
+					}
 				}
 			})
 		})

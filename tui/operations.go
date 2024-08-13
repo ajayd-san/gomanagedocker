@@ -6,6 +6,8 @@ package tui
 
 import (
 	"fmt"
+	"sync"
+	"sync/atomic"
 
 	"strings"
 
@@ -160,6 +162,54 @@ func imageDelete(client dockercmd.DockerClient, imageId string, opts image.Remov
 		msg := fmt.Sprintf("Deleted %s", imageId[:8])
 
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+
+		return nil
+	}
+}
+
+// Same as above but is a bulk operation
+func imageDeleteBulk(
+	client dockercmd.DockerClient,
+	items []dockerRes,
+	opts image.RemoveOptions,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errorChan chan error,
+) Operation {
+
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, item := range items {
+			imageId := item.GetId()
+
+			wg.Add(1)
+
+			go func() {
+				err := client.DeleteImage(imageId, opts)
+				if err != nil {
+					errorChan <- err
+				} else {
+					// send notification
+					imageId = strings.TrimPrefix(imageId, "sha256:")
+					msg := fmt.Sprintf("Deleted %s", imageId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+
+		}
+
+		wg.Wait()
+		if successCounter.Load() > 1 {
+			msg := fmt.Sprintf("Deleted %d images", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
 
 		return nil
 	}

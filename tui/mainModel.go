@@ -314,20 +314,14 @@ notificationLoop:
 				case key.Matches(assertedMsg, ImageKeymap.DeleteForce):
 					items := m.getSelectedItems()
 
-					for _, curItem := range items {
-						if curItem != nil {
-							imageId := curItem.(imageItem).GetId()
-
-							deleteOpts := image.RemoveOptions{
-								Force:         true,
-								PruneChildren: false,
-							}
-							op := imageDelete(m.dockerClient, imageId, deleteOpts, m.activeTab, m.notificationChan)
-							go m.runBackground(op)
-
-							cmds = append(cmds, clearSelectionCmd())
-						}
+					deleteOpts := image.RemoveOptions{
+						Force:         true,
+						PruneChildren: false,
 					}
+					op := imageDeleteBulk(m.dockerClient, items, deleteOpts, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					go m.runBackground(op)
+
+					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, ImageKeymap.Prune):
 					m.activeDialog = getPruneImagesDialog(make(map[string]string))
