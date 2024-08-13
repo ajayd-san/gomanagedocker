@@ -542,12 +542,10 @@ notificationLoop:
 				case key.Matches(assertedMsg, VolumeKeymap.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
-					for _, item := range selectedItems {
-						op := volumeDelete(m.dockerClient, item.GetId(), true, m.activeTab, m.notificationChan)
-						go m.runBackground(op)
+					op := volumeDeleteBulk(m.dockerClient, selectedItems, true, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					go m.runBackground(op)
 
-						cmds = append(cmds, clearSelectionCmd())
-					}
+					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
 					currentItem := m.getSelectedItem()

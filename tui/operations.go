@@ -363,6 +363,40 @@ func imageDeleteBulk(
 	}
 }
 
+func volumeDeleteBulk(client dockercmd.DockerClient, volumes []dockerRes, force bool, activeTab tabId, notificationChan chan notificationMetadata, errChan chan error) Operation {
+	return func() error {
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, volume := range volumes {
+			wg.Add(1)
+			go func() {
+				volumeId := volume.GetId()
+				err := client.DeleteVolume(volumeId, force)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Deleted %s", volumeId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		if successCounter.Load() > 1 {
+			msg := fmt.Sprintf("Deleted %d volumes", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
+
+		return nil
+	}
+}
+
 func volumeDelete(client dockercmd.DockerClient, volumeId string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteVolume(volumeId, force)
