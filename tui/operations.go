@@ -167,18 +167,41 @@ func togglePauseResumeContainer(
 }
 
 // Returns func that calls dockercmd api to restart container and sends notification to notificationChan
-func toggleRestartContainer(client dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func toggleRestartContainer(
+	client dockercmd.DockerClient,
+	containers []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
 	return func() error {
-		containerId := containerInfo.GetId()
-		err := client.RestartContainer(containerId)
 
-		if err != nil {
-			return err
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, container := range containers {
+			containerId := container.GetId()
+
+			wg.Add(1)
+			go func() {
+				err := client.RestartContainer(containerId)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Restarted %s", containerId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
 		}
 
-		msg := fmt.Sprintf("Restarted %s", containerId[:8])
-		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		wg.Wait()
 
+		msg := fmt.Sprintf("Restarted %d containers", successCounter.Load())
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 	}
 }

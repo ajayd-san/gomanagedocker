@@ -419,15 +419,9 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.Restart):
 					selectedItems := m.getSelectedItems()
 
-					for _, item := range selectedItems {
-						if item != nil {
-							containerInfo := item.(containerItem)
-							op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-							go m.runBackground(op)
-
-							cmds = append(cmds, clearSelectionCmd())
-						}
-					}
+					op := toggleRestartContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					go m.runBackground(op)
+					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
