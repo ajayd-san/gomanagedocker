@@ -102,25 +102,66 @@ func toggleStartStopContainer(
 }
 
 // Returns func that calls dockercmd api to toggle pause/resume container, and sends notification to `notificaitonChan`
-func togglePauseResumeContainer(client dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func togglePauseResumeContainer(
+	client dockercmd.DockerClient,
+	containers []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
 	return func() error {
-		containerId := containerInfo.GetId()
-		err := client.TogglePauseResume(containerId)
 
-		if err != nil {
-			return err
+		var wg sync.WaitGroup
+		var successCounterPaused atomic.Uint32
+		var successCounterResumed atomic.Uint32
+
+		for _, container := range containers {
+
+			wg.Add(1)
+			go func() {
+				containerInfo := container.(containerItem)
+				containerId := containerInfo.GetId()
+				err := client.TogglePauseResume(containerId)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := ""
+					if containerInfo.getState() == "running" {
+						msg = "Paused " + containerId[:8]
+						successCounterPaused.Add(1)
+					} else {
+						msg = "Resumed " + containerId[:8]
+						successCounterResumed.Add(1)
+					}
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+				}
+				wg.Done()
+			}()
 		}
 
 		// send notification
-		msg := ""
-		if containerInfo.getState() == "running" {
-			msg = "Paused " + containerId[:8]
-		} else {
-			msg = "Resumed " + containerId[:8]
+		wg.Wait()
+
+		resumedContainers := successCounterResumed.Load()
+		pausedContainers := successCounterPaused.Load()
+
+		if resumedContainers+pausedContainers > 1 {
+			var msg string
+			if pausedContainers > 0 {
+				msg = fmt.Sprintf("Paused: %d", pausedContainers)
+			}
+			if resumedContainers > 0 {
+				if msg == "" {
+					msg = fmt.Sprintf("Resumed: %d", resumedContainers)
+				} else {
+					msg = fmt.Sprintf("%s, Resumed: %d", msg, resumedContainers)
+				}
+			}
+			msg = fmt.Sprintf("%s containers", msg)
+			notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+			notificationChan <- notif
 		}
-
-		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
-
 		return nil
 	}
 }
