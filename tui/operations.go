@@ -35,27 +35,68 @@ func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, no
 }
 
 // Returns func that calls dockercmd api to toggle start/stop container, and sends notification to `notificaitonChan`
-func toggleStartStopContainer(cli dockercmd.DockerClient, containerInfo containerItem, activeTab tabId, notifcationChan chan notificationMetadata) Operation {
-
+func toggleStartStopContainer(
+	cli dockercmd.DockerClient,
+	containers []dockerRes,
+	activeTab tabId,
+	notifcationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
 	return func() error {
-		containerId := containerInfo.GetId()
-		err := cli.ToggleStartStopContainer(containerId)
 
-		if err != nil {
-			return err
+		var wg sync.WaitGroup
+		var successCounterStopped atomic.Uint32
+		var successCounterStarted atomic.Uint32
+
+		for _, dRes := range containers {
+
+			wg.Add(1)
+			go func() {
+				containerInfo := dRes.(containerItem)
+				containerId := containerInfo.GetId()
+				err := cli.ToggleStartStopContainer(containerId)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					// send notification
+					msg := ""
+					if containerInfo.getState() == "running" {
+						msg = fmt.Sprintf("Stopped %s", containerId[:8])
+						successCounterStopped.Add(1)
+					} else {
+						msg = fmt.Sprintf("Started %s", containerId[:8])
+						successCounterStarted.Add(1)
+					}
+
+					notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					notifcationChan <- notif
+				}
+				wg.Done()
+			}()
 		}
 
-		// send notification
-		msg := ""
-		if containerInfo.getState() == "running" {
-			msg = fmt.Sprintf("Stopped %s", containerId[:8])
-		} else {
-			msg = fmt.Sprintf("Started %s", containerId[:8])
+		wg.Wait()
+
+		startedContainers := successCounterStarted.Load()
+		stoppedContainers := successCounterStopped.Load()
+
+		if startedContainers+stoppedContainers > 1 {
+			var msg string
+			if stoppedContainers > 0 {
+				msg = fmt.Sprintf("Stopped: %d", stoppedContainers)
+			}
+			if startedContainers > 0 {
+				if msg == "" {
+					msg = fmt.Sprintf("Started: %d", startedContainers)
+				} else {
+					msg = fmt.Sprintf("%s, Started: %d", msg, startedContainers)
+				}
+			}
+			msg = fmt.Sprintf("%s containers", msg)
+			notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+			notifcationChan <- notif
 		}
-
-		notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
-
-		notifcationChan <- notif
 		return nil
 	}
 }

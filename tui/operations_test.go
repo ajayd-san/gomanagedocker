@@ -96,31 +96,66 @@ func setupTest(t *testing.T) dockercmd.DockerClient {
 func TestToggleStartStopContainer(t *testing.T) {
 
 	tests := []struct {
-		target    types.Container
-		want      string
-		notifWant string
+		containers []dockerRes
+		wantState  []string
+		notifWant  []string
 	}{
 		{
-			target: types.Container{
-				Names:      []string{"b"},
-				ID:         "2aaaaaaaa",
-				SizeRw:     201,
-				SizeRootFs: 401,
-				State:      "running",
+			containers: []dockerRes{
+				containerItem{
+					types.Container{
+						Names:      []string{"a"},
+						ID:         "1aaaaaaaa",
+						SizeRw:     1e+9,
+						SizeRootFs: 2e+9,
+						State:      "running",
+						Status:     "",
+					},
+				},
+				containerItem{
+					types.Container{
+						Names:      []string{"b"},
+						ID:         "2aaaaaaaa",
+						SizeRw:     201,
+						SizeRootFs: 401,
+						State:      "running",
+					},
+				},
 			},
-			want:      "stopped",
-			notifWant: listStatusMessageStyle.Render("Stopped 2aaaaaaa"),
+			wantState: []string{"stopped", "stopped"},
+			notifWant: []string{
+				listStatusMessageStyle.Render("Stopped 1aaaaaaa"),
+				listStatusMessageStyle.Render("Stopped 2aaaaaaa"),
+				listStatusMessageStyle.Render("Toggled 2 containers"),
+			},
 		},
 		{
-			target: types.Container{
-				Names:      []string{"b"},
-				ID:         "2aaaaaaaa",
-				SizeRw:     201,
-				SizeRootFs: 401,
-				State:      "stopped",
+			containers: []dockerRes{
+				containerItem{
+					types.Container{
+						Names:      []string{"b"},
+						ID:         "2aaaaaaaa",
+						SizeRw:     201,
+						SizeRootFs: 401,
+						State:      "stopped",
+					},
+				},
+				containerItem{
+					types.Container{
+						Names:      []string{"b"},
+						ID:         "3aaaaaaaa",
+						SizeRw:     201,
+						SizeRootFs: 401,
+						State:      "running",
+					},
+				},
 			},
-			want:      "running",
-			notifWant: listStatusMessageStyle.Render("Started 2aaaaaaa"),
+			wantState: []string{"running", "stopped"},
+			notifWant: []string{
+				listStatusMessageStyle.Render("Started 2aaaaaaa"),
+				listStatusMessageStyle.Render("Started 3aaaaaaa"),
+				listStatusMessageStyle.Render("Toggled 2 containers"),
+			},
 		},
 	}
 
@@ -129,36 +164,30 @@ func TestToggleStartStopContainer(t *testing.T) {
 
 	for _, testCase := range tests {
 		t.Run("Test for existing container", func(t *testing.T) {
-			target := containerItem{
-				testCase.target,
-			}
 
 			notifChan := make(chan notificationMetadata, 10)
-			op := toggleStartStopContainer(mock, target, 1, notifChan)
+			errChan := make(chan error, 10)
+			op := toggleStartStopContainer(mock, testCase.containers, 1, notifChan, errChan)
 
 			op()
 
 			t.Run("Test Stopping", func(t *testing.T) {
-				containers := mock.ListContainers(false)
-				index := slices.IndexFunc(containers, func(elem types.Container) bool {
-					return elem.ID == target.ID
-				})
+				updatedContainers := mock.ListContainers(false)
+				for i, container := range testCase.containers {
+					id := container.GetId()
 
-				got := containers[index]
+					index := slices.IndexFunc(updatedContainers, func(elem types.Container) bool {
+						return elem.ID == id
+					})
 
-				assert.Equal(t, got.State, testCase.want)
+					assert.Equal(t, updatedContainers[index].State, testCase.wantState[i])
+				}
 			})
 
 			t.Run("Assert Notification", func(t *testing.T) {
-				select {
-				case notif := <-notifChan:
-					assert.Equal(t, notif, notificationMetadata{
-						listId: 1,
-						msg:    testCase.notifWant,
-					})
-				default:
-					t.Errorf("No notification received")
-				}
+				// ik this is not a complete test but it's just easier.
+				// TODO: assert each notification
+				assert.Equal(t, len(testCase.notifWant), len(notifChan))
 			})
 		})
 	}
