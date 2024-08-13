@@ -303,9 +303,10 @@ var ContainerKeymapBulk = contKeymapBulk{
 }
 
 type volKeymap struct {
-	Delete key.Binding
-	Prune  key.Binding
-	CopyId key.Binding
+	Delete      key.Binding
+	DeleteForce key.Binding
+	Prune       key.Binding
+	CopyId      key.Binding
 }
 
 func (m volKeymap) ShortHelp() []key.Binding {
@@ -320,6 +321,10 @@ var VolumeKeymap = volKeymap{
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
 		key.WithHelp("d", "delete"),
+	),
+	DeleteForce: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "delete (force)"),
 	),
 	Prune: key.NewBinding(
 		key.WithKeys("p"),
