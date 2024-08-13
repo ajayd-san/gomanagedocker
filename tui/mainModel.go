@@ -111,8 +111,23 @@ func (m MainModel) Init() tea.Cmd {
 func NewModel() MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
-	for tabid := range CONFIG_TAB_ORDERING {
-		contents[tabid] = InitList(tabId(tabid))
+	for tabid, tabName := range CONFIG_TAB_ORDERING {
+		var objectHelp help.KeyMap
+		var objectHelpBulk help.KeyMap
+
+		switch tabName {
+		case "images":
+			objectHelp = ImageKeymap
+			objectHelpBulk = imageKeymapBulk
+		case "containers":
+			objectHelp = ContainerKeymap
+			objectHelpBulk = ContainerKeymapBulk
+
+		case "volumes":
+			objectHelp = VolumeKeymap
+			objectHelpBulk = volumeKeymapBulk
+		}
+		contents[tabid] = InitList(tabId(tabid), objectHelp, objectHelpBulk)
 	}
 
 	firstTab := contents[0].tabKind
@@ -826,16 +841,8 @@ func (m MainModel) View() string {
 	// TODO: align info box to right edge of the window
 	body_with_info := lipgloss.JoinHorizontal(lipgloss.Top, list, infobox)
 
-	tabSpecificKeyBinds := ""
-
-	switch m.activeTab {
-	case IMAGES:
-		tabSpecificKeyBinds = m.helpGen.View(ImageKeymap)
-	case CONTAINERS:
-		tabSpecificKeyBinds = m.helpGen.View(ContainerKeymap)
-	case VOLUMES:
-		tabSpecificKeyBinds = m.helpGen.View(VolumeKeymap)
-	}
+	tabKeyBinds := m.getActiveTab().getKeymap()
+	tabKeyBindsStr := m.helpGen.View(tabKeyBinds)
 
 	// we do this cuz the help string is misaligned when it is of more than 2 lines, so we split and add space to align them
 
@@ -851,9 +858,9 @@ func (m MainModel) View() string {
 	}
 
 	navKeyBinds := AlignHelpText(m.navKeymap.View(NavKeymap))
-	tabSpecificKeyBinds = AlignHelpText(tabSpecificKeyBinds)
+	tabKeyBindsStr = AlignHelpText(tabKeyBindsStr)
 
-	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabSpecificKeyBinds)
+	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabKeyBindsStr)
 	help = lipgloss.PlaceVertical(5, lipgloss.Bottom, help)
 	body_with_help := lipgloss.JoinVertical(lipgloss.Top, body_with_info, help)
 	body_with_info = windowStyle.Render(body_with_help)

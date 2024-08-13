@@ -20,6 +20,58 @@ type navigationKeymap struct {
 	NextPage key.Binding
 }
 
+func (m navigationKeymap) FullHelp() [][]key.Binding {
+	allBindings := []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Quit}
+	return packKeybindings(allBindings, KeymapAvailableWidth)
+}
+
+func (m navigationKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{}
+}
+
+var NavKeymap = navigationKeymap{
+	Enter: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "select"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "back"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("ctrl+c", "q"),
+		key.WithHelp("q", "quit"),
+	),
+	Select: key.NewBinding(
+		key.WithKeys(tea.KeySpace.String()),
+		key.WithHelp("<space>", "Select"),
+	),
+	NextTab: key.NewBinding(
+		key.WithKeys("right", "l", "tab"),
+		key.WithHelp("->/l/tab", "next"),
+	),
+	PrevTab: key.NewBinding(
+		key.WithKeys("left", "h", "shift+tab"),
+		key.WithHelp("<-/h/S-tab", "prev"),
+	),
+	NextItem: key.NewBinding(
+		key.WithKeys("down", "j"),
+		key.WithHelp("↓/j", "next item"),
+	),
+	PrevItem: key.NewBinding(
+		key.WithKeys("up", "k"),
+		key.WithHelp("↑/h", "prev item"),
+	),
+	PrevPage: key.NewBinding(
+		key.WithKeys("["),
+		key.WithHelp("[", "prev page"),
+	),
+	NextPage: key.NewBinding(
+		key.WithKeys("]"),
+		key.WithHelp("]", "next page"),
+	),
+}
+
 type imgKeymap struct {
 	Run         key.Binding
 	Rename      key.Binding
@@ -30,25 +82,6 @@ type imgKeymap struct {
 	DeleteForce key.Binding
 	CopyId      key.Binding
 	RunAndExec  key.Binding
-}
-
-type contKeymap struct {
-	ToggleListAll   key.Binding
-	ToggleStartStop key.Binding
-	TogglePause     key.Binding
-	Restart         key.Binding
-	Delete          key.Binding
-	DeleteForce     key.Binding
-	Exec            key.Binding
-	Prune           key.Binding
-	CopyId          key.Binding
-	ShowLogs        key.Binding
-}
-
-type volKeymap struct {
-	Delete key.Binding
-	Prune  key.Binding
-	CopyId key.Binding
 }
 
 var ImageKeymap = imgKeymap{
@@ -107,17 +140,76 @@ func (m imgKeymap) FullHelp() [][]key.Binding {
 
 }
 
+// This not required and is there only to satisfy the
 func (m imgKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{
-		m.Run,
+	return []key.Binding{}
+}
+
+type imgKeymapBulk struct {
+	DeleteForce key.Binding
+}
+
+var imageKeymapBulk = imgKeymapBulk{
+	DeleteForce: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "bulk delete (force)"),
+	),
+}
+
+// not required, only there to satify the help.KeyMap interface
+func (im imgKeymapBulk) ShortHelp() []key.Binding {
+	return []key.Binding{}
+}
+
+func (im imgKeymapBulk) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{im.DeleteForce},
+	}
+}
+
+type contKeymap struct {
+	ToggleListAll   key.Binding
+	ToggleStartStop key.Binding
+	TogglePause     key.Binding
+	Restart         key.Binding
+	Delete          key.Binding
+	DeleteForce     key.Binding
+	Exec            key.Binding
+	Prune           key.Binding
+	CopyId          key.Binding
+	ShowLogs        key.Binding
+}
+
+func (m contKeymap) FullHelp() [][]key.Binding {
+	bindings := []key.Binding{
+		m.ToggleListAll,
+		m.ToggleStartStop,
+		m.Restart,
+		m.TogglePause,
 		m.Delete,
 		m.DeleteForce,
 		m.Prune,
-		m.Scout,
+		m.Exec,
 		m.CopyId,
-		m.RunAndExec,
+		m.ShowLogs,
 	}
 
+	return packKeybindings(bindings, KeymapAvailableWidth)
+}
+
+func (m contKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		m.ToggleListAll,
+		m.ToggleStartStop,
+		m.Restart,
+		m.TogglePause,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune,
+		m.Exec,
+		m.CopyId,
+		m.ShowLogs,
+	}
 }
 
 var ContainerKeymap = contKeymap{
@@ -163,36 +255,65 @@ var ContainerKeymap = contKeymap{
 	),
 }
 
-func (m contKeymap) FullHelp() [][]key.Binding {
+type contKeymapBulk struct {
+	ToggleListAll   key.Binding
+	ToggleStartStop key.Binding
+	TogglePause     key.Binding
+	Restart         key.Binding
+	DeleteForce     key.Binding
+}
+
+func (co contKeymapBulk) ShortHelp() []key.Binding {
+	return []key.Binding{}
+}
+
+func (co contKeymapBulk) FullHelp() [][]key.Binding {
 	bindings := []key.Binding{
-		m.ToggleListAll,
-		m.ToggleStartStop,
-		m.Restart,
-		m.TogglePause,
-		m.Delete,
-		m.DeleteForce,
-		m.Prune,
-		m.Exec,
-		m.CopyId,
-		m.ShowLogs,
+		co.ToggleListAll,
+		co.ToggleStartStop,
+		co.Restart,
+		co.TogglePause,
+		co.DeleteForce,
 	}
 
 	return packKeybindings(bindings, KeymapAvailableWidth)
 }
 
-func (m contKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{
-		m.ToggleListAll,
-		m.ToggleStartStop,
-		m.Restart,
-		m.TogglePause,
-		m.Delete,
-		m.DeleteForce,
-		m.Prune,
-		m.Exec,
-		m.CopyId,
-		m.ShowLogs,
-	}
+var ContainerKeymapBulk = contKeymapBulk{
+	ToggleListAll: key.NewBinding(
+		key.WithKeys("a"),
+		key.WithHelp("a", "Bulk toggle list all"),
+	),
+	ToggleStartStop: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "Bulk toggle Start/Stop"),
+	),
+	TogglePause: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "Bulk toggle Pause/unPause"),
+	),
+	Restart: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "Bulk restart"),
+	),
+	DeleteForce: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "Bulk delete (force)"),
+	),
+}
+
+type volKeymap struct {
+	Delete key.Binding
+	Prune  key.Binding
+	CopyId key.Binding
+}
+
+func (m volKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{}
+}
+
+func (m volKeymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{{m.Delete}, {m.Prune}, {m.CopyId}}
 }
 
 var VolumeKeymap = volKeymap{
@@ -210,64 +331,25 @@ var VolumeKeymap = volKeymap{
 	),
 }
 
-func (m volKeymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{{m.Delete}, {m.Prune}, {m.CopyId}}
+type volKeymapBulk struct {
+	DeleteForce key.Binding
 }
 
-func (m volKeymap) ShortHelp() []key.Binding {
+func (vo volKeymapBulk) ShortHelp() []key.Binding {
 	return []key.Binding{}
 }
 
-var NavKeymap = navigationKeymap{
-	Enter: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("enter", "select"),
-	),
-	Back: key.NewBinding(
-		key.WithKeys("esc"),
-		key.WithHelp("esc", "back"),
-	),
-	Quit: key.NewBinding(
-		key.WithKeys("ctrl+c", "q"),
-		key.WithHelp("q", "quit"),
-	),
-	Select: key.NewBinding(
-		key.WithKeys(tea.KeySpace.String()),
-		key.WithHelp("<space>", "Select"),
-	),
-	NextTab: key.NewBinding(
-		key.WithKeys("right", "l", "tab"),
-		key.WithHelp("->/l/tab", "next"),
-	),
-	PrevTab: key.NewBinding(
-		key.WithKeys("left", "h", "shift+tab"),
-		key.WithHelp("<-/h/S-tab", "prev"),
-	),
-	NextItem: key.NewBinding(
-		key.WithKeys("down", "j"),
-		key.WithHelp("↓/j", "next item"),
-	),
-	PrevItem: key.NewBinding(
-		key.WithKeys("up", "k"),
-		key.WithHelp("↑/h", "prev item"),
-	),
-	PrevPage: key.NewBinding(
-		key.WithKeys("["),
-		key.WithHelp("[", "prev page"),
-	),
-	NextPage: key.NewBinding(
-		key.WithKeys("]"),
-		key.WithHelp("]", "next page"),
-	),
+func (vo volKeymapBulk) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{vo.DeleteForce},
+	}
 }
 
-func (m navigationKeymap) FullHelp() [][]key.Binding {
-	allBindings := []key.Binding{m.NextItem, m.PrevItem, m.NextTab, m.PrevTab, m.PrevPage, m.NextPage, m.Quit}
-	return packKeybindings(allBindings, KeymapAvailableWidth)
-}
-
-func (m navigationKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{}
+var volumeKeymapBulk = volKeymapBulk{
+	DeleteForce: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "bulk delete (force)"),
+	),
 }
 
 func packKeybindings(keybindings []key.Binding, width int) [][]key.Binding {

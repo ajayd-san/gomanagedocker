@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -21,10 +22,12 @@ type itemSelect struct{}
 type clearSelection struct{}
 
 type listModel struct {
-	list        list.Model
-	ExistingIds map[string]struct{}
-	tabKind     tabId
-	listEmpty   bool
+	list           list.Model
+	ExistingIds    map[string]struct{}
+	tabKind        tabId
+	listEmpty      bool
+	objectHelp     help.KeyMap
+	objectHelpBulk help.KeyMap
 }
 
 func (m listModel) Init() tea.Cmd {
@@ -71,16 +74,18 @@ func (m listModel) View() string {
 }
 
 func (m listModel) inSelectionMode() bool {
-	return len(m.list.GetSelected()) > 0
+	return len(m.list.GetSelected()) > 1
 }
 
-func InitList(tabkind tabId) listModel {
+func InitList(tabkind tabId, objectHelp, objectHelpBulk help.KeyMap) listModel {
 
 	items := make([]list.Item, 0)
 	m := listModel{
-		list:        list.New(items, list.NewDefaultDelegate(), 60, 30),
-		ExistingIds: make(map[string]struct{}),
-		tabKind:     tabkind,
+		list:           list.New(items, list.NewDefaultDelegate(), 60, 30),
+		ExistingIds:    make(map[string]struct{}),
+		tabKind:        tabkind,
+		objectHelp:     objectHelp,
+		objectHelpBulk: objectHelpBulk,
 	}
 
 	m.list.Title = CONFIG_POLLING_TIME.String()
@@ -91,6 +96,14 @@ func InitList(tabkind tabId) listModel {
 	m.list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("["))
 
 	return m
+}
+
+// returns `help.KeyMap` depending on context (i.e in bulk selection mode or nah)
+func (m listModel) getKeymap() help.KeyMap {
+	if m.inSelectionMode() {
+		return m.objectHelpBulk
+	}
+	return m.objectHelp
 }
 
 func makeItems(raw []dockerRes) []list.Item {

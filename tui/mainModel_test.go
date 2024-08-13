@@ -96,7 +96,7 @@ func TestFetchNewData(t *testing.T) {
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0),
+			InitList(0, ContainerKeymap, ContainerKeymapBulk),
 		},
 		containerSizeTracker: ContainerSizeManager{
 			sizeMap: make(map[string]ContainerSize),
@@ -182,7 +182,7 @@ func TestInfoBoxSize(t *testing.T) {
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0),
+			InitList(0, ContainerKeymap, ContainerKeymapBulk),
 		},
 	}
 
@@ -223,7 +223,7 @@ func TestMainModelUpdate(t *testing.T) {
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0),
+			InitList(0, ContainerKeymap, ContainerKeymapBulk),
 		},
 	}
 

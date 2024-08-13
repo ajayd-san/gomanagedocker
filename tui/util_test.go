@@ -32,7 +32,7 @@ func TestNotifyList(t *testing.T) {
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0),
+			InitList(0, ContainerKeymap, ContainerKeymapBulk),
 		},
 	}
 
