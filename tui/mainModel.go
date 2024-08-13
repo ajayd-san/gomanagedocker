@@ -290,7 +290,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ImageKeymap.Run):
 					curItem := m.getSelectedItem()
 
-					if curItem != nil {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						imageInfo := curItem.(imageItem)
 						storage := map[string]string{"ID": imageInfo.GetId()}
 						m.activeDialog = getRunImageDialog(storage)
@@ -302,7 +302,8 @@ notificationLoop:
 
 				case key.Matches(assertedMsg, ImageKeymap.Delete):
 					curItem := m.getSelectedItem()
-					if curItem != nil {
+
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						imageId := curItem.(dockerRes).GetId()
 						storage := map[string]string{"ID": imageId}
 						m.activeDialog = getRemoveImageDialog(storage)
@@ -324,13 +325,15 @@ notificationLoop:
 					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, ImageKeymap.Prune):
-					m.activeDialog = getPruneImagesDialog(make(map[string]string))
-					m.showDialog = true
-					cmds = append(cmds, m.activeDialog.Init())
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getPruneImagesDialog(make(map[string]string))
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
 
 				case key.Matches(assertedMsg, ImageKeymap.Scout):
 					curItem := m.getSelectedItem()
-					if curItem != nil {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						dockerRes := curItem.(dockerRes)
 						imageInfo := dockerRes.(imageItem)
 						imageName := imageInfo.RepoTags[0]
@@ -356,7 +359,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ImageKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
-					if currentItem != nil {
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						dres := currentItem.(dockerRes)
 						op := copyIdToClipboard(dres, m.activeTab, m.notificationChan)
 						op()
@@ -365,7 +368,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ImageKeymap.RunAndExec):
 					currentItem := m.getSelectedItem()
 
-					if currentItem != nil {
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						dres := currentItem.(dockerRes)
 						id := dres.GetId()
 
@@ -391,9 +394,11 @@ notificationLoop:
 					}
 
 				case key.Matches(assertedMsg, ImageKeymap.Build):
-					m.activeDialog = getBuildImageDialog(make(map[string]string))
-					m.showDialog = true
-					cmds = append(cmds, m.activeDialog.Init())
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getBuildImageDialog(make(map[string]string))
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
 				}
 
 			} else if m.activeTab == CONTAINERS {
@@ -402,7 +407,6 @@ notificationLoop:
 					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
 
 				case key.Matches(assertedMsg, ContainerKeymap.ToggleStartStop):
-
 					selectedItems := m.getSelectedItems()
 
 					op := toggleStartStopContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
@@ -425,7 +429,8 @@ notificationLoop:
 
 				case key.Matches(assertedMsg, ContainerKeymap.Delete):
 					curItem := m.getSelectedItem()
-					if containerInfo, ok := curItem.(dockerRes); ok {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
+						containerInfo := curItem.(dockerRes)
 						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.GetId()})
 						m.activeDialog = dialog
 						m.showDialog = true
@@ -454,13 +459,15 @@ notificationLoop:
 					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, ContainerKeymap.Prune):
-					m.activeDialog = getPruneContainersDialog(make(map[string]string))
-					m.showDialog = true
-					cmds = append(cmds, m.activeDialog.Init())
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getPruneContainersDialog(make(map[string]string))
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
 
 				case key.Matches(assertedMsg, ContainerKeymap.Exec):
 					curItem := m.getSelectedItem()
-					if curItem != nil {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						container := curItem.(containerItem)
 
 						if container.getState() != "running" {
@@ -493,7 +500,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
-					if currentItem != nil {
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						object := currentItem.(dockerRes)
 						op := copyIdToClipboard(object, m.activeTab, m.notificationChan)
 
@@ -503,7 +510,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.ShowLogs):
 					currentItem := m.getSelectedItem()
 
-					if currentItem != nil {
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						dres := currentItem.(dockerRes)
 						id := dres.GetId()
 						cmd := exec.Command("docker", "logs", "--follow", id)
@@ -521,7 +528,7 @@ notificationLoop:
 				switch {
 				case key.Matches(assertedMsg, VolumeKeymap.Prune):
 					curItem := m.getSelectedItem()
-					if curItem != nil {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						volumeId := curItem.(dockerRes).GetId()
 						m.activeDialog = getPruneVolumesDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
@@ -532,7 +539,7 @@ notificationLoop:
 
 					curItem := m.getSelectedItem()
 
-					if curItem != nil {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						volumeId := curItem.(dockerRes).GetId()
 						m.activeDialog = getRemoveVolumeDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
@@ -550,7 +557,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
 					currentItem := m.getSelectedItem()
 
-					if currentItem != nil {
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						dres := currentItem.(dockerRes)
 						op := copyIdToClipboard(dres, m.activeTab, m.notificationChan)
 						op()
@@ -1044,6 +1051,11 @@ func (m MainModel) getSelectedItems() []dockerRes {
 	} else {
 		return []dockerRes{activeTab.list.SelectedItem().(dockerRes)}
 	}
+}
+
+// Helper function to get state of current tab (i.e bulk mode or nah)
+func (m MainModel) isCurrentTabInBulkMode() bool {
+	return m.getActiveTab().inBulkMode()
 }
 
 // Copies str to clipboard
