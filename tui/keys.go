@@ -146,13 +146,18 @@ func (m imgKeymap) ShortHelp() []key.Binding {
 }
 
 type imgKeymapBulk struct {
-	DeleteForce key.Binding
+	DeleteForce       key.Binding
+	ExitSelectionMode key.Binding
 }
 
 var imageKeymapBulk = imgKeymapBulk{
 	DeleteForce: key.NewBinding(
 		key.WithKeys("D"),
 		key.WithHelp("D", "bulk delete (force)"),
+	),
+	ExitSelectionMode: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "exit selection mode"),
 	),
 }
 
@@ -163,7 +168,7 @@ func (im imgKeymapBulk) ShortHelp() []key.Binding {
 
 func (im imgKeymapBulk) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{im.DeleteForce},
+		{im.DeleteForce}, {im.ExitSelectionMode},
 	}
 }
 
@@ -256,11 +261,12 @@ var ContainerKeymap = contKeymap{
 }
 
 type contKeymapBulk struct {
-	ToggleListAll   key.Binding
-	ToggleStartStop key.Binding
-	TogglePause     key.Binding
-	Restart         key.Binding
-	DeleteForce     key.Binding
+	ToggleListAll     key.Binding
+	ToggleStartStop   key.Binding
+	TogglePause       key.Binding
+	Restart           key.Binding
+	DeleteForce       key.Binding
+	ExitSelectionMode key.Binding
 }
 
 func (co contKeymapBulk) ShortHelp() []key.Binding {
@@ -274,6 +280,7 @@ func (co contKeymapBulk) FullHelp() [][]key.Binding {
 		co.Restart,
 		co.TogglePause,
 		co.DeleteForce,
+		co.ExitSelectionMode,
 	}
 
 	return packKeybindings(bindings, KeymapAvailableWidth)
@@ -282,7 +289,7 @@ func (co contKeymapBulk) FullHelp() [][]key.Binding {
 var ContainerKeymapBulk = contKeymapBulk{
 	ToggleListAll: key.NewBinding(
 		key.WithKeys("a"),
-		key.WithHelp("a", "Bulk toggle list all"),
+		key.WithHelp("a", "toggle list all"),
 	),
 	ToggleStartStop: key.NewBinding(
 		key.WithKeys("s"),
@@ -299,6 +306,10 @@ var ContainerKeymapBulk = contKeymapBulk{
 	DeleteForce: key.NewBinding(
 		key.WithKeys("D"),
 		key.WithHelp("D", "Bulk delete (force)"),
+	),
+	ExitSelectionMode: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "exit selection mode"),
 	),
 }
 
@@ -337,7 +348,8 @@ var VolumeKeymap = volKeymap{
 }
 
 type volKeymapBulk struct {
-	DeleteForce key.Binding
+	DeleteForce       key.Binding
+	ExitSelectionMode key.Binding
 }
 
 func (vo volKeymapBulk) ShortHelp() []key.Binding {
@@ -346,7 +358,7 @@ func (vo volKeymapBulk) ShortHelp() []key.Binding {
 
 func (vo volKeymapBulk) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{vo.DeleteForce},
+		{vo.DeleteForce}, {vo.ExitSelectionMode},
 	}
 }
 
@@ -354,6 +366,10 @@ var volumeKeymapBulk = volKeymapBulk{
 	DeleteForce: key.NewBinding(
 		key.WithKeys("D"),
 		key.WithHelp("D", "bulk delete (force)"),
+	),
+	ExitSelectionMode: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "exit selection mode"),
 	),
 }
 
