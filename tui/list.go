@@ -73,10 +73,6 @@ func (m listModel) View() string {
 	return listContainer.Render(listDocStyle.Render(m.list.View()))
 }
 
-func (m listModel) inSelectionMode() bool {
-	return len(m.list.GetSelected()) > 1
-}
-
 func InitList(tabkind tabId, objectHelp, objectHelpBulk help.KeyMap) listModel {
 
 	items := make([]list.Item, 0)
@@ -98,9 +94,14 @@ func InitList(tabkind tabId, objectHelp, objectHelpBulk help.KeyMap) listModel {
 	return m
 }
 
+// returns if we are in bulk more or nah
+func (m listModel) inBulkMode() bool {
+	return len(m.list.GetSelected()) > 1
+}
+
 // returns `help.KeyMap` depending on context (i.e in bulk selection mode or nah)
 func (m listModel) getKeymap() help.KeyMap {
-	if m.inSelectionMode() {
+	if m.inBulkMode() {
 		return m.objectHelpBulk
 	}
 	return m.objectHelp

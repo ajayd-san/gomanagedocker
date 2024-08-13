@@ -279,7 +279,7 @@ notificationLoop:
 				msg = itemSelect{}
 				break
 			case key.Matches(assertedMsg, NavKeymap.Back):
-				if m.getActiveTab().inSelectionMode() {
+				if m.getActiveTab().inBulkMode() {
 					msg = clearSelection{}
 					break
 				}
@@ -312,17 +312,19 @@ notificationLoop:
 					}
 
 				case key.Matches(assertedMsg, ImageKeymap.DeleteForce):
-					curItem := m.getSelectedItem()
+					items := m.getSelectedItems()
 
-					if curItem != nil {
-						imageId := curItem.(imageItem).GetId()
+					for _, curItem := range items {
+						if curItem != nil {
+							imageId := curItem.(imageItem).GetId()
 
-						deleteOpts := image.RemoveOptions{
-							Force:         true,
-							PruneChildren: false,
+							deleteOpts := image.RemoveOptions{
+								Force:         true,
+								PruneChildren: false,
+							}
+							op := imageDelete(m.dockerClient, imageId, deleteOpts, m.activeTab, m.notificationChan)
+							go m.runBackground(op)
 						}
-						op := imageDelete(m.dockerClient, imageId, deleteOpts, m.activeTab, m.notificationChan)
-						go m.runBackground(op)
 					}
 
 				case key.Matches(assertedMsg, ImageKeymap.Prune):
@@ -391,6 +393,7 @@ notificationLoop:
 							return nil
 						}))
 					}
+
 				case key.Matches(assertedMsg, ImageKeymap.Build):
 					m.activeDialog = getBuildImageDialog(make(map[string]string))
 					m.showDialog = true
@@ -403,27 +406,36 @@ notificationLoop:
 					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
 
 				case key.Matches(assertedMsg, ContainerKeymap.ToggleStartStop):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						containerInfo := curItem.(containerItem)
-						op := toggleStartStopContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-						go m.runBackground(op)
+
+					selectedItems := m.getSelectedItems()
+
+					for _, item := range selectedItems {
+						if item != nil {
+							containerInfo := item.(containerItem)
+							op := toggleStartStopContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+							go m.runBackground(op)
+						}
 					}
 
 				case key.Matches(assertedMsg, ContainerKeymap.TogglePause):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						containerInfo := curItem.(containerItem)
-						op := togglePauseResumeContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-						go m.runBackground(op)
+					selectedItems := m.getSelectedItems()
+					for _, item := range selectedItems {
+						if item != nil {
+							containerInfo := item.(containerItem)
+							op := togglePauseResumeContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+							go m.runBackground(op)
+						}
 					}
 
 				case key.Matches(assertedMsg, ContainerKeymap.Restart):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						containerInfo := curItem.(containerItem)
-						op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
-						go m.runBackground(op)
+					selectedItems := m.getSelectedItems()
+
+					for _, item := range selectedItems {
+						if item != nil {
+							containerInfo := item.(containerItem)
+							op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
+							go m.runBackground(op)
+						}
 					}
 
 				case key.Matches(assertedMsg, ContainerKeymap.Delete):
@@ -436,18 +448,20 @@ notificationLoop:
 					}
 
 				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
-					curItem := m.getSelectedItem()
-					if curItem != nil {
-						containerId := curItem.(containerItem).GetId()
-						deleteOpts := container.RemoveOptions{
-							RemoveVolumes: false,
-							RemoveLinks:   false,
-							Force:         true,
+					selectedItems := m.getSelectedItems()
+
+					for _, item := range selectedItems {
+						if item != nil {
+							containerId := item.(containerItem).GetId()
+							deleteOpts := container.RemoveOptions{
+								RemoveVolumes: false,
+								RemoveLinks:   false,
+								Force:         true,
+							}
+
+							op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
+							go m.runBackground(op)
 						}
-
-						op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
-
-						go m.runBackground(op)
 					}
 
 				case key.Matches(assertedMsg, ContainerKeymap.Prune):
@@ -534,6 +548,14 @@ notificationLoop:
 						m.activeDialog = getRemoveVolumeDialog(map[string]string{"ID": volumeId})
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(assertedMsg, VolumeKeymap.DeleteForce):
+					selectedItems := m.getSelectedItems()
+
+					for _, item := range selectedItems {
+						op := volumeDelete(m.dockerClient, item.GetId(), true, m.activeTab, m.notificationChan)
+						go m.runBackground(op)
 					}
 
 				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
@@ -1008,6 +1030,31 @@ func (m MainModel) getList(index int) *list.Model {
 // Helper function to get current focused item in the list
 func (m MainModel) getSelectedItem() list.Item {
 	return m.TabContent[m.activeTab].list.SelectedItem()
+}
+
+/*
+Helper function to get selected Items in the list to perform bulk operations
+if no items are selected, returns the current Item the cursor is on in a list
+of length 1
+*/
+func (m MainModel) getSelectedItems() []dockerRes {
+	activeTab := m.getActiveTab()
+
+	if activeTab.inBulkMode() {
+		selectedMap := activeTab.list.GetSelected()
+
+		vals := make([]dockerRes, len(selectedMap))
+
+		i := 0
+		for _, val := range selectedMap {
+			vals[i] = val.(dockerRes)
+			i++
+		}
+
+		return vals
+	} else {
+		return []dockerRes{activeTab.list.SelectedItem().(dockerRes)}
+	}
 }
 
 // Copies str to clipboard
