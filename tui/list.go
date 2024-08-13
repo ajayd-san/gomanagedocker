@@ -162,3 +162,10 @@ func (m *listModel) updateExistigIds(newlistItems *[]dockerRes) {
 		m.ExistingIds[item.GetId()] = struct{}{}
 	}
 }
+
+// returns `tea.Cmd` that returns `clearSelection{}`
+func clearSelectionCmd() tea.Cmd {
+	return func() tea.Msg {
+		return clearSelection{}
+	}
+}

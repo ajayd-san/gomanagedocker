@@ -324,6 +324,8 @@ notificationLoop:
 							}
 							op := imageDelete(m.dockerClient, imageId, deleteOpts, m.activeTab, m.notificationChan)
 							go m.runBackground(op)
+
+							cmds = append(cmds, clearSelectionCmd())
 						}
 					}
 
@@ -414,6 +416,8 @@ notificationLoop:
 							containerInfo := item.(containerItem)
 							op := toggleStartStopContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
 							go m.runBackground(op)
+
+							cmds = append(cmds, clearSelectionCmd())
 						}
 					}
 
@@ -424,6 +428,8 @@ notificationLoop:
 							containerInfo := item.(containerItem)
 							op := togglePauseResumeContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
 							go m.runBackground(op)
+
+							cmds = append(cmds, clearSelectionCmd())
 						}
 					}
 
@@ -435,6 +441,8 @@ notificationLoop:
 							containerInfo := item.(containerItem)
 							op := toggleRestartContainer(m.dockerClient, containerInfo, m.activeTab, m.notificationChan)
 							go m.runBackground(op)
+
+							cmds = append(cmds, clearSelectionCmd())
 						}
 					}
 
@@ -461,6 +469,8 @@ notificationLoop:
 
 							op := containerDelete(m.dockerClient, containerId, deleteOpts, m.activeTab, m.notificationChan)
 							go m.runBackground(op)
+
+							cmds = append(cmds, clearSelectionCmd())
 						}
 					}
 
@@ -556,6 +566,8 @@ notificationLoop:
 					for _, item := range selectedItems {
 						op := volumeDelete(m.dockerClient, item.GetId(), true, m.activeTab, m.notificationChan)
 						go m.runBackground(op)
+
+						cmds = append(cmds, clearSelectionCmd())
 					}
 
 				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
