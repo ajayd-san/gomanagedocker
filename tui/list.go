@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"log"
 	"slices"
 
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
@@ -49,12 +48,6 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case itemSelect:
 		m.list.ToggleSelect()
-
-		for k, _ := range m.list.GetSelected() {
-			log.Println(k)
-		}
-		log.Println("---------------------")
-		log.Println(len(m.list.GetSelected()))
 
 	case clearSelection:
 		m.list.ClearSelection()

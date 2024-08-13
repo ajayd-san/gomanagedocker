@@ -248,12 +248,12 @@ func New(items []Item, delegate ItemDelegate, width, height int) Model {
 }
 
 func (m *Model) ToggleSelect() {
-	cur := m.SelectedItem().(DefaultItem)
-
-	if _, ok := m.selectedItems[cur.GetId()]; ok {
-		delete(m.selectedItems, cur.GetId())
-	} else {
-		m.selectedItems[cur.GetId()] = cur
+	if cur, ok := m.SelectedItem().(DefaultItem); ok {
+		if _, ok := m.selectedItems[cur.GetId()]; ok {
+			delete(m.selectedItems, cur.GetId())
+		} else {
+			m.selectedItems[cur.GetId()] = cur
+		}
 	}
 }
 
