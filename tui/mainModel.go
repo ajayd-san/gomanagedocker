@@ -84,6 +84,9 @@ type MainModel struct {
 
 	// Channels for sending and receiving notifications, we use these to update list status messages
 	notificationChan chan notificationMetadata
+
+	// only used to store fatal error before quitting with non-zero exit code
+	exitError error
 }
 
 // this ticker enables us to update Docker lists items every 500ms (unless set to different value in config)
@@ -95,8 +98,8 @@ func (m MainModel) Init() tea.Cmd {
 	// check if Docker is alive, if not, exit
 	err := m.dockerClient.PingDocker()
 	if err != nil {
-		fmt.Printf("Error connecting to Docker daemon.\nInfo: %s\n", err.Error())
-		os.Exit(1)
+		earlyExitErr = fmt.Errorf("Error connecting to Docker daemon.\nInfo: %w\n", err)
+		return tea.Quit
 	}
 
 	// initialize clipboard

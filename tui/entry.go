@@ -28,6 +28,12 @@ var CONFIG_NOTIFICATION_TIMEOUT time.Duration
 
 var globalConfig = koanf.New(".")
 
+/*
+stores fatal error that we can print before quitting gracefully
+I dont think there is a native way that bubble tea lets you do it for now
+*/
+var earlyExitErr error
+
 func StartTUI(debug bool) error {
 	if debug {
 		f, _ := tea.LogToFile("gmd_debug.log", "debug")
@@ -43,6 +49,15 @@ func StartTUI(debug bool) error {
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		return err
+	}
+
+	/*
+		we check if there is a fatal error (mostly if docker ping returned an error), print it
+		and exit with non-zero error code
+	*/
+	if earlyExitErr != nil {
+		fmt.Println(earlyExitErr.Error())
+		os.Exit(1)
 	}
 	return nil
 }
