@@ -47,66 +47,66 @@ Now, **goManageDocker 😏!!**
 
 ## Features
 
-### **New in v1.3:**
+### **New in v1.4:**
+1. Global notification system
+2. Bulk operation mode: select multiple objects before performing an operations (saves so much time!!)
+	![bulkDelete](vhs/gifs/bulkDelete.gif)
+2. Build image from Dockerfile using `b`
+3. View live logs from a container using `L`
+4. Run image now takes arguments for port, name and env vars. 
 
-1. You can now run and exec into an image directly from the images tab with  `x`
+### **Previous release features:**
 
-   ![runAndExec](vhs/gifs/execFromImgs.gif)
-
-2. You can directly copy the ID to your clipboard of an object by pressing `c`.
-
-   ![copyId](vhs/gifs/copyId.gif)
-
-**New in v1.2**: You can now run an image directly from the image tab by pressing `r`.
-
-   ![runImage](vhs/gifs/runImage.gif)
-
-**New in v1.1.1**: Ability to perform `docker scout quickview` on any image (just press `s`).
-
-   ![scout](vhs/gifs/scout.gif)
 
 1. Easy navigation with vim keybinds and arrow keys.
-   
    ![intro](vhs/gifs/intro.gif)
 
 2. Exec into selected container with A SINGLE KEYSTROKE: `x`...How cool is that?
-
    ![exec](vhs/gifs/exec.gif)
 
 3. Delete objects using `d` (You can force delete with `D`, you won't have to answer a prompt this way)
-   
    ![delete](vhs/gifs/delete.gif)
 
 4. Prune objects using `p`
-   
    ![prune](vhs/gifs/prune.gif)
 
 5. start/stop/pause/restart containers with `s`, `t` and `r`
-   
    ![startstop](vhs/gifs/startstop.gif)
 
 6. Filter objects with `/`
-   
    ![search](vhs/gifs/search.gif)
+   
+7. Perfrom docker scout with `s`
+   ![scout](vhs/gifs/scout.gif)
+   
+8. Run an image directly from the image tab by pressing `r`.
+   ![runImage](vhs/gifs/runImage.gif) 
+   
+9. You can directly copy the ID to your clipboard of an object by pressing `c`.
+   ![copyId](vhs/gifs/copyId.gif)
+10. You can now run and exec into an image directly from the images tab with  `x`
+    ![runAndExec](vhs/gifs/execFromImgs.gif)
 
 ## Keybinds
 
 ### Navigation
-| Operation | Key                                                                 |
-|-----------|---------------------------------------------------------------------|
-| Back      | <kbd>Esc</kbd>                                                      |
-| Quit      | <kbd>Ctrl</kbd> + <kbd>c</kbd> / <kbd>q</kbd>                       |
-| Next Tab  | <kbd>→</kbd> / <kbd>l</kbd> / <kbd>Tab</kbd>                        |
-| Prev Tab  | <kbd>←</kbd> / <kbd>h</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>     |
-| Next Item | <kbd>↓</kbd> / <kbd>j</kbd>                                         |
-| Prev Item | <kbd>↑</kbd> / <kbd>k</kbd>                                         |
-| Next Page | <kbd>[</kbd>                                                        |
-| Prev Page | <kbd>]</kbd>                                                        |
+| Operation 		   | Key                                                                 |
+|------------------|---------------------------------------------------------------------|
+| Back 			   | <kbd>Esc</kbd>                                                      |
+| Quit      		   | <kbd>Ctrl</kbd> + <kbd>c</kbd> / <kbd>q</kbd>                       |
+| Next Tab  		   | <kbd>→</kbd> / <kbd>l</kbd> / <kbd>Tab</kbd>                        |
+| Prev Tab  		   | <kbd>←</kbd> / <kbd>h</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>     |
+| Next Item 		   | <kbd>↓</kbd> / <kbd>j</kbd>                                         |
+| Prev Item 		   | <kbd>↑</kbd> / <kbd>k</kbd>                                         |
+| Next Page 		   | <kbd>[</kbd>                                                        |
+| Prev Page 		   | <kbd>]</kbd>                                                        |
+| Enter bulk mode  | <kbd>Space</kbd>                                                    |
 
 ### Image
 | Operation         | Key                                                           |
 |-------------------|---------------------------------------------------------------|
 | Run               | <kbd>r</kbd>                                                  |
+| Build Image       | <kbd>b</kbd>                                                  |
 | Scout             | <kbd>s</kbd>                                                  |
 | Prune             | <kbd>p</kbd>                                                  |
 | Delete            | <kbd>d</kbd>                                                  |
@@ -126,6 +126,7 @@ Now, **goManageDocker 😏!!**
 | Exec              | <kbd>x</kbd>                                                  |
 | Prune             | <kbd>p</kbd>                                                  |
 | Copy ID           | <kbd>c</kbd>                                                  |
+| Show Logs         | <kbd>L</kbd>                                                  |
 
 ### Volume
 | Operation         | Key                                                           |
@@ -146,16 +147,17 @@ Default Configuration:
 config:
   Polling-Time: 500
   Tab-Order: [images, containers, volumes]
+  Notification-timeout: 2000
 ```
 
 - Polling-Time: Set how frequently the program calls the docker API (measured in milliseconds, default: 500ms)
 - Tab-Order: Set the order of tabs displayed, the keys must be `images`, `containers` and `volumes`. You can omit the names of the tabs you do not wish to see as well. Say I want to see `containers` tab first and do not want to see the `volumes` tab, I can set `Tab-Order: [containers, images]`
+- Notification-Timeout: Set how long a status message sticks around for (measured in milliseconds, default: 2000ms)
 
 ## Roadmap
 
-- Make the program work with minimized terminal state
 - Add a networks tab
-- Add More Config Options
+- Make compatible with podman 👀
 
 ## Found an issue ?
 
