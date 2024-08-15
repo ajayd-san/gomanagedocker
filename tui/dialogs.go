@@ -45,7 +45,7 @@ func getRunImageDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	title := "Run Image\n(Leave inputs blank for defaults)"
-	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage)
+	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage, teadialog.WithShowFullHelp(true))
 }
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) DockerScoutInfoCard {

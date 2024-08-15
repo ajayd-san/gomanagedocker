@@ -5,7 +5,7 @@ module github.com/ajayd-san/gomanagedocker
 go 1.22.2
 
 require (
-	github.com/ajayd-san/teaDialog v1.1.8
+	github.com/ajayd-san/teaDialog v1.1.9
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/evertras/bubble-table v0.16.0
 	github.com/google/go-cmp v0.6.0
