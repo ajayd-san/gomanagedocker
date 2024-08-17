@@ -49,11 +49,19 @@ Now, **goManageDocker 😏!!**
 
 ### **New in v1.4:**
 1. Global notification system
+	![notificationSystem](vhs/gifs/notifications.gif)
+	
 2. Bulk operation mode: select multiple objects before performing an operations (saves so much time!!)
 	![bulkDelete](vhs/gifs/bulkDelete.gif)
-2. Build image from Dockerfile using `b`
-3. View live logs from a container using `L`
-4. Run image now takes arguments for port, name and env vars. 
+	
+3. Build image from Dockerfile using `b`
+	![build](vhs/gifs/build.gif)
+	
+4. View live logs from a container using `L`
+ 	![runImage](vhs/gifs/logs.gif)
+
+5. Run image now takes arguments for port, name and env vars. 
+ 	![runImage](vhs/gifs/runImage.gif)
 
 ### **Previous release features:**
 
