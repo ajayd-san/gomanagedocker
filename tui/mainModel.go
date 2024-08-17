@@ -514,16 +514,17 @@ notificationLoop:
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
-						dres := currentItem.(dockerRes)
-						id := dres.GetId()
-						cmd := exec.Command("docker", "logs", "--follow", id)
-						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
-							if err.Error() != "exit status 1" {
-								m.possibleLongRunningOpErrorChan <- err
-							}
-							return nil
-						}))
-
+						dres := currentItem.(containerItem)
+						if dres.State == "running" {
+							id := dres.GetId()
+							cmd := exec.Command("docker", "logs", "--follow", id)
+							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+								if err.Error() != "exit status 1" {
+									m.possibleLongRunningOpErrorChan <- err
+								}
+								return nil
+							}))
+						}
 					}
 				}
 
