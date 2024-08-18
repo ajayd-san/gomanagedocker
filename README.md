@@ -49,7 +49,7 @@ Now, **goManageDocker 😏!!**
 Want to try this without installing a binary? I gotchu!
 
 ```
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock kakshipth/gomanagedocker:main
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock kakshipth/gomanagedocker:latest
 ```
 
 Alias it to something quicker (unless you like typing a lot 🙄)
