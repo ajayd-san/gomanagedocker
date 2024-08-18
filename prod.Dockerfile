@@ -4,7 +4,7 @@ ENV TERM=xterm-256color
 
 RUN apt-get update && apt-get install -y libx11-dev
 
-RUN go install github.com/ajayd-san/gomanagedocker@HEAD
+RUN go install github.com/ajayd-san/gomanagedocker@main
 
 FROM debian:bullseye-slim
 
