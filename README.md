@@ -31,10 +31,10 @@ Start the program with `gmd`.
 Just build like any other Go binary: 
 
 ```
-go install github.com/ajayd-san/gomanagedocker@HEAD
+go install github.com/ajayd-san/gomanagedocker@main
 ```
 
-Start the program with `gomanagedocker` (You'll have to rename it to `gmd` if you want, the binary will be installed at your `$GOPATH`).
+Start the program with `gomanagedocker` (Rename it to `gmd` if you'd like, the binary will be installed at your `$GOPATH`).
 
 ### Windows
 
@@ -45,9 +45,18 @@ Now, **goManageDocker 😏!!**
 > [!NOTE]
 > goManageDocker runs best on terminals that support ANSI 256 colors and designed to run while the **terminal is maximized**.
 
+### Docker
+Want to try this without installing a binary? I gotchu!
+
+```
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock kakshipth/gomanagedocker:main
+```
+
+Alias it to something quicker (unless you like typing a lot 🙄)
 ## Features
 
-### **New in v1.4:**
+### **New in v1.4:**\
+
 1. Global notification system
 	![notificationSystem](vhs/gifs/notifications.gif)
 	
