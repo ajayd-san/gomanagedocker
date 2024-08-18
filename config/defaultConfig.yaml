@@ -1,3 +1,4 @@
 config:
   Polling-Time: 500
   Tab-Order: [images, containers, volumes]
+  Notification-Timeout: 2000

@@ -13,6 +13,8 @@ You can contribute in 3 ways:
 ### Requirements: 
 - Go 1.22.2
 - Docker (not really needed, but helpful to debug and final testing)
+- just:  [Install Here](https://github.com/casey/just) (command runner, is nice to have, since this lets you run commands quickly) 
+- dlv (debugger, optional)
 
 ### Setting up the Development environment
 1. Fork this repository
@@ -26,3 +28,15 @@ Make sure to run using `go run main.go --debug` to enable logging.
 
 ### Create a PR. 
 You have now made your changes, congrats! Open a PR and try to be as descriptive as possible, include pertinent information such as a detailed description, issue ID (if it fixes an issue), etc. Adding a test case (if applicable) will reinforce confidence and make the PR move faster.
+
+
+### Justfile
+
+There are multiple recipes in the included [justfile](./justfile): 
+
+1. `just run`: compiles and runs the project with `--debug` flag
+2. `just test`: runs all tests, across all packages
+3. `just build`: builds the binary(Not used much)
+4. `just race`: runs the project with the race detector. Pretty useful to detect race conditions. 
+5. `just debug-server`: starts a `dlv` debug server at `localhost:43000`
+6. `just debug-connect`: connects to an existing debug session running at `localhost:43000`. Do `just debug-server` before running this. 

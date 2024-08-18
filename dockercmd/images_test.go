@@ -1,8 +1,12 @@
 package dockercmd
 
 import (
+	"bufio"
+	"os"
+	"slices"
 	"testing"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dimage "github.com/docker/docker/api/types/image"
 	"github.com/google/go-cmp/cmp"
@@ -192,4 +196,100 @@ func TestParseDockerScoutOutput(t *testing.T) {
 		}
 	}
 
+}
+
+func TestBuildImage(t *testing.T) {
+	imgs := []dimage.Summary{
+		{
+			Containers: 0,
+			ID:         "0",
+		},
+
+		{
+			Containers: 0,
+			ID:         "1",
+		},
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+		{
+			Containers: 0,
+			ID:         "5",
+		},
+	}
+
+	dclient := DockerClient{
+		cli: &MockApi{
+			mockImages:      imgs,
+			CommonAPIClient: nil,
+		},
+		containerListArgs: container.ListOptions{},
+	}
+
+	cwd, _ := os.Getwd()
+	opts := types.ImageBuildOptions{
+		Tags: []string{"test"},
+	}
+	res, err := dclient.BuildImage(cwd, opts)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// no-op, must wait till this finishes
+	reader := bufio.NewScanner(res.Body)
+	for reader.Scan() {
+	}
+
+	got := dclient.ListImages()
+
+	index := slices.IndexFunc(got, func(entry dimage.Summary) bool {
+		return slices.Equal(entry.RepoTags, []string{"test"})
+	})
+
+	if index == -1 {
+		t.Error("Could not find built image")
+	}
+}
+
+func TestSepPortMapping(t *testing.T) {
+	t.Run("Clean string, test mapping", func(t *testing.T) {
+		// format is host:container
+		testStr := "8080:80/tcp,1123:112,6969:9696/udp"
+		want := []PortBinding{
+			{
+				HostPort:      "8080",
+				ContainerPort: "80",
+				Proto:         "tcp",
+			},
+			{
+				"1123",
+				"112",
+				"tcp",
+			},
+			{
+				"6969",
+				"9696",
+				"udp",
+			},
+		}
+
+		got, err := GetPortMappingFromStr(testStr)
+
+		assert.NilError(t, err)
+
+		assert.DeepEqual(t, got, want)
+	})
+
+	t.Run("Empty port string", func(t *testing.T) {
+		testStr := ""
+		_, err := GetPortMappingFromStr(testStr)
+		assert.NilError(t, err)
+	})
+
+	t.Run("Invalid mapping, should throw error", func(t *testing.T) {
+		testStr := "8080:878:9/tcp"
+		_, err := GetPortMappingFromStr(testStr)
+		assert.Error(t, err, "Port Mapping 8080:878:9/tcp is invalid")
+	})
 }

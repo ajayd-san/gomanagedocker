@@ -2,10 +2,10 @@ package tui
 
 import (
 	"slices"
-	"time"
 
+	"github.com/ajayd-san/gomanagedocker/tui/components/list"
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -15,15 +15,18 @@ const listWidthRatioWithOutInfoBox = 0.85
 var (
 	// list always takes up 30% of the screen by default
 	listWidthRatio float32 = listWidthRatioWithInfoBox
-	// duration of the list status message on screen, default: 2s
-	statusMessageDuration time.Duration = 2 * time.Second
 )
 
+type itemSelect struct{}
+type clearSelection struct{}
+
 type listModel struct {
-	list        list.Model
-	ExistingIds map[string]struct{}
-	tabKind     tabId
-	listEmpty   bool
+	list           list.Model
+	ExistingIds    map[string]struct{}
+	tabKind        tabId
+	listEmpty      bool
+	objectHelp     help.KeyMap
+	objectHelpBulk help.KeyMap
 }
 
 func (m listModel) Init() tea.Cmd {
@@ -43,7 +46,11 @@ func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.listEmpty = false
 		}
+	case itemSelect:
+		m.list.ToggleSelect()
 
+	case clearSelection:
+		m.list.ClearSelection()
 	}
 
 	var cmd tea.Cmd
@@ -59,23 +66,38 @@ func (m listModel) View() string {
 	return listContainer.Render(listDocStyle.Render(m.list.View()))
 }
 
-func InitList(tabkind tabId) listModel {
+func InitList(tabkind tabId, objectHelp, objectHelpBulk help.KeyMap) listModel {
 
 	items := make([]list.Item, 0)
 	m := listModel{
-		list:        list.New(items, list.NewDefaultDelegate(), 60, 30),
-		ExistingIds: make(map[string]struct{}),
-		tabKind:     tabkind,
+		list:           list.New(items, list.NewDefaultDelegate(), 60, 30),
+		ExistingIds:    make(map[string]struct{}),
+		tabKind:        tabkind,
+		objectHelp:     objectHelp,
+		objectHelpBulk: objectHelpBulk,
 	}
 
 	m.list.Title = CONFIG_POLLING_TIME.String()
-	m.list.StatusMessageLifetime = statusMessageDuration
+	m.list.StatusMessageLifetime = CONFIG_NOTIFICATION_TIMEOUT
 	m.list.DisableQuitKeybindings()
 	m.list.SetShowHelp(false)
 	m.list.KeyMap.NextPage = key.NewBinding(key.WithKeys("]"))
 	m.list.KeyMap.PrevPage = key.NewBinding(key.WithKeys("["))
 
 	return m
+}
+
+// returns if we are in bulk more or nah
+func (m listModel) inBulkMode() bool {
+	return len(m.list.GetSelected()) > 1
+}
+
+// returns `help.KeyMap` depending on context (i.e in bulk selection mode or nah)
+func (m listModel) getKeymap() help.KeyMap {
+	if m.inBulkMode() {
+		return m.objectHelpBulk
+	}
+	return m.objectHelp
 }
 
 func makeItems(raw []dockerRes) []list.Item {
@@ -115,7 +137,6 @@ func (m *listModel) updateTab(newlist []dockerRes) {
 		case VOLUMES:
 			// newA := a.(VolumeItem)
 			// newB := b.(VolumeItem)
-
 		}
 
 		return true
@@ -131,6 +152,13 @@ func (m *listModel) updateTab(newlist []dockerRes) {
 
 func (m *listModel) updateExistigIds(newlistItems *[]dockerRes) {
 	for _, item := range *newlistItems {
-		m.ExistingIds[item.getId()] = struct{}{}
+		m.ExistingIds[item.GetId()] = struct{}{}
+	}
+}
+
+// returns `tea.Cmd` that returns `clearSelection{}`
+func clearSelectionCmd() tea.Cmd {
+	return func() tea.Msg {
+		return clearSelection{}
 	}
 }

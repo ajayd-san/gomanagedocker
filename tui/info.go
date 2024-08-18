@@ -80,6 +80,9 @@ func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker 
 	if len(containerInfo.Mounts) > 0 {
 		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
 	}
+	if len(containerInfo.Ports) > 0 {
+		addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
+	}
 	return res.String()
 }
 
@@ -91,7 +94,6 @@ func addEntry(res *strings.Builder, label string, val string) {
 }
 
 func mountPointString(mounts []types.MountPoint) string {
-
 	var res strings.Builder
 
 	slices.SortStableFunc(mounts, func(a types.MountPoint, b types.MountPoint) int {
@@ -107,6 +109,23 @@ func mountPointString(mounts []types.MountPoint) string {
 	}
 
 	return res.String()
+}
+
+// converts []types.Port to human readable string
+func portsString(ports []types.Port) string {
+	var res strings.Builder
+
+	for _, port := range ports {
+		var str string
+		if port.PublicPort == 0 {
+			str = fmt.Sprintf("%d/%s, ", port.PrivatePort, port.Type)
+		} else {
+			str = fmt.Sprintf("%d -> %d/%s, ", port.PublicPort, port.PrivatePort, port.Type)
+		}
+		res.WriteString(str)
+	}
+
+	return strings.TrimSuffix(res.String(), ", ")
 }
 
 func mapToString(m map[string]string) string {

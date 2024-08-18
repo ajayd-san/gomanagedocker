@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"regexp"
+
 	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 )
 
@@ -10,12 +13,42 @@ const (
 	dialogPruneContainers
 	dialogRemoveImage
 	dialogPruneImages
+	dialogRunImage
 	dialogPruneVolumes
 	dialogRemoveVolumes
 	dialogImageScout
+	dialogImageBuild
+	dialogImageBuildProgress
 )
 
-func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapperModel {
+func getRunImageDialog(storage map[string]string) teadialog.Dialog {
+	// MGS nerds will prolly like this
+	prompt := []teadialog.Prompt{
+		teadialog.MakeTextInputPrompt(
+			"port",
+			"Port mappings",
+			teadialog.WithPlaceHolder("Ex: 1011:2016,226:1984/udp"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"name",
+			"Name",
+			teadialog.WithPlaceHolder("prologueAwakening"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"env",
+			"Environment variables",
+			teadialog.WithPlaceHolder("VENOM=AHAB,DD=goodDoggo"),
+			teadialog.WithTextWidth(30),
+		),
+	}
+
+	title := "Run Image\n(Leave inputs blank for defaults)"
+	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage, teadialog.WithShowFullHelp(true))
+}
+
+func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) DockerScoutInfoCard {
 	infoCard := teadialog.InitInfoCard(
 		"Image Scout",
 		"",
@@ -23,11 +56,11 @@ func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) InfoCardWrapper
 		teadialog.WithMinHeight(13),
 		teadialog.WithMinWidth(130),
 	)
-	return InfoCardWrapperModel{
+	return DockerScoutInfoCard{
 		tableChan: make(chan *TableModel),
 		inner:     &infoCard,
 		f:         f,
-		spinner:   initialModel(),
+		spinner:   components.InitialModel(),
 	}
 }
 
@@ -81,4 +114,35 @@ func getPruneVolumesDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	return teadialog.InitDialogWithPrompt("Prune Containers: ", prompts, dialogPruneVolumes, storage)
+}
+
+func getBuildImageDialog(storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		// teadialog.NewFilePicker("browser"),
+		// NewFilePicker("filepicker"),
+		teadialog.MakeTextInputPrompt("image_tags", "Image Tags:"),
+	}
+
+	return teadialog.InitDialogWithPrompt("Build Image: ", prompts, dialogImageBuild, storage)
+}
+
+// Gets the build progress bar info card/dialog
+func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
+
+	infoCard := teadialog.InitInfoCard(
+		"Image Build",
+		"",
+		dialogImageBuildProgress,
+		teadialog.WithMinHeight(8),
+		teadialog.WithMinWidth(100),
+	)
+
+	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+
+	return buildProgressModel{
+		progressChan: make(chan string, 10),
+		regex:        reg,
+		progressBar:  progressBar,
+		inner:        &infoCard,
+	}
 }

@@ -1,4 +1,4 @@
-package tui
+package components
 
 // A simple program demonstrating the spinner component from the Bubbles
 // component library.
@@ -17,7 +17,7 @@ type SpinnerModel struct {
 	err      error
 }
 
-func initialModel() SpinnerModel {
+func InitialModel() SpinnerModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))

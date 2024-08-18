@@ -3,14 +3,40 @@ package dockercmd
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/pkg/archive"
 )
+
+// builds a docker image from `options` and `buildContext`
+func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
+	dockerignoreFile, err := os.Open(filepath.Join(buildContext, ".dockerignore"))
+
+	opts := archive.TarOptions{}
+	if err == nil {
+		opts.ExcludePatterns = getDockerIgnorePatterns(dockerignoreFile)
+	}
+
+	tar, err := archive.TarWithOptions(buildContext, &opts)
+
+	if err != nil {
+		return nil, err
+	}
+	defer tar.Close()
+
+	res, err := dc.cli.ImageBuild(context.Background(), tar, options)
+
+	return &res, err
+}
 
 func (dc *DockerClient) ListImages() []image.Summary {
 	images, err := dc.cli.ImageList(context.Background(), image.ListOptions{ContainerCount: true})
@@ -23,14 +49,14 @@ func (dc *DockerClient) ListImages() []image.Summary {
 }
 
 // Runs the image and returns the container ID
-func (dc *DockerClient) RunImage(containerConfig container.Config) (*string, error) {
+func (dc *DockerClient) RunImage(containerConfig *container.Config, hostConfig *container.HostConfig, containerName string) (*string, error) {
 	res, err := dc.cli.ContainerCreate(
 		context.Background(),
-		&containerConfig,
+		containerConfig,
+		hostConfig,
 		nil,
 		nil,
-		nil,
-		"",
+		containerName,
 	)
 
 	if err != nil {
@@ -96,4 +122,37 @@ func runDockerScout(ctx context.Context, imageId string) ([]byte, error) {
 	}
 
 	return output, nil
+}
+
+type PortBinding struct {
+	HostPort      string
+	ContainerPort string
+	Proto         string
+}
+
+// UTIL
+func GetPortMappingFromStr(portStr string) ([]PortBinding, error) {
+	portBindings := make([]PortBinding, 0, len(portStr))
+	portStr = strings.Trim(portStr, " ")
+	portMappingStrs := strings.Split(portStr, ",")
+
+	for _, mappingStr := range portMappingStrs {
+		mappingStr = strings.Trim(mappingStr, " ")
+		if mappingStr == "" {
+			continue
+		}
+		substr := strings.Split(mappingStr, ":")
+		if len(substr) != 2 {
+			return nil, errors.New(fmt.Sprintf("Port Mapping %s is invalid", mappingStr))
+		}
+
+		if containerPort, found := strings.CutSuffix(substr[1], "/udp"); found {
+			portBindings = append(portBindings, PortBinding{substr[0], containerPort, "udp"})
+		} else {
+			containerPort, _ = strings.CutSuffix(containerPort, "/tcp")
+			portBindings = append(portBindings, PortBinding{substr[0], containerPort, "tcp"})
+		}
+	}
+
+	return portBindings, nil
 }

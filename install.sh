@@ -28,18 +28,9 @@ echo -e '
  ░╚═════╝░░╚════╝░╚═╝░░░░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝░░╚═╝░╚═════╝░╚══════╝╚═════╝░░╚════╝░░╚════╝░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝
 '
 
-temp_dir=$(mktemp -d)
-if [ $? -ne 0 ]; then
-    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unable to create temporary directory${nc}"
-    exit 1
-fi
-
 package=gomanagedocker
-version=1.3.2
 arch=$(uname -m)
 os=$(uname -s)
-
-cd "${temp_dir}"
 
 if [[ "$arch" == "x86_64" ]]; then
     arch="amd64"
@@ -59,32 +50,24 @@ else
     exit 1
 fi
 
-file_name=${package}_${os}_${arch}_v${version}
+# allow specifying different destination directory
+DIR="${DIR:-"$HOME/.local/bin"}"
 
-url="https://github.com/ajayd-san/gomanagedocker/releases/download/v${version}/${file_name}.tar.gz"
+GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/ajayd-san/gomanagedocker/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+FILE_NAME=${package}_${os}_${arch}_${GITHUB_LATEST_VERSION}
+GITHUB_URL="https://github.com/ajayd-san/gomanagedocker/releases/download/${GITHUB_LATEST_VERSION}/${FILE_NAME}.tar.gz"
 
-if command -v curl &> /dev/null; then
-    echo -e "${bright_yellow}Downloading ${cyan}${package} v${version} for ${os} (${arch})...${nc}"
-    curl -sLO "$url"
-else
-    echo -e "${bright_yellow}Downloading ${cyan}${package} v${version} for ${os} (${arch})...${nc}"
-    wget -q "$url"
-fi
+PARENT_FOLDER="${os}_${arch}_${GITHUB_LATEST_VERSION}"
+# install/update the local binary
+echo -e "${bright_yellow}Downloading ${cyan}${package} v${version} for ${os} (${arch})...${nc}"
+curl -L -o gomanagedocker.tar.gz $GITHUB_URL
 
 echo -e "${bright_yellow}Extracting ${cyan}${package}...${nc}"
-tar -xzf "${file_name}.tar.gz"
+tar xzvf gomanagedocker.tar.gz "${PARENT_FOLDER}/gmd" -O >gmd
 
-echo -e "${bright_yellow}Installing ${cyan}${package}...${nc}"
-
-extracted_folder_name=${os}_${arch}_v${version}
-cd ${extracted_folder_name}
-chmod +x ./gmd
-
-if sudo mv ./gmd /usr/local/bin/; then
-  echo -e "🎉 ${bright_green}Installation complete!${nc}"
-  echo -e "${bright_cyan}You can type ${white}\"${bright_yellow}gmd${white}\" ${bright_cyan}to start!${nc}"
+if install -Dm 755 gmd -t "$DIR" && rm gmd gomanagedocker.tar.gz; then
+    echo -e "🎉 ${bright_green}Installation complete!${nc}"
+    echo -e "${bright_cyan}You can type ${white}\"${bright_yellow}gmd${white}\" ${bright_cyan}to start!${nc}"
 else
-  echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unable to move binary to /usr/local/bin. Do you have sudo permissions?${nc}"
+    echo -e "${red}❌ Fail install goManageDocker to ${DIR} ${nc}"
 fi
-
-rm -rf "$temp_dir"

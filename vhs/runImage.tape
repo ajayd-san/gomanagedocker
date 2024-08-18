@@ -17,10 +17,17 @@ Type "l"
 Sleep 2s
 Type "h"
 Sleep 500ms
-Type@500ms "jj"
+Type@500ms "jjjj"
 Sleep 1s
 Type "r"
 Sleep 1s
+Type@150ms "80:80, 34000:35000"
+Enter
+Type@150ms "reeeeedis"
+Enter
+Type@150ms "USER=me,PASSWORD=pass"
+Enter
+Sleep 2s
 Type "l"
 Sleep 3s
 Type "q"
