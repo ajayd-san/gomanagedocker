@@ -55,7 +55,7 @@ docker run -it -v /var/run/docker.sock:/var/run/docker.sock kakshipth/gomanagedo
 Alias it to something quicker (unless you like typing a lot 🙄)
 ## Features
 
-### **New in v1.4:**\
+### **New in v1.4:**
 
 1. Global notification system
 	![notificationSystem](vhs/gifs/notifications.gif)
