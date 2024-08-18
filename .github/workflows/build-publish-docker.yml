@@ -37,7 +37,9 @@ jobs:
           context: .
           file: ./prod.Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: 
+            - ${{ env.IMAGE_NAME }}:latest
+            - ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Generate artifact attestation
