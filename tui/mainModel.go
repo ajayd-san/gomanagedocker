@@ -824,9 +824,9 @@ func (m MainModel) View() string {
 		var style lipgloss.Style
 		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == int(m.activeTab)
 		if isActive {
-			style = activeTabStyle.Copy()
+			style = activeTabStyle
 		} else {
-			style = inactiveTabStyle.Copy()
+			style = inactiveTabStyle
 		}
 		border, _, _, _, _ := style.GetBorder()
 		if isFirst && isActive {

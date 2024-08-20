@@ -18,7 +18,7 @@ var (
 	docStyle         = lipgloss.NewStyle().Padding(0, 1, 0, 2)
 	highlightColor   = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
 	inactiveTabStyle = lipgloss.NewStyle().Border(inactiveTabBorder, true).BorderForeground(highlightColor).Padding(0, 1)
-	activeTabStyle   = inactiveTabStyle.Copy().Border(activeTabBorder, true)
+	activeTabStyle   = inactiveTabStyle.Border(activeTabBorder, true)
 	fillerStyle      = lipgloss.NewStyle().Foreground(highlightColor)
 	// The outer most visible border, this encloses all the elements on screen (except for dialogs, for now)
 	windowStyle = lipgloss.NewStyle().
