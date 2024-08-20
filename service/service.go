@@ -22,7 +22,7 @@ type Service interface {
 
 	// container
 	InspectContainer(id string) (*et.ContainerJSON, error)
-	ListContainers(showContainerSize bool) []et.Container
+	ListContainers(showContainerSize bool) []types.ContainerSummary
 	ToggleContainerListAll()
 	ToggleStartStopContainer(id string) error
 	RestartContainer(id string) error

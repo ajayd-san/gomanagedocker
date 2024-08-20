@@ -103,7 +103,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"a"},
 						ID:         "1aaaaaaaa",
 						SizeRw:     1e+9,
@@ -113,7 +113,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -132,7 +132,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -141,7 +141,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "3aaaaaaaa",
 						SizeRw:     201,
@@ -176,7 +176,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 				for i, container := range testCase.containers {
 					id := container.GetId()
 
-					index := slices.IndexFunc(updatedContainers, func(elem types.Container) bool {
+					index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
 						return elem.ID == id
 					})
 
@@ -204,7 +204,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"a"},
 						ID:         "1aaaaaaaa",
 						SizeRw:     1e+9,
@@ -214,7 +214,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -233,7 +233,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -242,7 +242,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "3aaaaaaaa",
 						SizeRw:     201,
@@ -275,7 +275,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 				for i, container := range testCase.containers {
 					id := container.GetId()
 
-					index := slices.IndexFunc(updatedContainers, func(elem types.Container) bool {
+					index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
 						return elem.ID == id
 					})
 
@@ -309,7 +309,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"a"},
 						ID:         "1aaaaaaaa",
 						SizeRw:     1e+9,
@@ -319,7 +319,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -337,7 +337,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -373,7 +373,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 			t.Run("Confirm container deleted", func(t *testing.T) {
 				containers := mock.ListContainers(true)
 
-				exists := slices.ContainsFunc(containers, func(elem types.Container) bool {
+				exists := slices.ContainsFunc(containers, func(elem it.ContainerSummary) bool {
 					for _, c := range testCase.containers {
 						if elem.ID == c.GetId() {
 							return true
@@ -456,7 +456,7 @@ func TestContainerDelete(t *testing.T) {
 			t.Run("Confirm container deleted", func(t *testing.T) {
 				containers := mock.ListContainers(false)
 
-				exists := slices.ContainsFunc(containers, func(elem types.Container) bool {
+				exists := slices.ContainsFunc(containers, func(elem it.ContainerSummary) bool {
 					if elem.ID == testCase.ID {
 						return true
 					}

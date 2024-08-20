@@ -28,7 +28,6 @@ import (
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
-	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
@@ -145,7 +144,8 @@ func NewModel() MainModel {
 	NavKeymap.FullSeparator = " • "
 	NavKeymap.ShowAll = true
 
-	client, _ := podmancmd.NewPodmanClient()
+	// client, _ := podmancmd.NewPodmanClient()
+	client := dockercmd.NewDockerClient()
 
 	return MainModel{
 		dockerClient:                   client,

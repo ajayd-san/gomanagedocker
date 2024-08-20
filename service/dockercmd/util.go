@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ajayd-san/gomanagedocker/service/types"
+	et "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 )
 
@@ -44,7 +45,26 @@ func toImageSummaryArr(summary []image.Summary) []types.ImageSummary {
 			Containers: entry.Containers,
 			Created:    entry.Created,
 		}
+	}
 
+	return res
+}
+
+func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
+	res := make([]types.ContainerSummary, len(summary))
+
+	for index, entry := range summary {
+		res[index] = types.ContainerSummary{
+			ID:         entry.ID,
+			ImageID:    entry.ImageID,
+			Created:    entry.Created,
+			SizeRw:     entry.SizeRw,
+			SizeRootFs: entry.SizeRootFs,
+			Names:      entry.Names,
+			State:      entry.State,
+			Command:    entry.Command,
+			Status:     entry.Status,
+		}
 	}
 
 	return res

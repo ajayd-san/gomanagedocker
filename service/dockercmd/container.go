@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/docker/docker/api/types"
+	"github.com/ajayd-san/gomanagedocker/service/types"
+	et "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 )
 
-func (dc *DockerClient) InspectContainer(id string) (*types.ContainerJSON, error) {
+func (dc *DockerClient) InspectContainer(id string) (*et.ContainerJSON, error) {
 	res, _, err := dc.cli.ContainerInspectWithRaw(context.Background(), id, true)
 
 	if err != nil {
@@ -21,7 +22,7 @@ func (dc *DockerClient) InspectContainer(id string) (*types.ContainerJSON, error
 	return &res, nil
 }
 
-func (dc *DockerClient) ListContainers(showContainerSize bool) []types.Container {
+func (dc *DockerClient) ListContainers(showContainerSize bool) []types.ContainerSummary {
 	listArgs := dc.containerListArgs
 	listArgs.Size = showContainerSize
 
@@ -31,7 +32,7 @@ func (dc *DockerClient) ListContainers(showContainerSize bool) []types.Container
 		panic(err)
 	}
 
-	return containers
+	return toContainerSummaryArr(containers)
 }
 
 // Toggles listing of inactive containers
@@ -86,11 +87,11 @@ func (dc *DockerClient) DeleteContainer(id string, opts container.RemoveOptions)
 	return dc.cli.ContainerRemove(context.Background(), id, opts)
 }
 
-func (dc *DockerClient) PruneContainers() (types.ContainersPruneReport, error) {
+func (dc *DockerClient) PruneContainers() (et.ContainersPruneReport, error) {
 	report, err := dc.cli.ContainersPrune(context.Background(), filters.Args{})
 
 	if err != nil {
-		return types.ContainersPruneReport{}, err
+		return et.ContainersPruneReport{}, err
 	}
 
 	return report, nil

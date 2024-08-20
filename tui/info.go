@@ -77,12 +77,13 @@ func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker 
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)
 
-	if len(containerInfo.Mounts) > 0 {
-		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
-	}
-	if len(containerInfo.Ports) > 0 {
-		addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
-	}
+	// TODO: figure ports and mount points out
+	// if len(containerInfo.Mounts) > 0 {
+	// 	addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
+	// }
+	// if len(containerInfo.Ports) > 0 {
+	// 	addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
+	// }
 	return res.String()
 }
 

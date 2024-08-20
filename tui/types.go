@@ -10,7 +10,6 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
 )
 
@@ -96,13 +95,13 @@ func (i imageItem) Description() string {
 func (i imageItem) FilterValue() string { return i.getName() }
 
 type containerItem struct {
-	types.Container
+	it.ContainerSummary
 }
 
-func makeContainerItems(dockerlist []types.Container) []dockerRes {
+func makeContainerItems(dockerlist []it.ContainerSummary) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
-	slices.SortFunc(dockerlist, func(a types.Container, b types.Container) int {
+	slices.SortFunc(dockerlist, func(a it.ContainerSummary, b it.ContainerSummary) int {
 
 		if statusMap[a.State] < statusMap[b.State] {
 			return -1
@@ -115,7 +114,7 @@ func makeContainerItems(dockerlist []types.Container) []dockerRes {
 	})
 
 	for i := range dockerlist {
-		res[i] = containerItem{Container: dockerlist[i]}
+		res[i] = containerItem{dockerlist[i]}
 	}
 
 	return res

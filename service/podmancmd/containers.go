@@ -1,6 +1,7 @@
 package podmancmd
 
 import (
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 )
@@ -9,7 +10,7 @@ func (po *PodmanClient) InspectContainer(id string) (*types.ContainerJSON, error
 	panic("not implemented") // TODO: Implement
 }
 
-func (po *PodmanClient) ListContainers(showContainerSize bool) []types.Container {
+func (po *PodmanClient) ListContainers(showContainerSize bool) []it.ContainerSummary {
 	return nil
 }
 

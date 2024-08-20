@@ -3,6 +3,7 @@ package dockercmd
 import (
 	"testing"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"gotest.tools/v3/assert"
@@ -69,7 +70,7 @@ func TestListContainer(t *testing.T) {
 
 		got := dclient.ListContainers(false)
 
-		want := []types.Container{
+		want := []it.ContainerSummary{
 			{
 				ID:         "1",
 				SizeRw:     -1,
@@ -101,7 +102,7 @@ func TestListContainer(t *testing.T) {
 
 		got := dclient.ListContainers(false)
 
-		want := []types.Container{
+		want := []it.ContainerSummary{
 			{
 				ID:         "1",
 				SizeRw:     -1,
@@ -145,7 +146,33 @@ func TestListContainer(t *testing.T) {
 		dclient.ToggleContainerListAll()
 
 		got := dclient.ListContainers(true)
-		want := containers
+		want := []it.ContainerSummary{
+			{
+				ID:         "1",
+				SizeRw:     200,
+				SizeRootFs: 400,
+				State:      "running",
+				Status:     "",
+			},
+			{
+				ID:         "2",
+				SizeRw:     201,
+				SizeRootFs: 401,
+				State:      "running",
+			},
+			{
+				ID:         "3",
+				SizeRw:     202,
+				SizeRootFs: 402,
+				State:      "created",
+			},
+			{
+				ID:         "4",
+				SizeRw:     203,
+				SizeRootFs: 403,
+				State:      "stopped",
+			},
+		}
 
 		assert.DeepEqual(t, got, want)
 	})

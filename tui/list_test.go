@@ -4,15 +4,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/docker/docker/api/types"
 	"gotest.tools/v3/assert"
 )
 
 func TestUpdateExistingIds(t *testing.T) {
 
-	containers := []types.Container{
+	containers := []types.ContainerSummary{
 		{
 			Names:      []string{"a"},
 			ID:         "1",
