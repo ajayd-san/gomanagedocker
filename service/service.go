@@ -4,11 +4,14 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/volume"
+	"github.com/docker/docker/api/types/volume"
 )
 
 // both DockerClient and PodmanClient satisfy this interface
 type Service interface {
+	Ping() error
+	GetListOptions() *container.ListOptions
+
 	// image
 	BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error)
 	ListImages() []image.Summary
@@ -17,6 +20,7 @@ type Service interface {
 	PruneImages() (types.ImagesPruneReport, error)
 
 	// container
+	InspectContainer(id string) (*types.ContainerJSON, error)
 	ListContainers(showContainerSize bool) []types.Container
 	ToggleContainerListAll()
 	ToggleStartStopContainer(id string) error

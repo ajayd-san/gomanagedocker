@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"

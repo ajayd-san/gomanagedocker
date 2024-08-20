@@ -3,6 +3,7 @@ package dockercmd
 import (
 	"context"
 
+	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
@@ -46,14 +47,14 @@ type DockerClient struct {
 	containerListArgs container.ListOptions
 }
 
-func NewDockerClient() DockerClient {
+func NewDockerClient() service.Service {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}
 
 	//TODO: size should not be true, investigate later
-	return DockerClient{
+	return &DockerClient{
 		cli: cli,
 		containerListArgs: container.ListOptions{
 			Size:   true,
@@ -63,14 +64,14 @@ func NewDockerClient() DockerClient {
 	}
 }
 
-func (dc DockerClient) PingDocker() error {
+func (dc DockerClient) Ping() error {
 	_, err := dc.cli.Ping(context.Background())
 	return err
 }
 
 // used for testing only
-func NewMockCli(cli *MockApi) DockerClient {
-	return DockerClient{
+func NewMockCli(cli *MockApi) service.Service {
+	return &DockerClient{
 		cli:               cli,
 		containerListArgs: container.ListOptions{},
 	}

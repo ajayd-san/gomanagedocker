@@ -11,7 +11,7 @@ import (
 
 	"strings"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"golang.design/x/clipboard"
@@ -20,7 +20,7 @@ import (
 type Operation func() error
 
 // Hides/shows existed containers and sends notification to `notificationChan`
-func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) {
+func toggleListAllContainers(client service.Service, activeTab tabId, notificationChan chan notificationMetadata) {
 	client.ToggleContainerListAll()
 	listOpts := client.GetListOptions()
 
@@ -36,7 +36,7 @@ func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, no
 
 // Returns func that calls dockercmd api to toggle start/stop container, and sends notification to `notificaitonChan`
 func toggleStartStopContainer(
-	cli dockercmd.DockerClient,
+	cli service.Service,
 	containers []dockerRes,
 	activeTab tabId,
 	notifcationChan chan notificationMetadata,
@@ -103,7 +103,7 @@ func toggleStartStopContainer(
 
 // Returns func that calls dockercmd api to toggle pause/resume container, and sends notification to `notificaitonChan`
 func togglePauseResumeContainer(
-	client dockercmd.DockerClient,
+	client service.Service,
 	containers []dockerRes,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
@@ -168,7 +168,7 @@ func togglePauseResumeContainer(
 
 // Returns func that calls dockercmd api to restart container and sends notification to notificationChan
 func toggleRestartContainer(
-	client dockercmd.DockerClient,
+	client service.Service,
 	containers []dockerRes,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
@@ -207,7 +207,7 @@ func toggleRestartContainer(
 }
 
 // Returns func that calls dockercmd api to deletes container using `opts` as options and sends notification to notificationChan
-func containerDelete(client dockercmd.DockerClient, containerId string, opts container.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func containerDelete(client service.Service, containerId string, opts container.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteContainer(containerId, opts)
 
@@ -223,7 +223,7 @@ func containerDelete(client dockercmd.DockerClient, containerId string, opts con
 
 // bulk deletes `containers`
 func containerDeleteBulk(
-	client dockercmd.DockerClient,
+	client service.Service,
 	containers []dockerRes,
 	opts container.RemoveOptions,
 	activeTab tabId,
@@ -279,7 +279,7 @@ func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan 
 }
 
 // Runs image and sends notification to `notificationChan`
-func runImage(client dockercmd.DockerClient, containerConfig *container.Config, hostConfig *container.HostConfig, containerName string, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func runImage(client service.Service, containerConfig *container.Config, hostConfig *container.HostConfig, containerName string, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		_, err := client.RunImage(containerConfig, hostConfig, containerName)
 
@@ -297,7 +297,7 @@ func runImage(client dockercmd.DockerClient, containerConfig *container.Config, 
 }
 
 // Deletes image with `opts` and sends notification to `notificationChan`
-func imageDelete(client dockercmd.DockerClient, imageId string, opts image.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func imageDelete(client service.Service, imageId string, opts image.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteImage(imageId, opts)
 
@@ -317,7 +317,7 @@ func imageDelete(client dockercmd.DockerClient, imageId string, opts image.Remov
 
 // Same as above but is a bulk operation
 func imageDeleteBulk(
-	client dockercmd.DockerClient,
+	client service.Service,
 	items []dockerRes,
 	opts image.RemoveOptions,
 	activeTab tabId,
@@ -363,7 +363,7 @@ func imageDeleteBulk(
 	}
 }
 
-func volumeDeleteBulk(client dockercmd.DockerClient, volumes []dockerRes, force bool, activeTab tabId, notificationChan chan notificationMetadata, errChan chan error) Operation {
+func volumeDeleteBulk(client service.Service, volumes []dockerRes, force bool, activeTab tabId, notificationChan chan notificationMetadata, errChan chan error) Operation {
 	return func() error {
 		var wg sync.WaitGroup
 		var successCounter atomic.Uint32
@@ -397,7 +397,7 @@ func volumeDeleteBulk(client dockercmd.DockerClient, volumes []dockerRes, force 
 	}
 }
 
-func volumeDelete(client dockercmd.DockerClient, volumeId string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func volumeDelete(client service.Service, volumeId string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteVolume(volumeId, force)
 
@@ -410,7 +410,7 @@ func volumeDelete(client dockercmd.DockerClient, volumeId string, force bool, ac
 	}
 }
 
-func imagePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func imagePrune(client service.Service, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 
 		report, err := client.PruneImages()
@@ -425,7 +425,7 @@ func imagePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan
 	}
 }
 
-func volumePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func volumePrune(client service.Service, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		report, err := client.PruneVolumes()
 		if err != nil {

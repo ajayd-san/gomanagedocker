@@ -3,7 +3,7 @@ package tui
 import (
 	"regexp"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 )

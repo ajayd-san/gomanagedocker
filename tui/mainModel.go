@@ -16,6 +16,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 
+	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,7 +27,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"golang.design/x/clipboard"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
@@ -58,7 +59,7 @@ type ContainerSizeManager struct {
 }
 
 type MainModel struct {
-	dockerClient        dockercmd.DockerClient
+	dockerClient        service.Service
 	Tabs                []string
 	TabContent          []listModel
 	activeTab           tabId
@@ -96,7 +97,7 @@ func doUpdateObjectsTick() tea.Cmd {
 
 func (m MainModel) Init() tea.Cmd {
 	// check if Docker is alive, if not, exit
-	err := m.dockerClient.PingDocker()
+	err := m.dockerClient.Ping()
 	if err != nil {
 		earlyExitErr = fmt.Errorf("Error connecting to Docker daemon.\nInfo: %w\n", err)
 		return tea.Quit
@@ -346,7 +347,8 @@ notificationLoop:
 
 						f := func() (*dockercmd.ScoutData, error) {
 
-							scoutData, err := m.dockerClient.ScoutImage(ctx, imageName)
+							dockerClient := m.dockerClient.(*dockercmd.DockerClient)
+							scoutData, err := dockerClient.ScoutImage(ctx, imageName)
 
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
@@ -407,7 +409,7 @@ notificationLoop:
 			} else if m.activeTab == CONTAINERS {
 				switch {
 				case key.Matches(assertedMsg, ContainerKeymap.ToggleListAll):
-					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
+					toggleListAllContainers(m.dockerClient, m.activeTab, m.notificationChan)
 
 				case key.Matches(assertedMsg, ContainerKeymap.ToggleStartStop):
 					selectedItems := m.getSelectedItems()

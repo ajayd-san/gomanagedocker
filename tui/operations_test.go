@@ -4,7 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -12,7 +13,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func setupTest(t *testing.T) dockercmd.DockerClient {
+func setupTest(t *testing.T) service.Service {
 	api := dockercmd.MockApi{}
 
 	containers := []types.Container{
