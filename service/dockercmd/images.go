@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -38,14 +39,14 @@ func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuild
 	return &res, err
 }
 
-func (dc *DockerClient) ListImages() []image.Summary {
+func (dc *DockerClient) ListImages() []it.ImageSummary {
 	images, err := dc.cli.ImageList(context.Background(), image.ListOptions{ContainerCount: true})
 
 	if err != nil {
 		panic(err)
 	}
 
-	return images
+	return toImageSummaryArr(images)
 }
 
 // Runs the image and returns the container ID

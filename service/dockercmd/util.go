@@ -7,6 +7,9 @@ import (
 	"log"
 	"strings"
 	"time"
+
+	"github.com/ajayd-san/gomanagedocker/service/types"
+	"github.com/docker/docker/api/types/image"
 )
 
 func timeBenchmark(start time.Time, msg string) {
@@ -28,4 +31,21 @@ func getDockerIgnorePatterns(file io.Reader) []string {
 	}
 
 	return patterns
+}
+
+func toImageSummaryArr(summary []image.Summary) []types.ImageSummary {
+	res := make([]types.ImageSummary, len(summary))
+
+	for index, entry := range summary {
+		res[index] = types.ImageSummary{
+			ID:         entry.ID,
+			Size:       entry.Size,
+			RepoTags:   entry.RepoTags,
+			Containers: entry.Containers,
+			Created:    entry.Created,
+		}
+
+	}
+
+	return res
 }

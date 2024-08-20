@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types/image"
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	"gotest.tools/v3/assert"
 )
 
@@ -19,7 +19,7 @@ func TestMakeDescriptionString(t *testing.T) {
 }
 
 func TestMakeImageItems(t *testing.T) {
-	dockerList := []image.Summary{
+	dockerList := []types.ImageSummary{
 		{
 			ID:       "#1",
 			RepoTags: []string{"latest", "tag1", "tag2"},

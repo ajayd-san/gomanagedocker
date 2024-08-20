@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 )
 
@@ -45,10 +45,10 @@ type dockerRes interface {
 }
 
 type imageItem struct {
-	image.Summary
+	it.ImageSummary
 }
 
-func makeImageItems(dockerlist []image.Summary) []dockerRes {
+func makeImageItems(dockerlist []it.ImageSummary) []dockerRes {
 	res := make([]dockerRes, 0)
 
 	for i := range dockerlist {
@@ -56,7 +56,7 @@ func makeImageItems(dockerlist []image.Summary) []dockerRes {
 			continue
 		}
 
-		res = append(res, imageItem{Summary: dockerlist[i]})
+		res = append(res, imageItem{dockerlist[i]})
 	}
 
 	return res

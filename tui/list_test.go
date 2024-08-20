@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
 	"gotest.tools/v3/assert"
 )
 
@@ -45,7 +45,7 @@ func TestUpdateExistingIds(t *testing.T) {
 		},
 	}
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0",
@@ -103,7 +103,7 @@ func TestUpdateTab(t *testing.T) {
 	IMAGES = 0
 	CONTAINERS = 1
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0",
@@ -139,7 +139,7 @@ func TestUpdateTab(t *testing.T) {
 			got := liItems[i].(imageItem)
 			want := subset[i]
 
-			assert.DeepEqual(t, got.Summary, want)
+			assert.DeepEqual(t, got.ImageSummary, want)
 		}
 	})
 
@@ -153,7 +153,7 @@ func TestUpdateTab(t *testing.T) {
 			got := liItems[i].(imageItem)
 			want := imgs[i]
 
-			assert.DeepEqual(t, got.Summary, want)
+			assert.DeepEqual(t, got.ImageSummary, want)
 		}
 	})
 
@@ -163,7 +163,7 @@ func TestUpdate(t *testing.T) {
 	IMAGES = 0
 	CONTAINERS = 1
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0",
@@ -200,7 +200,7 @@ func TestUpdate(t *testing.T) {
 			got := listItems[i].(imageItem)
 			want := imgs[i]
 
-			assert.DeepEqual(t, got.Summary, want)
+			assert.DeepEqual(t, got.ImageSummary, want)
 		}
 	})
 
@@ -218,7 +218,7 @@ func TestEmptyList(t *testing.T) {
 	IMAGES = 0
 	CONTAINERS = 1
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0as;dkfjasdfasdfasdfaasdf",

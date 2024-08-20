@@ -141,7 +141,8 @@ func TestFetchNewData(t *testing.T) {
 
 			for i := range len(newlist) {
 				img := newlist[i].(imageItem)
-				assert.DeepEqual(t, img.Summary, imgs[i])
+				assert.Equal(t, img.ImageSummary.ID, imgs[i].ID)
+				assert.DeepEqual(t, img.ImageSummary.RepoTags, imgs[i].RepoTags)
 			}
 		})
 

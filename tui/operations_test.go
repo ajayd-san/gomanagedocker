@@ -6,6 +6,7 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -549,7 +550,7 @@ func TestImageDelete(t *testing.T) {
 			t.Run("Confirm image deleted", func(t *testing.T) {
 				images := mock.ListImages()
 
-				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
 					if elem.ID == testCase.ID {
 						return true
 					}
@@ -583,7 +584,7 @@ func TestImageDeleteBulk(t *testing.T) {
 		{
 			imgs: []dockerRes{
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "0bbbbbbbb",
 						RepoTags:   []string{"a"},
@@ -591,7 +592,7 @@ func TestImageDeleteBulk(t *testing.T) {
 				},
 
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "1bbbbbbbb",
 						RepoTags:   []string{"b"},
@@ -611,7 +612,7 @@ func TestImageDeleteBulk(t *testing.T) {
 		{
 			imgs: []dockerRes{
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "this does not exist",
 						RepoTags:   []string{"a"},
@@ -619,7 +620,7 @@ func TestImageDeleteBulk(t *testing.T) {
 				},
 
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "1bbbbbbbb",
 						RepoTags:   []string{"b"},
@@ -664,7 +665,7 @@ func TestImageDeleteBulk(t *testing.T) {
 			t.Run("Confirm image deleted", func(t *testing.T) {
 				images := mock.ListImages()
 
-				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
 					for _, dres := range testCase.imgs {
 						if elem.ID == dres.GetId() {
 							return true
@@ -736,7 +737,7 @@ func TestDeleteVolume(t *testing.T) {
 			t.Run("Confirm image deleted", func(t *testing.T) {
 				images := mock.ListImages()
 
-				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
 					if elem.ID == testCase.Id {
 						return true
 					}

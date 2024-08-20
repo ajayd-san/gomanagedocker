@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dimage "github.com/docker/docker/api/types/image"
@@ -44,8 +45,25 @@ func TestListImages(t *testing.T) {
 	}
 
 	got := dclient.ListImages()
-	want := imgs
+	want := []it.ImageSummary{
+		{
+			Containers: 0,
+			ID:         "0",
+		},
 
+		{
+			Containers: 2,
+			ID:         "1",
+		},
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+		{
+			Containers: 4,
+			ID:         "5",
+		},
+	}
 	assert.DeepEqual(t, got, want)
 }
 
@@ -243,7 +261,7 @@ func TestBuildImage(t *testing.T) {
 
 	got := dclient.ListImages()
 
-	index := slices.IndexFunc(got, func(entry dimage.Summary) bool {
+	index := slices.IndexFunc(got, func(entry it.ImageSummary) bool {
 		return slices.Equal(entry.RepoTags, []string{"test"})
 	})
 
