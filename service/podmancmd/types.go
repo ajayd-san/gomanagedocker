@@ -4,15 +4,18 @@ import (
 	"context"
 
 	"github.com/containers/podman/v5/pkg/bindings"
+	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/docker/docker/api/types/container"
 )
 
 type PodmanClient struct {
-	cli context.Context
+	cli         context.Context
+	listOptions containers.ListOptions
 }
 
-func (po *PodmanClient) GetListOptions() *container.ListOptions {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) GetListOptions() *container.ListOptions {
+	// return &pc.listOptions
+	panic("unimplemented")
 }
 
 func NewPodmanClient() (*PodmanClient, error) {
@@ -22,7 +25,10 @@ func NewPodmanClient() (*PodmanClient, error) {
 		return nil, err
 	}
 
-	return &PodmanClient{ctx}, nil
+	return &PodmanClient{
+		ctx,
+		containers.ListOptions{},
+	}, nil
 }
 
 // no-op since bindings.NewConnection already pings

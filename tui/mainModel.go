@@ -28,6 +28,8 @@ import (
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
@@ -144,8 +146,8 @@ func NewModel() MainModel {
 	NavKeymap.FullSeparator = " • "
 	NavKeymap.ShowAll = true
 
-	// client, _ := podmancmd.NewPodmanClient()
-	client := dockercmd.NewDockerClient()
+	client, _ := podmancmd.NewPodmanClient()
+	// client := dockercmd.NewDockerClient()
 
 	return MainModel{
 		dockerClient:                   client,
@@ -949,7 +951,7 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 						panic(err)
 					}
 
-					updateContainerSizeMap(containerInfo, &m.containerSizeTracker)
+					updateContainerSizeMap(*containerInfo, &m.containerSizeTracker)
 				}()
 			}
 		}
@@ -1086,11 +1088,11 @@ func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 }
 
 // Adds size info from containerInfo to containersizeTracker. Meant to be used on demand when new container gets added.
-func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTracker *ContainerSizeManager) {
+func updateContainerSizeMap(containerInfo it.InspectContainerData, containerSizeTracker *ContainerSizeManager) {
 	containerSizeTracker.mu.Lock()
 	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
-		sizeRw: *containerInfo.SizeRw,
-		rootFs: *containerInfo.SizeRootFs,
+		sizeRw: containerInfo.SizeRw,
+		rootFs: containerInfo.SizeRootFs,
 	}
 	containerSizeTracker.mu.Unlock()
 }

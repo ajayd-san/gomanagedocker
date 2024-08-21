@@ -12,14 +12,14 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-func (dc *DockerClient) InspectContainer(id string) (*et.ContainerJSON, error) {
-	res, _, err := dc.cli.ContainerInspectWithRaw(context.Background(), id, true)
+func (dc *DockerClient) InspectContainer(id string) (*types.InspectContainerData, error) {
+	raw, _, err := dc.cli.ContainerInspectWithRaw(context.Background(), id, true)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &res, nil
+	return toContainerInspectData(&raw), nil
 }
 
 func (dc *DockerClient) ListContainers(showContainerSize bool) []types.ContainerSummary {

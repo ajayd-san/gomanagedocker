@@ -21,7 +21,7 @@ type Service interface {
 	PruneImages() (et.ImagesPruneReport, error)
 
 	// container
-	InspectContainer(id string) (*et.ContainerJSON, error)
+	InspectContainer(id string) (*types.InspectContainerData, error)
 	ListContainers(showContainerSize bool) []types.ContainerSummary
 	ToggleContainerListAll()
 	ToggleStartStopContainer(id string) error

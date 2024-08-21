@@ -69,3 +69,26 @@ func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 
 	return res
 }
+
+func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData {
+	res := types.ContainerSummary{
+		ID:      info.ID,
+		ImageID: info.Image,
+		// TODO: figure out created
+		// Created:    info.Created,
+		Names: []string{info.Name},
+		State: info.State.Status,
+		// Command:    info.Command,
+		Status: info.State.Status,
+	}
+
+	if info.SizeRootFs != nil {
+		res.SizeRootFs = *info.SizeRootFs
+	}
+
+	if info.SizeRw != nil {
+		res.SizeRw = *info.SizeRw
+	}
+
+	return &types.InspectContainerData{res}
+}
