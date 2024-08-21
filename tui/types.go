@@ -10,7 +10,6 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types/volume"
 )
 
 type status int
@@ -170,7 +169,7 @@ func (i containerItem) Description() string {
 func (i containerItem) FilterValue() string { return i.getLabel() }
 
 type VolumeItem struct {
-	volume.Volume
+	it.VolumeSummary
 }
 
 func (v VolumeItem) FilterValue() string {
@@ -191,21 +190,18 @@ func (v VolumeItem) getName() string {
 }
 
 func (v VolumeItem) getSize() float64 {
-	if v.UsageData == nil {
-		return -1
-	}
-	return float64(v.UsageData.Size)
+	return float64(v.UsageData)
 }
 
 func (i VolumeItem) Title() string { return i.getName() }
 
 func (i VolumeItem) Description() string { return "" }
 
-func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
+func makeVolumeItem(dockerlist []it.VolumeSummary) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
 	for i, volume := range dockerlist {
-		res[i] = VolumeItem{Volume: *volume}
+		res[i] = VolumeItem{VolumeSummary: volume}
 	}
 
 	sort.Slice(res, func(i, j int) bool {

@@ -5,7 +5,6 @@ import (
 	et "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/volume"
 )
 
 // both DockerClient and PodmanClient satisfy this interface
@@ -31,7 +30,7 @@ type Service interface {
 	PruneContainers() (et.ContainersPruneReport, error)
 
 	// volume
-	ListVolumes() ([]*volume.Volume, error)
+	ListVolumes() ([]types.VolumeSummary, error)
 	PruneVolumes() (*et.VolumesPruneReport, error)
 	DeleteVolume(id string, force bool) error
 }

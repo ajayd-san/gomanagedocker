@@ -29,6 +29,14 @@ type ContainerSummary struct {
 	// Ports []string
 }
 
+type VolumeSummary struct {
+	Name       string
+	CreatedAt  string
+	Driver     string
+	Mountpoint string
+	UsageData  int64
+}
+
 type InspectContainerData struct {
 	ContainerSummary
 }

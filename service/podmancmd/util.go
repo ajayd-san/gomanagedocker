@@ -58,3 +58,19 @@ func toContainerSummary(info *define.InspectContainerData) types.ContainerSummar
 
 	return res
 }
+
+func toVolumeSummaryArr(entries []*et.VolumeListReport) []types.VolumeSummary {
+	res := make([]types.VolumeSummary, len(entries))
+
+	for index, entry := range entries {
+		res[index] = types.VolumeSummary{
+			Name:       entry.Name,
+			CreatedAt:  entry.CreatedAt.String(),
+			Driver:     entry.Driver,
+			Mountpoint: entry.Mountpoint,
+			UsageData:  0,
+		}
+	}
+
+	return res
+}

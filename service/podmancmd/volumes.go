@@ -1,12 +1,19 @@
 package podmancmd
 
 import (
+	it "github.com/ajayd-san/gomanagedocker/service/types"
+	"github.com/containers/podman/v5/pkg/bindings/volumes"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/volume"
 )
 
-func (po *PodmanClient) ListVolumes() ([]*volume.Volume, error) {
-	return []*volume.Volume{}, nil
+func (pc *PodmanClient) ListVolumes() ([]it.VolumeSummary, error) {
+	res, err := volumes.List(pc.cli, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toVolumeSummaryArr(res), nil
 }
 
 func (po *PodmanClient) PruneVolumes() (*types.VolumesPruneReport, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/ajayd-san/gomanagedocker/service/types"
 	et "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/volume"
 )
 
 func timeBenchmark(start time.Time, msg string) {
@@ -91,4 +92,23 @@ func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData 
 	}
 
 	return &types.InspectContainerData{res}
+}
+
+func toVolumeSummaryArr(entries []*volume.Volume) []types.VolumeSummary {
+	res := make([]types.VolumeSummary, len(entries))
+
+	for index, entry := range entries {
+		res[index] = types.VolumeSummary{
+			Name:       entry.Name,
+			CreatedAt:  entry.CreatedAt,
+			Driver:     entry.Driver,
+			Mountpoint: entry.Mountpoint,
+		}
+
+		if entry.UsageData != nil {
+			res[index].UsageData = entry.UsageData.Size
+		}
+	}
+
+	return res
 }
