@@ -507,14 +507,14 @@ func TestImageDelete(t *testing.T) {
 		ID        string
 		notifWant string
 		errorStr  string
-		opts      image.RemoveOptions
+		opts      it.RemoveImageOptions
 	}{
 		{
 			ID:        "0bbbbbbbb",
 			notifWant: listStatusMessageStyle.Render("Deleted 0bbbbbbb"),
-			opts: image.RemoveOptions{
-				Force:         false,
-				PruneChildren: false,
+			opts: it.RemoveImageOptions{
+				Force:   false,
+				NoPrune: true,
 			},
 		},
 		{
@@ -579,7 +579,7 @@ func TestImageDeleteBulk(t *testing.T) {
 		imgs   []dockerRes
 		notifs []string
 		errors []string
-		opts   image.RemoveOptions
+		opts   it.RemoveImageOptions
 	}{
 		{
 			imgs: []dockerRes{
@@ -604,9 +604,9 @@ func TestImageDeleteBulk(t *testing.T) {
 				listStatusMessageStyle.Render("Deleted 1bbbbbbb"),
 				listStatusMessageStyle.Render("Deleted 2 images"),
 			},
-			opts: image.RemoveOptions{
-				Force:         true,
-				PruneChildren: false,
+			opts: it.RemoveImageOptions{
+				Force:   true,
+				NoPrune: true,
 			},
 		},
 		{
@@ -630,9 +630,9 @@ func TestImageDeleteBulk(t *testing.T) {
 			notifs: []string{
 				listStatusMessageStyle.Render("Deleted 1bbbbbbb"),
 			},
-			opts: image.RemoveOptions{
-				Force:         true,
-				PruneChildren: false,
+			opts: it.RemoveImageOptions{
+				Force:   true,
+				NoPrune: true,
 			},
 		},
 	}

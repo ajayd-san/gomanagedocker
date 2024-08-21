@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
 	"golang.design/x/clipboard"
 )
 
@@ -297,7 +297,7 @@ func runImage(client service.Service, containerConfig *container.Config, hostCon
 }
 
 // Deletes image with `opts` and sends notification to `notificationChan`
-func imageDelete(client service.Service, imageId string, opts image.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func imageDelete(client service.Service, imageId string, opts types.RemoveImageOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteImage(imageId, opts)
 
@@ -319,7 +319,7 @@ func imageDelete(client service.Service, imageId string, opts image.RemoveOption
 func imageDeleteBulk(
 	client service.Service,
 	items []dockerRes,
-	opts image.RemoveOptions,
+	opts types.RemoveImageOptions,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
 	errorChan chan error,

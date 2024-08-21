@@ -97,7 +97,7 @@ func TestDeleteImage(t *testing.T) {
 	}
 
 	t.Run("No force required image test", func(t *testing.T) {
-		err := dclient.DeleteImage("0", dimage.RemoveOptions{})
+		err := dclient.DeleteImage("0", it.RemoveImageOptions{})
 		assert.NilError(t, err)
 
 		afterDeleteImgs := dclient.cli.(*MockApi).mockImages
@@ -107,12 +107,12 @@ func TestDeleteImage(t *testing.T) {
 	})
 
 	t.Run("Should fail, image has active containers", func(t *testing.T) {
-		err := dclient.DeleteImage("1", dimage.RemoveOptions{})
+		err := dclient.DeleteImage("1", it.RemoveImageOptions{})
 		assert.ErrorContains(t, err, "must be forced")
 	})
 
 	t.Run("With force", func(t *testing.T) {
-		err := dclient.DeleteImage("1", dimage.RemoveOptions{Force: true})
+		err := dclient.DeleteImage("1", it.RemoveImageOptions{Force: true})
 		assert.NilError(t, err)
 
 		// same reason as above, but this time we exclude last to elements

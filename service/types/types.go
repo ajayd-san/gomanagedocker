@@ -15,6 +15,18 @@ type ImageSummary struct {
 	Created    int64
 }
 
+/*
+this type direct copy of podman's `types.RemoveImageOptions`,
+I chose this cuz it is more exhausive compared to docker's
+*/
+type RemoveImageOptions struct {
+	All            bool
+	Force          bool
+	Ignore         bool
+	LookupManifest bool
+	NoPrune        bool
+}
+
 type ContainerSummary struct {
 	ID         string
 	ImageID    string

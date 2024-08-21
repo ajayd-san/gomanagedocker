@@ -73,8 +73,13 @@ func (dc *DockerClient) RunImage(containerConfig *container.Config, hostConfig *
 	return &res.ID, nil
 }
 
-func (dc *DockerClient) DeleteImage(id string, opts image.RemoveOptions) error {
-	_, err := dc.cli.ImageRemove(context.Background(), id, opts)
+func (dc *DockerClient) DeleteImage(id string, opts it.RemoveImageOptions) error {
+	dockerOpts := image.RemoveOptions{
+		Force:         opts.Force,
+		PruneChildren: opts.NoPrune,
+	}
+
+	_, err := dc.cli.ImageRemove(context.Background(), id, dockerOpts)
 	return err
 }
 

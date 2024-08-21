@@ -5,7 +5,6 @@ import (
 	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
 )
 
 func (po *PodmanClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
@@ -26,8 +25,20 @@ func (po *PodmanClient) RunImage(containerConfig *container.Config, hostConfig *
 	panic("not implemented") // TODO: Implement
 }
 
-func (po *PodmanClient) DeleteImage(id string, opts image.RemoveOptions) error {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) DeleteImage(id string, opts it.RemoveImageOptions) error {
+	_, errs := images.Remove(pc.cli, []string{id}, &images.RemoveOptions{
+		All:            &opts.All,
+		Force:          &opts.Force,
+		Ignore:         &opts.Ignore,
+		LookupManifest: &opts.LookupManifest,
+		NoPrune:        &opts.NoPrune,
+	})
+
+	if errs != nil {
+		return errs[0]
+	}
+
+	return nil
 }
 
 func (po *PodmanClient) PruneImages() (types.ImagesPruneReport, error) {

@@ -22,7 +22,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
 	"golang.design/x/clipboard"
@@ -320,11 +319,18 @@ notificationLoop:
 				case key.Matches(assertedMsg, ImageKeymap.DeleteForce):
 					items := m.getSelectedItems()
 
-					deleteOpts := image.RemoveOptions{
-						Force:         true,
-						PruneChildren: false,
+					deleteOpts := it.RemoveImageOptions{
+						Force:   true,
+						NoPrune: true,
 					}
-					op := imageDeleteBulk(m.dockerClient, items, deleteOpts, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					op := imageDeleteBulk(
+						m.dockerClient,
+						items,
+						deleteOpts,
+						m.activeTab,
+						m.notificationChan,
+						m.possibleLongRunningOpErrorChan,
+					)
 					go m.runBackground(op)
 
 					cmds = append(cmds, clearSelectionCmd())
@@ -712,9 +718,9 @@ notificationLoop:
 			imageId := dialogRes.UserStorage["ID"]
 
 			if imageId != "" {
-				opts := image.RemoveOptions{
-					Force:         userChoice["force"].(bool),
-					PruneChildren: userChoice["pruneChildren"].(bool),
+				opts := it.RemoveImageOptions{
+					Force:   userChoice["force"].(bool),
+					NoPrune: !userChoice["pruneChildren"].(bool),
 				}
 
 				op := imageDelete(m.dockerClient, imageId, opts, m.activeTab, m.notificationChan)
