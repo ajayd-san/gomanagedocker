@@ -4,6 +4,9 @@ alias r := run
 run:
     go run main.go --debug
 
+runp:
+    go run main.go p --debug
+
 # run all tests, disable caching
 test:
     go test ./... -count=1

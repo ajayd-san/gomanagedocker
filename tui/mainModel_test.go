@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
@@ -18,10 +19,19 @@ import (
 func TestNewModel(t *testing.T) {
 	CONFIG_TAB_ORDERING = []string{"images", "volumes"}
 
-	model := NewModel()
+	t.Run("with docker client", func(t *testing.T) {
+		client, _ := podmancmd.NewPodmanClient()
+		model := NewModel(client)
+		assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
+		assert.Equal(t, model.activeTab, tabId(0))
+	})
 
-	assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
-	assert.Equal(t, model.activeTab, tabId(0))
+	t.Run("with docker client", func(t *testing.T) {
+		client := dockercmd.NewDockerClient()
+		model := NewModel(client)
+		assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
+		assert.Equal(t, model.activeTab, tabId(0))
+	})
 }
 
 func TestFetchNewData(t *testing.T) {

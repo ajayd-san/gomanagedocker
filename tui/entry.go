@@ -8,6 +8,10 @@ import (
 	"time"
 
 	config "github.com/ajayd-san/gomanagedocker/config"
+	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/knadh/koanf/v2"
 )
@@ -34,7 +38,7 @@ I dont think there is a native way that bubble tea lets you do it for now
 */
 var earlyExitErr error
 
-func StartTUI(debug bool) error {
+func StartTUI(debug bool, serviceKind types.ServiceType) error {
 	if debug {
 		f, _ := tea.LogToFile("gmd_debug.log", "debug")
 		defer f.Close()
@@ -45,7 +49,14 @@ func StartTUI(debug bool) error {
 	readConfig()
 	loadConfig()
 
-	m := NewModel()
+	var client service.Service
+	if serviceKind == types.Docker {
+		client = dockercmd.NewDockerClient()
+	} else {
+		client, _ = podmancmd.NewPodmanClient()
+	}
+
+	m := NewModel(client)
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		return err

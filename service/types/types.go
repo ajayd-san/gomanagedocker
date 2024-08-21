@@ -1,5 +1,12 @@
 package types
 
+type ServiceType int
+
+const (
+	Docker ServiceType = iota
+	Podman
+)
+
 type ImageSummary struct {
 	ID         string
 	Size       int64

@@ -28,7 +28,6 @@ import (
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
-	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
@@ -114,7 +113,7 @@ func (m MainModel) Init() tea.Cmd {
 }
 
 // Initializes and returns a new Model instance.
-func NewModel() MainModel {
+func NewModel(client service.Service) MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
 	for tabid, tabName := range CONFIG_TAB_ORDERING {
@@ -145,9 +144,6 @@ func NewModel() MainModel {
 	NavKeymap := help.New()
 	NavKeymap.FullSeparator = " • "
 	NavKeymap.ShowAll = true
-
-	client, _ := podmancmd.NewPodmanClient()
-	// client := dockercmd.NewDockerClient()
 
 	return MainModel{
 		dockerClient:                   client,
