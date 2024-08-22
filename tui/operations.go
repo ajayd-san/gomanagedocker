@@ -419,7 +419,7 @@ func imagePrune(client service.Service, activeTab tabId, notificationChan chan n
 			return err
 		}
 
-		msg := fmt.Sprintf("Pruned %d images", len(report.ImagesDeleted))
+		msg := fmt.Sprintf("Pruned %d images", report.ImagesDeleted)
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 	}

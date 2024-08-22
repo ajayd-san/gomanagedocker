@@ -16,7 +16,7 @@ type Service interface {
 	ListImages() []types.ImageSummary
 	RunImage(containerConfig *container.Config, hostConfig *container.HostConfig, containerName string) (*string, error)
 	DeleteImage(id string, opts types.RemoveImageOptions) error
-	PruneImages() (et.ImagesPruneReport, error)
+	PruneImages() (types.ImagePruneReport, error)
 
 	// container
 	InspectContainer(id string) (*types.InspectContainerData, error)

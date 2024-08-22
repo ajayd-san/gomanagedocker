@@ -83,9 +83,10 @@ func (dc *DockerClient) DeleteImage(id string, opts it.RemoveImageOptions) error
 	return err
 }
 
-func (dc *DockerClient) PruneImages() (types.ImagesPruneReport, error) {
+func (dc *DockerClient) PruneImages() (it.ImagePruneReport, error) {
 	report, err := dc.cli.ImagesPrune(context.Background(), filters.Args{})
-	return report, err
+
+	return it.ImagePruneReport{ImagesDeleted: len(report.ImagesDeleted)}, err
 }
 
 // runs docker scout and parses the output using regex

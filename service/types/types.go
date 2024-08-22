@@ -27,6 +27,10 @@ type RemoveImageOptions struct {
 	NoPrune        bool
 }
 
+type ImagePruneReport struct {
+	ImagesDeleted int
+}
+
 type ContainerSummary struct {
 	ID         string
 	ImageID    string

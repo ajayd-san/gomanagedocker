@@ -41,6 +41,11 @@ func (pc *PodmanClient) DeleteImage(id string, opts it.RemoveImageOptions) error
 	return nil
 }
 
-func (po *PodmanClient) PruneImages() (types.ImagesPruneReport, error) {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) PruneImages() (it.ImagePruneReport, error) {
+	t := true
+	reports, err := images.Prune(pc.cli, &images.PruneOptions{
+		All: &t,
+	})
+
+	return it.ImagePruneReport{ImagesDeleted: len(reports)}, err
 }
