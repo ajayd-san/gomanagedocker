@@ -8,6 +8,7 @@ import (
 )
 
 func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, error) {
+	// TODO: refactor this, using `With` methods
 	f := true
 	raw, err := containers.Inspect(pc.cli, id, &containers.InspectOptions{
 		Size: &f,
@@ -24,7 +25,8 @@ func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, e
 }
 
 func (pc *PodmanClient) ListContainers(showContainerSize bool) []it.ContainerSummary {
-	raw, err := containers.List(pc.cli, &pc.listOptions)
+	opts := pc.listOptions
+	raw, err := containers.List(pc.cli, opts.WithSize(showContainerSize))
 
 	if err != nil {
 		panic(err)
