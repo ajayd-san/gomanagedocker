@@ -74,3 +74,7 @@ func toVolumeSummaryArr(entries []*et.VolumeListReport) []types.VolumeSummary {
 
 	return res
 }
+
+func boolPtr(b bool) *bool {
+	return &b
+}

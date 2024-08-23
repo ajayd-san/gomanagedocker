@@ -37,6 +37,7 @@ func (dc *DockerClient) ListContainers(showContainerSize bool) []types.Container
 
 // Toggles listing of inactive containers
 func (dc *DockerClient) ToggleContainerListAll() {
+	dc.containerListOpts.All = !dc.containerListOpts.All
 	dc.containerListArgs.All = !dc.containerListArgs.All
 }
 

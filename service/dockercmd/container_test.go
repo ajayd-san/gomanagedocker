@@ -188,8 +188,10 @@ func TestContainerToggleListAll(t *testing.T) {
 	}
 
 	assert.Assert(t, !dclient.containerListArgs.All)
+	assert.Assert(t, !dclient.containerListOpts.All)
 	dclient.ToggleContainerListAll()
 	assert.Assert(t, dclient.containerListArgs.All)
+	assert.Assert(t, dclient.containerListOpts.All)
 }
 
 func TestToggleStartStopContainer(t *testing.T) {

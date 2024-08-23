@@ -18,7 +18,7 @@ func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, e
 	}
 
 	return &it.InspectContainerData{
-		toContainerSummary(raw),
+		ContainerSummary: toContainerSummary(raw),
 	}, nil
 
 }
@@ -33,8 +33,14 @@ func (pc *PodmanClient) ListContainers(showContainerSize bool) []it.ContainerSum
 	return toContainerSummaryArr(raw)
 }
 
-func (po *PodmanClient) ToggleContainerListAll() {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) ToggleContainerListAll() {
+	if pc.containerListOpts.All {
+		pc.containerListOpts.All = false
+		pc.listOptions.All = boolPtr(false)
+	} else {
+		pc.containerListOpts.All = true
+		pc.listOptions.All = boolPtr(true)
+	}
 }
 
 func (po *PodmanClient) ToggleStartStopContainer(id string) error {

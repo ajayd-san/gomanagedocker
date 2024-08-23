@@ -14,7 +14,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func setupTest(t *testing.T) service.Service {
+func setupMockDockerClient(t *testing.T) service.Service {
 	api := dockercmd.MockApi{}
 
 	containers := []types.Container{
@@ -159,7 +159,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -194,7 +194,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 }
 
 func TestTogglePauseResumeContainer(t *testing.T) {
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 
 	tests := []struct {
 		containers []dockerRes
@@ -359,7 +359,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		mock := setupTest(t)
+		mock := setupMockDockerClient(t)
 		mock.ToggleContainerListAll()
 
 		t.Run("Force Delete Exising Container", func(t *testing.T) {
@@ -435,7 +435,7 @@ func TestContainerDelete(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -529,7 +529,7 @@ func TestImageDelete(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -638,7 +638,7 @@ func TestImageDeleteBulk(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		mock := setupTest(t)
+		mock := setupMockDockerClient(t)
 		mock.ToggleContainerListAll()
 		t.Run("Force Delete Exising image", func(t *testing.T) {
 
@@ -716,7 +716,7 @@ func TestDeleteVolume(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -760,4 +760,16 @@ func TestDeleteVolume(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestToggleListAll(t *testing.T) {
+	t.Run("Docker", func(t *testing.T) {
+		dockerClient := setupMockDockerClient(t)
+		assert.Assert(t, !dockerClient.GetListOptions().All)
+		dockerClient.ToggleContainerListAll()
+		t.Log(dockerClient.GetListOptions().All)
+		assert.Assert(t, dockerClient.GetListOptions().All)
+	})
+
+	//TODO: test for podman
 }

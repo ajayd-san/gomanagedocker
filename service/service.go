@@ -9,7 +9,7 @@ import (
 // both DockerClient and PodmanClient satisfy this interface
 type Service interface {
 	Ping() error
-	GetListOptions() *container.ListOptions
+	GetListOptions() types.ContainerListOptions
 
 	// image
 	BuildImage(buildContext string, options et.ImageBuildOptions) (*et.ImageBuildResponse, error)

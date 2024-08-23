@@ -56,3 +56,8 @@ type VolumeSummary struct {
 type InspectContainerData struct {
 	ContainerSummary
 }
+
+type ContainerListOptions struct {
+	All  bool
+	Size bool
+}

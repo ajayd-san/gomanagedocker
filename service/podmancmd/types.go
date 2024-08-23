@@ -3,19 +3,20 @@ package podmancmd
 import (
 	"context"
 
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
-	"github.com/docker/docker/api/types/container"
 )
 
 type PodmanClient struct {
-	cli         context.Context
+	cli               context.Context
+	containerListOpts types.ContainerListOptions
+	// internal
 	listOptions containers.ListOptions
 }
 
-func (pc *PodmanClient) GetListOptions() *container.ListOptions {
-	// return &pc.listOptions
-	panic("unimplemented")
+func (pc *PodmanClient) GetListOptions() types.ContainerListOptions {
+	return pc.containerListOpts
 }
 
 func NewPodmanClient() (*PodmanClient, error) {
@@ -27,7 +28,10 @@ func NewPodmanClient() (*PodmanClient, error) {
 
 	return &PodmanClient{
 		ctx,
-		containers.ListOptions{},
+		types.ContainerListOptions{},
+		containers.ListOptions{
+			All: boolPtr(false),
+		},
 	}, nil
 }
 
