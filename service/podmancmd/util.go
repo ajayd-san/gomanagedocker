@@ -34,14 +34,27 @@ func toContainerSummaryArr(summary []et.ListContainer) []types.ContainerSummary 
 			ImageID: entry.ImageID,
 			Created: entry.Created.Unix(),
 			Names:   entry.Names,
-			State:   entry.State,
 			Command: strings.Join(entry.Command, " "),
-			Status:  entry.Status,
+			State:   entry.State,
 		}
 	}
 
 	return res
 }
+
+// func mapState(state *define.InspectContainerState) *types.ContainerState {
+// 	return &types.ContainerState{
+// 		Status:     state.Status,
+// 		Running:    state.Running,
+// 		Paused:     state.Paused,
+// 		Restarting: state.Restarting,
+// 		OOMKilled:  state.OOMKilled,
+// 		Dead:       state.Dead,
+// 		Pid:        state.Pid,
+// 		ExitCode:   int(state.ExitCode),
+// 		Error:      state.Error,
+// 	}
+// }
 
 func toContainerSummary(info *define.InspectContainerData) types.ContainerSummary {
 	// jcart, _ := json.MarshalIndent(info, "", "\t")
@@ -53,7 +66,6 @@ func toContainerSummary(info *define.InspectContainerData) types.ContainerSummar
 		Names:   []string{info.Name},
 		State:   info.State.Status,
 		// Command:    strings.Join(entry.Command, " "),
-		Status: info.State.Status,
 	}
 
 	return res

@@ -45,8 +45,15 @@ func (pc *PodmanClient) ToggleContainerListAll() {
 	}
 }
 
-func (po *PodmanClient) ToggleStartStopContainer(id string) error {
-	panic("not implemented") // TODO: Implement
+func (po *PodmanClient) ToggleStartStopContainer(id string, isRunning bool) error {
+	var err error
+	if isRunning {
+		err = containers.Stop(po.cli, id, nil)
+	} else {
+		err = containers.Start(po.cli, id, nil)
+	}
+
+	return err
 }
 
 func (po *PodmanClient) RestartContainer(id string) error {

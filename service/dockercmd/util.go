@@ -64,12 +64,25 @@ func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 			Names:      entry.Names,
 			State:      entry.State,
 			Command:    entry.Command,
-			Status:     entry.Status,
 		}
 	}
 
 	return res
 }
+
+// func mapState(state *et.ContainerState) *types.ContainerState {
+// 	return &types.ContainerState{
+// 		Status:     state.Status,
+// 		Running:    state.Running,
+// 		Paused:     state.Paused,
+// 		Restarting: state.Restarting,
+// 		OOMKilled:  state.OOMKilled,
+// 		Dead:       state.Dead,
+// 		Pid:        state.Pid,
+// 		ExitCode:   state.ExitCode,
+// 		Error:      state.Error,
+// 	}
+// }
 
 func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData {
 	res := types.ContainerSummary{
@@ -80,7 +93,6 @@ func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData 
 		Names: []string{info.Name},
 		State: info.State.Status,
 		// Command:    info.Command,
-		Status: info.State.Status,
 	}
 
 	if info.SizeRootFs != nil {
@@ -91,7 +103,7 @@ func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData 
 		res.SizeRw = *info.SizeRw
 	}
 
-	return &types.InspectContainerData{res}
+	return &types.InspectContainerData{ContainerSummary: res}
 }
 
 func toVolumeSummaryArr(entries []*volume.Volume) []types.VolumeSummary {

@@ -54,14 +54,21 @@ func toggleStartStopContainer(
 			go func() {
 				containerInfo := dRes.(containerItem)
 				containerId := containerInfo.GetId()
-				err := cli.ToggleStartStopContainer(containerId)
+
+				stateStr := containerInfo.getState()
+				var isRunning bool
+
+				if stateStr == "running" {
+					isRunning = true
+				}
+				err := cli.ToggleStartStopContainer(containerId, isRunning)
 
 				if err != nil {
 					errChan <- err
 				} else {
 					// send notification
 					msg := ""
-					if containerInfo.getState() == "running" {
+					if stateStr == "running" {
 						msg = fmt.Sprintf("Stopped %s", containerId[:8])
 						successCounterStopped.Add(1)
 					} else {

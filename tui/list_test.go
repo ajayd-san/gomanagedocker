@@ -19,7 +19,6 @@ func TestUpdateExistingIds(t *testing.T) {
 			SizeRw:     1e+9,
 			SizeRootFs: 2e+9,
 			State:      "running",
-			Status:     "",
 		},
 		{
 			Names:      []string{"b"},

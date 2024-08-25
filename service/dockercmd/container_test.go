@@ -108,7 +108,6 @@ func TestListContainer(t *testing.T) {
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "running",
-				Status:     "",
 			},
 			{
 				ID:         "2",
@@ -152,7 +151,6 @@ func TestListContainer(t *testing.T) {
 				SizeRw:     200,
 				SizeRootFs: 400,
 				State:      "running",
-				Status:     "",
 			},
 			{
 				ID:         "2",
@@ -220,7 +218,8 @@ func TestToggleStartStopContainer(t *testing.T) {
 	}
 
 	t.Run("Stopping container test", func(t *testing.T) {
-		dclient.ToggleStartStopContainer("2")
+		isRunning := true
+		dclient.ToggleStartStopContainer("2", isRunning)
 
 		state := dclient.cli.(*MockApi).mockContainers
 
@@ -228,7 +227,8 @@ func TestToggleStartStopContainer(t *testing.T) {
 	})
 
 	t.Run("Start container test", func(t *testing.T) {
-		dclient.ToggleStartStopContainer("2")
+		isRunning := false
+		dclient.ToggleStartStopContainer("2", isRunning)
 
 		state := dclient.cli.(*MockApi).mockContainers
 

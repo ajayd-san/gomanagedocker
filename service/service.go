@@ -22,7 +22,7 @@ type Service interface {
 	InspectContainer(id string) (*types.InspectContainerData, error)
 	ListContainers(showContainerSize bool) []types.ContainerSummary
 	ToggleContainerListAll()
-	ToggleStartStopContainer(id string) error
+	ToggleStartStopContainer(id string, isRunning bool) error
 	RestartContainer(id string) error
 	TogglePauseResume(id string) error
 	DeleteContainer(id string, opts container.RemoveOptions) error

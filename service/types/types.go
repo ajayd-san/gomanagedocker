@@ -32,18 +32,31 @@ type ImagePruneReport struct {
 }
 
 type ContainerSummary struct {
-	ID         string
-	ImageID    string
-	Created    int64
-	Names      []string
-	State      string
-	Command    string
-	Status     string
+	ID      string
+	ImageID string
+	Created int64
+	Names   []string
+	State   string
+	Command string
+	// Status     string
 	SizeRw     int64
 	SizeRootFs int64
 	// Mounts []string
 	// Ports []string
 }
+
+// // represents container state
+// type ContainerState struct {
+// 	Status     string // String representation of the container state. Can be one of "created", "running", "paused", "restarting", "removing", "exited", or "dead"
+// 	Running    bool
+// 	Paused     bool
+// 	Restarting bool
+// 	OOMKilled  bool
+// 	Dead       bool
+// 	Pid        int
+// 	ExitCode   int
+// 	Error      string
+// }
 
 type VolumeSummary struct {
 	Name       string
