@@ -34,6 +34,8 @@ func (pc *PodmanClient) PruneVolumes() (*it.VolumePruneReport, error) {
 
 }
 
-func (po *PodmanClient) DeleteVolume(id string, force bool) error {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) DeleteVolume(id string, force bool) error {
+	opts := &volumes.RemoveOptions{}
+	opts = opts.WithForce(force)
+	return volumes.Remove(pc.cli, id, opts)
 }
