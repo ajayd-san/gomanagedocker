@@ -57,7 +57,7 @@ func (po *PodmanClient) ToggleStartStopContainer(id string, isRunning bool) erro
 }
 
 func (po *PodmanClient) RestartContainer(id string) error {
-	panic("not implemented") // TODO: Implement
+	return containers.Restart(po.cli, id, nil)
 }
 
 func (po *PodmanClient) TogglePauseResume(id string) error {
