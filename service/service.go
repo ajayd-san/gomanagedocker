@@ -26,7 +26,7 @@ type Service interface {
 	RestartContainer(id string) error
 	TogglePauseResume(id string, state string) error
 	DeleteContainer(id string, opts types.ContainerRemoveOpts) error
-	PruneContainers() (et.ContainersPruneReport, error)
+	PruneContainers() (types.ContainerPruneReport, error)
 
 	// volume
 	ListVolumes() ([]types.VolumeSummary, error)

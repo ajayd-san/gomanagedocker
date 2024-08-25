@@ -5,7 +5,6 @@ import (
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
-	"github.com/docker/docker/api/types"
 )
 
 func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, error) {
@@ -89,6 +88,15 @@ func (pc *PodmanClient) DeleteContainer(id string, opts it.ContainerRemoveOpts) 
 	return err
 }
 
-func (po *PodmanClient) PruneContainers() (types.ContainersPruneReport, error) {
-	panic("not implemented") // TODO: Implement
+func (po *PodmanClient) PruneContainers() (it.ContainerPruneReport, error) {
+	report, err := containers.Prune(po.cli, nil)
+
+	// only count successfully deleted containers
+	containersDeleted := 0
+	for _, entry := range report {
+		if entry.Err == nil {
+			containersDeleted += 1
+		}
+	}
+	return it.ContainerPruneReport{ContainersDeleted: containersDeleted}, err
 }

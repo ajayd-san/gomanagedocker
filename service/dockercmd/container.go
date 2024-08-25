@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/ajayd-san/gomanagedocker/service/types"
-	et "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 )
@@ -85,14 +84,14 @@ func (dc *DockerClient) DeleteContainer(id string, opts types.ContainerRemoveOpt
 	return dc.cli.ContainerRemove(context.Background(), id, dockerOpts)
 }
 
-func (dc *DockerClient) PruneContainers() (et.ContainersPruneReport, error) {
+func (dc *DockerClient) PruneContainers() (types.ContainerPruneReport, error) {
 	report, err := dc.cli.ContainersPrune(context.Background(), filters.Args{})
 
 	if err != nil {
-		return et.ContainersPruneReport{}, err
+		return types.ContainerPruneReport{}, err
 	}
 
-	return report, nil
+	return types.ContainerPruneReport{ContainersDeleted: len(report.ContainersDeleted)}, nil
 }
 
 // gets logs

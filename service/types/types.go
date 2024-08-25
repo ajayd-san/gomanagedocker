@@ -80,3 +80,7 @@ type ContainerRemoveOpts struct {
 	RemoveVolumes bool
 	RemoveLinks   bool
 }
+
+type ContainerPruneReport struct {
+	ContainersDeleted int
+}

@@ -621,7 +621,7 @@ notificationLoop:
 					}
 
 					// we send notification directly from go routine since the main goroutine does not have access to `report`
-					msg := fmt.Sprintf("Pruned %d containers", len(report.ContainersDeleted))
+					msg := fmt.Sprintf("Pruned %d containers", report.ContainersDeleted)
 					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 
 					return nil
