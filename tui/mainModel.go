@@ -452,7 +452,7 @@ notificationLoop:
 				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
-					deleteOpts := container.RemoveOptions{
+					deleteOpts := it.ContainerRemoveOpts{
 						RemoveVolumes: false,
 						RemoveLinks:   false,
 						Force:         true,
@@ -595,7 +595,7 @@ notificationLoop:
 		case dialogRemoveContainer:
 			userChoice := dialogRes.UserChoices
 
-			opts := container.RemoveOptions{
+			opts := it.ContainerRemoveOpts{
 				RemoveVolumes: userChoice["remVols"].(bool),
 				RemoveLinks:   userChoice["remLinks"].(bool),
 				Force:         userChoice["force"].(bool),

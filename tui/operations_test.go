@@ -8,7 +8,6 @@ import (
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 	"gotest.tools/v3/assert"
@@ -349,7 +348,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 		},
 	}
 
-	opts := container.RemoveOptions{
+	opts := it.ContainerRemoveOpts{
 		RemoveVolumes: false,
 		RemoveLinks:   false,
 		Force:         true,
@@ -405,12 +404,12 @@ func TestContainerDelete(t *testing.T) {
 		ID        string
 		notifWant string
 		errorStr  string
-		opts      container.RemoveOptions
+		opts      it.ContainerRemoveOpts
 	}{
 		{
 			ID:        "2aaaaaaaa",
 			notifWant: listStatusMessageStyle.Render("Deleted 2aaaaaaa"),
-			opts: container.RemoveOptions{
+			opts: it.ContainerRemoveOpts{
 				RemoveVolumes: false,
 				RemoveLinks:   false,
 				Force:         true,

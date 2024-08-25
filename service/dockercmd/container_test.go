@@ -307,13 +307,13 @@ func TestDeleteContainer(t *testing.T) {
 
 	t.Run("Delete stopped container", func(t *testing.T) {
 		id := "2"
-		err := dclient.DeleteContainer(id, container.RemoveOptions{})
+		err := dclient.DeleteContainer(id, it.ContainerRemoveOpts{})
 		assert.NilError(t, err)
 	})
 
 	t.Run("Try delete runing container(fails)", func(t *testing.T) {
 		id := "1"
-		err := dclient.DeleteContainer(id, container.RemoveOptions{})
+		err := dclient.DeleteContainer(id, it.ContainerRemoveOpts{})
 		assert.ErrorContains(t, err, "container is running")
 	})
 }

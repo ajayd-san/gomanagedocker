@@ -215,7 +215,7 @@ func toggleRestartContainer(
 }
 
 // Returns func that calls dockercmd api to deletes container using `opts` as options and sends notification to notificationChan
-func containerDelete(client service.Service, containerId string, opts container.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func containerDelete(client service.Service, containerId string, opts types.ContainerRemoveOpts, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteContainer(containerId, opts)
 
@@ -233,7 +233,7 @@ func containerDelete(client service.Service, containerId string, opts container.
 func containerDeleteBulk(
 	client service.Service,
 	containers []dockerRes,
-	opts container.RemoveOptions,
+	opts types.ContainerRemoveOpts,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
 	errChan chan error,

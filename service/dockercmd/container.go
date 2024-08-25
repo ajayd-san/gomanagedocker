@@ -74,8 +74,15 @@ func (dc *DockerClient) TogglePauseResume(id string, state string) error {
 }
 
 // Deletes the container
-func (dc *DockerClient) DeleteContainer(id string, opts container.RemoveOptions) error {
-	return dc.cli.ContainerRemove(context.Background(), id, opts)
+func (dc *DockerClient) DeleteContainer(id string, opts types.ContainerRemoveOpts) error {
+	dockerOpts := container.RemoveOptions{}
+	if opts.Force {
+		dockerOpts.Force = true
+	}
+	if opts.RemoveVolumes {
+		dockerOpts.RemoveVolumes = true
+	}
+	return dc.cli.ContainerRemove(context.Background(), id, dockerOpts)
 }
 
 func (dc *DockerClient) PruneContainers() (et.ContainersPruneReport, error) {

@@ -74,3 +74,9 @@ type ContainerListOptions struct {
 	All  bool
 	Size bool
 }
+
+type ContainerRemoveOpts struct {
+	Force         bool
+	RemoveVolumes bool
+	RemoveLinks   bool
+}

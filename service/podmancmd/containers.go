@@ -6,7 +6,6 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 )
 
 func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, error) {
@@ -75,8 +74,19 @@ func (pc *PodmanClient) TogglePauseResume(id string, state string) error {
 	return err
 }
 
-func (po *PodmanClient) DeleteContainer(id string, opts container.RemoveOptions) error {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) DeleteContainer(id string, opts it.ContainerRemoveOpts) error {
+	podmanOpts := &containers.RemoveOptions{}
+	podmanOpts = podmanOpts.WithIgnore(true)
+
+	if opts.Force {
+		podmanOpts = podmanOpts.WithForce(true)
+	}
+	if opts.RemoveVolumes {
+		podmanOpts = podmanOpts.WithVolumes(true)
+	}
+
+	_, err := containers.Remove(pc.cli, id, podmanOpts)
+	return err
 }
 
 func (po *PodmanClient) PruneContainers() (types.ContainersPruneReport, error) {
