@@ -54,25 +54,20 @@ func (dc *DockerClient) RestartContainer(id string) error {
 	return dc.cli.ContainerRestart(context.Background(), id, container.StopOptions{})
 }
 
-func (dc *DockerClient) TogglePauseResume(id string) error {
-	info, err := dc.cli.ContainerInspect(context.Background(), id)
-	if err != nil {
-		return err
-	}
-
-	if info.State.Paused {
-		err = dc.cli.ContainerUnpause(context.Background(), id)
+func (dc *DockerClient) TogglePauseResume(id string, state string) error {
+	if state == "paused" {
+		err := dc.cli.ContainerUnpause(context.Background(), id)
 
 		if err != nil {
 			return err
 		}
-	} else if info.State.Running {
-		err = dc.cli.ContainerPause(context.Background(), id)
+	} else if state == "running" {
+		err := dc.cli.ContainerPause(context.Background(), id)
 		if err != nil {
 			return err
 		}
 	} else {
-		return errors.New(fmt.Sprintf("Cannot Pause/unPause a %s Process.", info.State.Status))
+		return errors.New(fmt.Sprintf("Cannot Pause/unPause a %s Process.", state))
 	}
 
 	return nil

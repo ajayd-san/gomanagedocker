@@ -258,7 +258,7 @@ func TestPauseUnpauseContainer(t *testing.T) {
 
 	t.Run("Pause running container", func(t *testing.T) {
 		id := "1"
-		err := dclient.TogglePauseResume(id)
+		err := dclient.TogglePauseResume(id, "running")
 		assert.NilError(t, err)
 		containers := dclient.cli.(*MockApi).mockContainers
 
@@ -268,7 +268,7 @@ func TestPauseUnpauseContainer(t *testing.T) {
 	t.Run("unpause running container", func(t *testing.T) {
 		id := "1"
 
-		err := dclient.TogglePauseResume(id)
+		err := dclient.TogglePauseResume(id, "paused")
 		assert.NilError(t, err)
 
 		containers := dclient.cli.(*MockApi).mockContainers
@@ -278,7 +278,7 @@ func TestPauseUnpauseContainer(t *testing.T) {
 
 	t.Run("unpause stopped container(should throw error)", func(t *testing.T) {
 		id := "2"
-		err := dclient.TogglePauseResume(id)
+		err := dclient.TogglePauseResume(id, "exited")
 		assert.ErrorContains(t, err, "Cannot Pause/unPause a")
 	})
 }

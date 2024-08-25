@@ -128,13 +128,14 @@ func togglePauseResumeContainer(
 			go func() {
 				containerInfo := container.(containerItem)
 				containerId := containerInfo.GetId()
-				err := client.TogglePauseResume(containerId)
+				state := containerInfo.getState()
+				err := client.TogglePauseResume(containerId, state)
 
 				if err != nil {
 					errChan <- err
 				} else {
 					msg := ""
-					if containerInfo.getState() == "running" {
+					if state == "running" {
 						msg = "Paused " + containerId[:8]
 						successCounterPaused.Add(1)
 					} else {

@@ -24,7 +24,7 @@ type Service interface {
 	ToggleContainerListAll()
 	ToggleStartStopContainer(id string, isRunning bool) error
 	RestartContainer(id string) error
-	TogglePauseResume(id string) error
+	TogglePauseResume(id string, state string) error
 	DeleteContainer(id string, opts container.RemoveOptions) error
 	PruneContainers() (et.ContainersPruneReport, error)
 

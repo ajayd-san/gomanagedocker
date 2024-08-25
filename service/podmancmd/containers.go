@@ -1,6 +1,8 @@
 package podmancmd
 
 import (
+	"fmt"
+
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/docker/docker/api/types"
@@ -45,23 +47,32 @@ func (pc *PodmanClient) ToggleContainerListAll() {
 	}
 }
 
-func (po *PodmanClient) ToggleStartStopContainer(id string, isRunning bool) error {
+func (pc *PodmanClient) ToggleStartStopContainer(id string, isRunning bool) error {
 	var err error
 	if isRunning {
-		err = containers.Stop(po.cli, id, nil)
+		err = containers.Stop(pc.cli, id, nil)
 	} else {
-		err = containers.Start(po.cli, id, nil)
+		err = containers.Start(pc.cli, id, nil)
 	}
 
 	return err
 }
 
-func (po *PodmanClient) RestartContainer(id string) error {
-	return containers.Restart(po.cli, id, nil)
+func (pc *PodmanClient) RestartContainer(id string) error {
+	return containers.Restart(pc.cli, id, nil)
 }
 
-func (po *PodmanClient) TogglePauseResume(id string) error {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) TogglePauseResume(id string, state string) error {
+	var err error
+	if state == "paused" {
+		err = containers.Unpause(pc.cli, id, nil)
+	} else if state == "running" {
+		err = containers.Pause(pc.cli, id, nil)
+	} else {
+		err = fmt.Errorf("Cannot Pause/unPause a %s Process.", state)
+	}
+
+	return err
 }
 
 func (po *PodmanClient) DeleteContainer(id string, opts container.RemoveOptions) error {
