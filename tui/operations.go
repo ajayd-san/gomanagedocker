@@ -440,7 +440,7 @@ func volumePrune(client service.Service, activeTab tabId, notificationChan chan 
 			return err
 		}
 
-		msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
+		msg := fmt.Sprintf("Pruned %d volumes", report.VolumesPruned)
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 

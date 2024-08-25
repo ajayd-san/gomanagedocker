@@ -4,7 +4,6 @@ import (
 	"context"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/volume"
 )
@@ -18,13 +17,13 @@ func (dc *DockerClient) ListVolumes() ([]it.VolumeSummary, error) {
 	return toVolumeSummaryArr(res.Volumes), nil
 }
 
-func (dc *DockerClient) PruneVolumes() (*types.VolumesPruneReport, error) {
+func (dc *DockerClient) PruneVolumes() (*it.VolumePruneReport, error) {
 	res, err := dc.cli.VolumesPrune(context.Background(), filters.Args{})
 
 	if err != nil {
 		return nil, err
 	}
-	return &res, nil
+	return &it.VolumePruneReport{VolumesPruned: len(res.VolumesDeleted)}, nil
 }
 
 func (dc *DockerClient) DeleteVolume(id string, force bool) error {

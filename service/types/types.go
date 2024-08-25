@@ -66,6 +66,10 @@ type VolumeSummary struct {
 	UsageData  int64
 }
 
+type VolumePruneReport struct {
+	VolumesPruned int
+}
+
 type InspectContainerData struct {
 	ContainerSummary
 }

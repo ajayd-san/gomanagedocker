@@ -30,6 +30,6 @@ type Service interface {
 
 	// volume
 	ListVolumes() ([]types.VolumeSummary, error)
-	PruneVolumes() (*et.VolumesPruneReport, error)
+	PruneVolumes() (*types.VolumePruneReport, error)
 	DeleteVolume(id string, force bool) error
 }
