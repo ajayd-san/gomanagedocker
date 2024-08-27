@@ -1,6 +1,7 @@
 package podmancmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ajayd-san/gomanagedocker/service/types"
@@ -89,4 +90,18 @@ func toVolumeSummaryArr(entries []*et.VolumeListReport) []types.VolumeSummary {
 
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+func getEnvMap(envVars *[]string) (map[string]string, error) {
+	res := make(map[string]string)
+	for _, entry := range *envVars {
+		seps := strings.Split(entry, "=")
+		if len(seps) != 2 {
+			return nil, fmt.Errorf("Invalid environment variable: %s", entry)
+		}
+
+		res[seps[0]] = seps[1]
+	}
+
+	return res, nil
 }
