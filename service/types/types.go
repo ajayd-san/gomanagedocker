@@ -88,3 +88,19 @@ type ContainerRemoveOpts struct {
 type ContainerPruneReport struct {
 	ContainersDeleted int
 }
+
+type ContainerCreateConfig struct {
+	// ExposedPorts []PortMapping
+	// name of the container
+	Name string
+	Env  []string
+	// ID of image
+	ImageId      string
+	PortBindings []PortBinding
+}
+
+type PortBinding struct {
+	HostPort      string
+	ContainerPort string
+	Proto         string
+}

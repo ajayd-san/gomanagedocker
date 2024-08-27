@@ -21,9 +21,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/go-connections/nat"
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
@@ -384,15 +382,19 @@ notificationLoop:
 						dres := currentItem.(dockerRes)
 						id := dres.GetId()
 
-						config := container.Config{
-							AttachStdin:  true,
-							AttachStdout: true,
-							AttachStderr: true,
-							Tty:          true,
-							Image:        id,
+						// config := container.Config{
+						// 	AttachStdin:  true,
+						// 	AttachStdout: true,
+						// 	AttachStderr: true,
+						// 	Tty:          true,
+						// 	Image:        id,
+						// }
+
+						config := it.ContainerCreateConfig{
+							ImageId: id,
 						}
 
-						containerId, err := m.dockerClient.RunImage(&config, nil, "")
+						containerId, err := m.dockerClient.RunImage(config)
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
@@ -635,7 +637,7 @@ notificationLoop:
 			storage := dialogRes.UserStorage
 
 			portMappingStr := userChoices["port"]
-			portMappings, err := dockercmd.GetPortMappingFromStr(portMappingStr.(string))
+			portMappings, err := GetPortMappingFromStr(portMappingStr.(string))
 
 			if err != nil {
 				m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
@@ -643,46 +645,19 @@ notificationLoop:
 				break
 			}
 
-			// this is just a list of exposed ports and is used in containerConfig
-			exposedPortsContainer := make(map[nat.Port]struct{}, len(portMappings))
-			// this is a port mapping from host to container and is used in hostConfig
-			portBindings := make(nat.PortMap)
-
-			for _, portBind := range portMappings {
-				port, err := nat.NewPort(portBind.Proto, portBind.ContainerPort)
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					break
-				}
-				exposedPortsContainer[port] = struct{}{}
-				portBindings[port] = []nat.PortBinding{
-					{
-						HostIP:   "::1",
-						HostPort: portBind.HostPort,
-					},
-				}
-			}
-
 			var envVars []string
 			if userChoices["env"].(string) != "" {
 				envVars = strings.Split(userChoices["env"].(string), ",")
 			}
 
-			config := container.Config{
-				ExposedPorts: exposedPortsContainer,
+			config := it.ContainerCreateConfig{
 				Env:          envVars,
-				Image:        storage["ID"],
-				Volumes:      map[string]struct{}{},
+				ImageId:      storage["ID"],
+				PortBindings: portMappings,
+				Name:         userChoices["name"].(string),
 			}
 
-			hostConfig := container.HostConfig{
-				PortBindings: portBindings,
-			}
-
-			containerName := userChoices["name"].(string)
-
-			op := runImage(m.dockerClient, &config, &hostConfig, containerName, m.activeTab, m.notificationChan)
+			op := runImage(m.dockerClient, config, m.activeTab, m.notificationChan)
 
 			go m.runBackground(op)
 

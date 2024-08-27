@@ -4,7 +4,6 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 )
 
 func (po *PodmanClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
@@ -21,8 +20,10 @@ func (pc *PodmanClient) ListImages() []it.ImageSummary {
 	return toImageSummaryArr(raw)
 }
 
-func (po *PodmanClient) RunImage(containerConfig *container.Config, hostConfig *container.HostConfig, containerName string) (*string, error) {
-	panic("not implemented") // TODO: Implement
+func (pc *PodmanClient) RunImage(config it.ContainerCreateConfig) (*string, error) {
+	// spec := specgen.NewSpecGenerator(image, false)
+	// containers.CreateWithSpec()
+	panic("un implemented")
 }
 
 func (pc *PodmanClient) DeleteImage(id string, opts it.RemoveImageOptions) error {

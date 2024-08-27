@@ -13,7 +13,6 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/ajayd-san/gomanagedocker/service/types"
-	"github.com/docker/docker/api/types/container"
 	"golang.design/x/clipboard"
 )
 
@@ -287,15 +286,20 @@ func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan 
 }
 
 // Runs image and sends notification to `notificationChan`
-func runImage(client service.Service, containerConfig *container.Config, hostConfig *container.HostConfig, containerName string, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func runImage(
+	client service.Service,
+	config types.ContainerCreateConfig,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+) Operation {
 	return func() error {
-		_, err := client.RunImage(containerConfig, hostConfig, containerName)
+		_, err := client.RunImage(config)
 
 		if err != nil {
 			return err
 		}
 
-		imageId := strings.TrimPrefix(containerConfig.Image, "sha256:")
+		imageId := strings.TrimPrefix(config.ImageId, "sha256:")
 		notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
 
 		notificationChan <- NewNotification(activeTab, notificationMsg)

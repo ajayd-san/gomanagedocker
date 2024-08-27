@@ -3,12 +3,10 @@ package dockercmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
@@ -16,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/go-connections/nat"
 )
 
 // builds a docker image from `options` and `buildContext`
@@ -50,14 +49,44 @@ func (dc *DockerClient) ListImages() []it.ImageSummary {
 }
 
 // Runs the image and returns the container ID
-func (dc *DockerClient) RunImage(containerConfig *container.Config, hostConfig *container.HostConfig, containerName string) (*string, error) {
+func (dc *DockerClient) RunImage(config it.ContainerCreateConfig) (*string, error) {
+
+	// this is just a list of exposed ports and is used in containerConfig
+	exposedPortsContainer := make(map[nat.Port]struct{}, len(config.PortBindings))
+	// this is a port mapping from host to container and is used in hostConfig
+	portBindings := make(nat.PortMap)
+
+	for _, portBind := range config.PortBindings {
+		port, err := nat.NewPort(portBind.Proto, portBind.ContainerPort)
+		if err != nil {
+			return nil, err
+		}
+		exposedPortsContainer[port] = struct{}{}
+		portBindings[port] = []nat.PortBinding{
+			{
+				HostIP:   "::1",
+				HostPort: portBind.HostPort,
+			},
+		}
+	}
+
+	dockerConfig := container.Config{
+		ExposedPorts: exposedPortsContainer,
+		Env:          config.Env,
+		Image:        config.ImageId,
+	}
+
+	dockerHostConfig := container.HostConfig{
+		PortBindings: portBindings,
+	}
+
 	res, err := dc.cli.ContainerCreate(
 		context.Background(),
-		containerConfig,
-		hostConfig,
+		&dockerConfig,
+		&dockerHostConfig,
 		nil,
 		nil,
-		containerName,
+		config.Name,
 	)
 
 	if err != nil {
@@ -129,37 +158,4 @@ func runDockerScout(ctx context.Context, imageId string) ([]byte, error) {
 	}
 
 	return output, nil
-}
-
-type PortBinding struct {
-	HostPort      string
-	ContainerPort string
-	Proto         string
-}
-
-// UTIL
-func GetPortMappingFromStr(portStr string) ([]PortBinding, error) {
-	portBindings := make([]PortBinding, 0, len(portStr))
-	portStr = strings.Trim(portStr, " ")
-	portMappingStrs := strings.Split(portStr, ",")
-
-	for _, mappingStr := range portMappingStrs {
-		mappingStr = strings.Trim(mappingStr, " ")
-		if mappingStr == "" {
-			continue
-		}
-		substr := strings.Split(mappingStr, ":")
-		if len(substr) != 2 {
-			return nil, errors.New(fmt.Sprintf("Port Mapping %s is invalid", mappingStr))
-		}
-
-		if containerPort, found := strings.CutSuffix(substr[1], "/udp"); found {
-			portBindings = append(portBindings, PortBinding{substr[0], containerPort, "udp"})
-		} else {
-			containerPort, _ = strings.CutSuffix(containerPort, "/tcp")
-			portBindings = append(portBindings, PortBinding{substr[0], containerPort, "tcp"})
-		}
-	}
-
-	return portBindings, nil
 }
