@@ -105,3 +105,7 @@ func (po *PodmanClient) PruneContainers() (it.ContainerPruneReport, error) {
 func (dc *PodmanClient) ExecCmd(id string) *exec.Cmd {
 	return exec.Command("podman", "exec", "-it", id, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 }
+
+func (dc *PodmanClient) LogsCmd(id string) *exec.Cmd {
+	return exec.Command("podman", "logs", "--follow", id)
+}

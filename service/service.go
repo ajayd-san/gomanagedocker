@@ -29,6 +29,7 @@ type Service interface {
 	DeleteContainer(id string, opts types.ContainerRemoveOpts) error
 	PruneContainers() (types.ContainerPruneReport, error)
 	ExecCmd(id string) *exec.Cmd
+	LogsCmd(id string) *exec.Cmd
 
 	// volume
 	ListVolumes() ([]types.VolumeSummary, error)

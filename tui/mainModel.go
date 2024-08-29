@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -528,7 +527,7 @@ notificationLoop:
 						dres := currentItem.(containerItem)
 						if dres.State == "running" {
 							id := dres.GetId()
-							cmd := exec.Command("docker", "logs", "--follow", id)
+							cmd := m.dockerClient.LogsCmd(id)
 							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 								if err.Error() != "exit status 1" {
 									m.possibleLongRunningOpErrorChan <- err

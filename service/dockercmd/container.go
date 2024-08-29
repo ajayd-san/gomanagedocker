@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os/exec"
 
 	"github.com/ajayd-san/gomanagedocker/service/types"
@@ -99,13 +98,6 @@ func (dc *DockerClient) ExecCmd(id string) *exec.Cmd {
 	return exec.Command("docker", "exec", "-it", id, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 }
 
-// gets logs
-func (dc *DockerClient) GetContainerLogs(id string) (io.ReadCloser, error) {
-	rc, err := dc.cli.ContainerLogs(context.Background(), id, container.LogsOptions{})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return rc, nil
+func (dc *DockerClient) LogsCmd(id string) *exec.Cmd {
+	return exec.Command("docker", "logs", "--follow", id)
 }
