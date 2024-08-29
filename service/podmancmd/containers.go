@@ -2,6 +2,7 @@ package podmancmd
 
 import (
 	"fmt"
+	"os/exec"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
@@ -99,4 +100,8 @@ func (po *PodmanClient) PruneContainers() (it.ContainerPruneReport, error) {
 		}
 	}
 	return it.ContainerPruneReport{ContainersDeleted: containersDeleted}, err
+}
+
+func (dc *PodmanClient) ExecCmd(id string) *exec.Cmd {
+	return exec.Command("podman", "exec", "-it", id, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 }

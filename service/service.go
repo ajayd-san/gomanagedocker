@@ -1,6 +1,8 @@
 package service
 
 import (
+	"os/exec"
+
 	"github.com/ajayd-san/gomanagedocker/service/types"
 	et "github.com/docker/docker/api/types"
 )
@@ -26,6 +28,7 @@ type Service interface {
 	TogglePauseResume(id string, state string) error
 	DeleteContainer(id string, opts types.ContainerRemoveOpts) error
 	PruneContainers() (types.ContainerPruneReport, error)
+	ExecCmd(id string) *exec.Cmd
 
 	// volume
 	ListVolumes() ([]types.VolumeSummary, error)

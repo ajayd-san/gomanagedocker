@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
 
 	"github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types/container"
@@ -92,6 +93,10 @@ func (dc *DockerClient) PruneContainers() (types.ContainerPruneReport, error) {
 	}
 
 	return types.ContainerPruneReport{ContainersDeleted: len(report.ContainersDeleted)}, nil
+}
+
+func (dc *DockerClient) ExecCmd(id string) *exec.Cmd {
+	return exec.Command("docker", "exec", "-it", id, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
 }
 
 // gets logs

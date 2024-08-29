@@ -502,7 +502,7 @@ notificationLoop:
 						} else {
 							containerId := container.GetId()
 							// execs into the default shell of the container (got from lazydocker)
-							cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
+							cmd := m.dockerClient.ExecCmd(containerId)
 
 							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 								m.possibleLongRunningOpErrorChan <- err
