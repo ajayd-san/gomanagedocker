@@ -1,5 +1,7 @@
 package types
 
+import "io"
+
 type ServiceType int
 
 const (
@@ -29,6 +31,15 @@ type RemoveImageOptions struct {
 
 type ImagePruneReport struct {
 	ImagesDeleted int
+}
+
+type ImageBuildReport struct {
+	Body io.Reader
+}
+
+type ImageBuildJSON struct {
+	Stream string `json:"stream,omitempty"`
+	Error  error
 }
 
 type ContainerSummary struct {

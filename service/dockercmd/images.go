@@ -18,7 +18,7 @@ import (
 )
 
 // builds a docker image from `options` and `buildContext`
-func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
+func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*it.ImageBuildReport, error) {
 	dockerignoreFile, err := os.Open(filepath.Join(buildContext, ".dockerignore"))
 
 	opts := archive.TarOptions{}
@@ -35,7 +35,7 @@ func (dc *DockerClient) BuildImage(buildContext string, options types.ImageBuild
 
 	res, err := dc.cli.ImageBuild(context.Background(), tar, options)
 
-	return &res, err
+	return &it.ImageBuildReport{Body: res.Body}, err
 }
 
 func (dc *DockerClient) ListImages() []it.ImageSummary {

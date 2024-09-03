@@ -13,7 +13,7 @@ type Service interface {
 	GetListOptions() types.ContainerListOptions
 
 	// image
-	BuildImage(buildContext string, options et.ImageBuildOptions) (*et.ImageBuildResponse, error)
+	BuildImage(buildContext string, options et.ImageBuildOptions) (*types.ImageBuildReport, error)
 	ListImages() []types.ImageSummary
 	RunImage(config types.ContainerCreateConfig) (*string, error)
 	DeleteImage(id string, opts types.RemoveImageOptions) error

@@ -1,19 +1,60 @@
 package podmancmd
 
 import (
+	"io"
 	"strconv"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
+	"github.com/containers/buildah/define"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/containers/podman/v5/pkg/bindings/images"
+	"github.com/containers/podman/v5/pkg/domain/entities/types"
 	"github.com/containers/podman/v5/pkg/specgen"
-	"github.com/docker/docker/api/types"
+	dt "github.com/docker/docker/api/types"
 
 	nettypes "github.com/containers/common/libnetwork/types"
 )
 
-func (po *PodmanClient) BuildImage(buildContext string, options types.ImageBuildOptions) (*types.ImageBuildResponse, error) {
-	panic("not implemented") // TODO: Implement
+type CustomWriter struct {
+	i    int
+	data []byte
+}
+
+func (cu *CustomWriter) Read(p []byte) (n int, err error) {
+	if cu.i > len(cu.data) {
+		return 0, io.EOF
+	}
+
+	i := copy(p, cu.data[cu.i:])
+	cu.i += i
+
+	return i, nil
+}
+
+func (cu *CustomWriter) Write(p []byte) (n int, err error) {
+	// jsn := make(map[string]any)
+
+	// data, err := json.Marshal(p)
+	cu.data = append(cu.data, p...)
+
+	return len(p), nil
+}
+
+func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOptions) (*it.ImageBuildReport, error) {
+
+	outputWriter := CustomWriter{}
+	_, err := images.Build(pc.cli, []string{"Dockerfile"}, types.BuildOptions{
+		BuildOptions: define.BuildOptions{
+			Labels: []string{"teststr"},
+			Out:    &outputWriter,
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &it.ImageBuildReport{Body: &outputWriter}, nil
 }
 
 func (pc *PodmanClient) ListImages() []it.ImageSummary {
