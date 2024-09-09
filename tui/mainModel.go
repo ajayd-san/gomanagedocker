@@ -20,7 +20,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/pkg/jsonmessage"
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
@@ -728,7 +727,7 @@ notificationLoop:
 
 				decoder := json.NewDecoder(res.Body)
 
-				var status jsonmessage.JSONMessage
+				var status it.ImageBuildJSON
 
 				for {
 					if err := decoder.Decode(&status); errors.Is(err, io.EOF) {

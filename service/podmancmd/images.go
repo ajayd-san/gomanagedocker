@@ -43,7 +43,7 @@ func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOpt
 			byts, _ = json.Marshal(step)
 
 			if err != nil {
-				log.Printf("error while marshalling: %s", err.Error())
+				log.Printf("Marshalling Error: %s", err.Error())
 			}
 			reportPipeW.Write(byts)
 		}
@@ -51,9 +51,10 @@ func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOpt
 		select {
 		case err := <-errChan:
 			if err != nil {
-				log.Println("got error ", err.Error())
 				errReport := it.ImageBuildJSON{
-					Error: err,
+					Error: &it.JSONError{
+						Message: err.Error(),
+					},
 				}
 
 				bytes, _ := json.Marshal(errReport)

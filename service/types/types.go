@@ -37,9 +37,19 @@ type ImageBuildReport struct {
 	Body io.Reader
 }
 
+// type ImageBuildJSON struct {
+// 	Stream string `json:"stream,omitempty"`
+// 	Error  error
+// }
+
 type ImageBuildJSON struct {
-	Stream string `json:"stream,omitempty"`
-	Error  error
+	Stream string     `json:"stream,omitempty"`
+	Error  *JSONError `json:"errorDetail,omitempty"`
+}
+
+type JSONError struct {
+	Code    int    `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 type ContainerSummary struct {
