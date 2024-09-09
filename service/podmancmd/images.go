@@ -19,37 +19,53 @@ import (
 )
 
 func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOptions) (*it.ImageBuildReport, error) {
-
 	outR, outW := io.Pipe()
 	reportPipeR, reportPipeW := io.Pipe()
 
 	reportReader := bufio.NewReader(reportPipeR)
+
+	// we use this to send the error from the builder goroutine to the reader goroutine(below)
+	errChan := make(chan error, 2)
 
 	go func() {
 		reader := bufio.NewReader(outR)
 		for {
 			str, err := reader.ReadString('\n')
 			if err != nil {
-				reportPipeW.Close()
 				break
 			}
+
+			var byts []byte
 
 			step := it.ImageBuildJSON{
 				Stream: str,
 			}
-
-			byts, err := json.Marshal(step)
+			byts, _ = json.Marshal(step)
 
 			if err != nil {
 				log.Printf("error while marshalling: %s", err.Error())
 			}
-
 			reportPipeW.Write(byts)
 		}
+
+		select {
+		case err := <-errChan:
+			if err != nil {
+				log.Println("got error ", err.Error())
+				errReport := it.ImageBuildJSON{
+					Error: err,
+				}
+
+				bytes, _ := json.Marshal(errReport)
+				reportPipeW.Write(bytes)
+			}
+		}
+
+		reportPipeW.Close()
 	}()
 
 	go func() {
-		images.Build(pc.cli, []string{"Dockerfile"}, types.BuildOptions{
+		_, err := images.Build(pc.cli, []string{"Dockerfile"}, types.BuildOptions{
 			BuildOptions: define.BuildOptions{
 				Labels:         []string{"teststr"},
 				Registry:       "regname",
@@ -58,7 +74,10 @@ func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOpt
 			},
 		})
 
+		errChan <- err
+
 		outW.Close()
+
 	}()
 
 	return &it.ImageBuildReport{
