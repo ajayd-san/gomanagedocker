@@ -35,17 +35,17 @@ func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOpt
 				break
 			}
 
-			var byts []byte
+			var bytes []byte
 
 			step := it.ImageBuildJSON{
 				Stream: str,
 			}
-			byts, _ = json.Marshal(step)
+			bytes, _ = json.Marshal(step)
 
 			if err != nil {
 				log.Printf("Marshalling Error: %s", err.Error())
 			}
-			reportPipeW.Write(byts)
+			reportPipeW.Write(bytes)
 		}
 
 		select {
