@@ -6,6 +6,8 @@ go 1.22.2
 
 require (
 	github.com/ajayd-san/teaDialog v1.1.9
+	github.com/containers/buildah v1.37.1
+	github.com/containers/common v0.60.1
 	github.com/containers/podman/v5 v5.2.1
 	github.com/docker/docker v27.1.1+incompatible
 	github.com/evertras/bubble-table v0.16.0
@@ -42,8 +44,6 @@ require (
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
-	github.com/containers/buildah v1.37.1 // indirect
-	github.com/containers/common v0.60.1 // indirect
 	github.com/containers/image/v5 v5.32.1 // indirect
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
 	github.com/containers/ocicrypt v1.2.0 // indirect
