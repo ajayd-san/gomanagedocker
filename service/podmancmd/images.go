@@ -13,12 +13,17 @@ import (
 	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/containers/podman/v5/pkg/domain/entities/types"
 	"github.com/containers/podman/v5/pkg/specgen"
-	dt "github.com/docker/docker/api/types"
 
 	nettypes "github.com/containers/common/libnetwork/types"
 )
 
-func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOptions) (*it.ImageBuildReport, error) {
+func (pc *PodmanClient) BuildImage(buildContext string, options it.ImageBuildOptions) (*it.ImageBuildReport, error) {
+
+	/*
+		INFO: this method has a lot going on, we return a io.Reader that receives data in form of types.ImageBuildJSON.
+			We want to do this as the parallelly as each step in dockerfile gets processed by image.Build which is why
+			we use pipes.
+	*/
 	outR, outW := io.Pipe()
 	reportPipeR, reportPipeW := io.Pipe()
 
@@ -66,11 +71,12 @@ func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOpt
 	}()
 
 	go func() {
-		_, err := images.Build(pc.cli, []string{"Dockerfile"}, types.BuildOptions{
+		//TODO: registry option
+		_, err := images.Build(pc.cli, []string{options.Dockerfile}, types.BuildOptions{
 			BuildOptions: define.BuildOptions{
-				Labels:         []string{"teststr"},
-				Registry:       "regname",
-				AdditionalTags: []string{"myimage:latest"},
+				// Labels:         []string{"teststr"},
+				// Registry:       "regname",
+				AdditionalTags: options.Tags,
 				Out:            outW,
 			},
 		})

@@ -19,7 +19,6 @@ import (
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types"
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
@@ -706,7 +705,7 @@ notificationLoop:
 			tags := strings.Split(tagsStr, ",")
 
 			buildContext, _ := os.Getwd()
-			options := types.ImageBuildOptions{
+			options := it.ImageBuildOptions{
 				Tags:       tags,
 				Dockerfile: "Dockerfile",
 			}

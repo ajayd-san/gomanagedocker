@@ -33,14 +33,14 @@ type ImagePruneReport struct {
 	ImagesDeleted int
 }
 
+type ImageBuildOptions struct {
+	Tags       []string
+	Dockerfile string
+}
+
 type ImageBuildReport struct {
 	Body io.Reader
 }
-
-// type ImageBuildJSON struct {
-// 	Stream string `json:"stream,omitempty"`
-// 	Error  error
-// }
 
 type ImageBuildJSON struct {
 	Stream string     `json:"stream,omitempty"`
