@@ -20,7 +20,7 @@ race:
 
 # start debug server
 debug-server: 
-    dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 . -- --debug
+    dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 --check-go-version=false . -- p --debug
 
 # connect to debug server
 debug-connect:

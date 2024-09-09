@@ -1,7 +1,10 @@
 package podmancmd
 
 import (
+	"bufio"
+	"encoding/json"
 	"io"
+	"log"
 	"strconv"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
@@ -15,46 +18,53 @@ import (
 	nettypes "github.com/containers/common/libnetwork/types"
 )
 
-type CustomWriter struct {
-	i    int
-	data []byte
-}
-
-func (cu *CustomWriter) Read(p []byte) (n int, err error) {
-	if cu.i > len(cu.data) {
-		return 0, io.EOF
-	}
-
-	i := copy(p, cu.data[cu.i:])
-	cu.i += i
-
-	return i, nil
-}
-
-func (cu *CustomWriter) Write(p []byte) (n int, err error) {
-	// jsn := make(map[string]any)
-
-	// data, err := json.Marshal(p)
-	cu.data = append(cu.data, p...)
-
-	return len(p), nil
-}
-
 func (pc *PodmanClient) BuildImage(buildContext string, options dt.ImageBuildOptions) (*it.ImageBuildReport, error) {
 
-	outputWriter := CustomWriter{}
-	_, err := images.Build(pc.cli, []string{"Dockerfile"}, types.BuildOptions{
-		BuildOptions: define.BuildOptions{
-			Labels: []string{"teststr"},
-			Out:    &outputWriter,
-		},
-	})
+	outR, outW := io.Pipe()
+	reportPipeR, reportPipeW := io.Pipe()
 
-	if err != nil {
-		return nil, err
-	}
+	reportReader := bufio.NewReader(reportPipeR)
 
-	return &it.ImageBuildReport{Body: &outputWriter}, nil
+	go func() {
+		reader := bufio.NewReader(outR)
+		for {
+			str, err := reader.ReadString('\n')
+			if err != nil {
+				reportPipeW.Close()
+				break
+			}
+
+			step := it.ImageBuildJSON{
+				Stream: str,
+			}
+
+			byts, err := json.Marshal(step)
+
+			if err != nil {
+				log.Printf("error while marshalling: %s", err.Error())
+			}
+
+			reportPipeW.Write(byts)
+		}
+	}()
+
+	go func() {
+		images.Build(pc.cli, []string{"Dockerfile"}, types.BuildOptions{
+			BuildOptions: define.BuildOptions{
+				Labels:         []string{"teststr"},
+				Registry:       "regname",
+				AdditionalTags: []string{"myimage:latest"},
+				Out:            outW,
+			},
+		})
+
+		outW.Close()
+	}()
+
+	return &it.ImageBuildReport{
+		Body: reportReader,
+	}, nil
+
 }
 
 func (pc *PodmanClient) ListImages() []it.ImageSummary {

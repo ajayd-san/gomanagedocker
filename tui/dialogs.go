@@ -137,7 +137,7 @@ func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 		teadialog.WithMinWidth(100),
 	)
 
-	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+	reg := regexp.MustCompile(`(?i)Step\s(\d+)\/(\d+)\s?:\s(.*)`)
 
 	return buildProgressModel{
 		progressChan: make(chan string, 10),

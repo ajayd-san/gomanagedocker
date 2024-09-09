@@ -321,10 +321,19 @@ func TestRunBackground(t *testing.T) {
 }
 
 func TestGetRegexMatch(t *testing.T) {
-	str := "Step 4/4 : RUN echo \"alpine\""
-	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+	reg := regexp.MustCompile(`(?i)Step\s(\d+)\/(\d+)\s?:\s(.*)`)
+	t.Run("docker step", func(t *testing.T) {
+		str := "Step 4/4 : RUN echo \"alpine\""
 
-	matches := reg.FindStringSubmatch(str)
-	assert.DeepEqual(t, matches, []string{str, "4", "4", "RUN echo \"alpine\""})
+		matches := reg.FindStringSubmatch(str)
+		assert.DeepEqual(t, matches, []string{str, "4", "4", "RUN echo \"alpine\""})
+	})
+
+	t.Run("podman step", func(t *testing.T) {
+		str := "STEP 3/5: RUN sleep 2"
+
+		matches := reg.FindStringSubmatch(str)
+		assert.DeepEqual(t, matches, []string{str, "3", "5", "RUN sleep 2"})
+	})
 
 }
