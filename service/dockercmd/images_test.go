@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dimage "github.com/docker/docker/api/types/image"
 	"github.com/google/go-cmp/cmp"
@@ -246,7 +245,7 @@ func TestBuildImage(t *testing.T) {
 	}
 
 	cwd, _ := os.Getwd()
-	opts := types.ImageBuildOptions{
+	opts := it.ImageBuildOptions{
 		Tags: []string{"test"},
 	}
 	res, err := dclient.BuildImage(cwd, opts)
