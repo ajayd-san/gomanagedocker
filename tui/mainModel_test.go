@@ -9,6 +9,7 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
@@ -21,16 +22,18 @@ func TestNewModel(t *testing.T) {
 
 	t.Run("with docker client", func(t *testing.T) {
 		client, _ := podmancmd.NewPodmanClient()
-		model := NewModel(client)
+		model := NewModel(client, it.Docker)
 		assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
 		assert.Equal(t, model.activeTab, tabId(0))
+		assert.Equal(t, model.serviceKind, it.Docker)
 	})
 
-	t.Run("with docker client", func(t *testing.T) {
+	t.Run("with podman client", func(t *testing.T) {
 		client := dockercmd.NewDockerClient()
-		model := NewModel(client)
+		model := NewModel(client, it.Podman)
 		assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
 		assert.Equal(t, model.activeTab, tabId(0))
+		assert.Equal(t, model.serviceKind, it.Podman)
 	})
 }
 

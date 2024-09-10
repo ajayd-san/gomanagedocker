@@ -56,7 +56,7 @@ func StartTUI(debug bool, serviceKind types.ServiceType) error {
 		client, _ = podmancmd.NewPodmanClient()
 	}
 
-	m := NewModel(client)
+	m := NewModel(client, serviceKind)
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		return err

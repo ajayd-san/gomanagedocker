@@ -54,6 +54,7 @@ type ContainerSizeManager struct {
 }
 
 type MainModel struct {
+	serviceKind         it.ServiceType
 	dockerClient        service.Service
 	Tabs                []string
 	TabContent          []listModel
@@ -107,7 +108,7 @@ func (m MainModel) Init() tea.Cmd {
 }
 
 // Initializes and returns a new Model instance.
-func NewModel(client service.Service) MainModel {
+func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
 
 	for tabid, tabName := range CONFIG_TAB_ORDERING {
@@ -121,7 +122,6 @@ func NewModel(client service.Service) MainModel {
 		case "containers":
 			objectHelp = ContainerKeymap
 			objectHelpBulk = ContainerKeymapBulk
-
 		case "volumes":
 			objectHelp = VolumeKeymap
 			objectHelpBulk = volumeKeymapBulk
@@ -140,6 +140,7 @@ func NewModel(client service.Service) MainModel {
 	NavKeymap.ShowAll = true
 
 	return MainModel{
+		serviceKind:                    serviceType,
 		dockerClient:                   client,
 		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
