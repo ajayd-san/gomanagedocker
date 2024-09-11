@@ -28,12 +28,14 @@ func TestNotifyList(t *testing.T) {
 
 	mockcli := dockercmd.NewMockCli(&api)
 
+	keymap := NewKeyMap(it.Docker)
+
 	CONTAINERS = 0
 	model := MainModel{
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0, ContainerKeymap, ContainerKeymapBulk),
+			InitList(0, keymap.container, keymap.containerBulk),
 		},
 	}
 

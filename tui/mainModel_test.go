@@ -105,11 +105,12 @@ func TestFetchNewData(t *testing.T) {
 	CONTAINERS = 0
 	IMAGES = 1
 	VOLUMES = 2
+	keymap := NewKeyMap(it.Docker)
 	model := MainModel{
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0, ContainerKeymap, ContainerKeymapBulk),
+			InitList(0, keymap.container, keymap.container),
 		},
 		containerSizeTracker: ContainerSizeManager{
 			sizeMap: make(map[string]ContainerSize),
@@ -191,12 +192,13 @@ func TestInfoBoxSize(t *testing.T) {
 
 	mockcli := dockercmd.NewMockCli(&api)
 
+	keymap := NewKeyMap(it.Docker)
 	CONTAINERS = 0
 	model := MainModel{
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0, ContainerKeymap, ContainerKeymapBulk),
+			InitList(0, keymap.container, keymap.containerBulk),
 		},
 	}
 
@@ -232,12 +234,13 @@ func TestMainModelUpdate(t *testing.T) {
 
 	mockcli := dockercmd.NewMockCli(&api)
 
+	keymap := NewKeyMap(it.Docker)
 	CONTAINERS = 0
 	model := MainModel{
 		dockerClient: mockcli,
 		activeTab:    0,
 		TabContent: []listModel{
-			InitList(0, ContainerKeymap, ContainerKeymapBulk),
+			InitList(0, keymap.container, keymap.containerBulk),
 		},
 	}
 
