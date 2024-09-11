@@ -1,15 +1,12 @@
 package tui
 
 import (
-	"cmp"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
-	"github.com/docker/docker/api/types"
 )
 
 func populateImageInfoBox(imageinfo imageItem) string {
@@ -79,9 +76,9 @@ func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker 
 	addEntry(&res, "State: ", containerInfo.State)
 
 	// TODO: figure ports and mount points out
-	// if len(containerInfo.Mounts) > 0 {
-	// 	addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
-	// }
+	if len(containerInfo.Mounts) > 0 {
+		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
+	}
 	if len(containerInfo.Ports) > 0 {
 		addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
 	}
@@ -95,15 +92,15 @@ func addEntry(res *strings.Builder, label string, val string) {
 	res.WriteString(entry)
 }
 
-func mountPointString(mounts []types.MountPoint) string {
+func mountPointString(mounts []string) string {
 	var res strings.Builder
 
-	slices.SortStableFunc(mounts, func(a types.MountPoint, b types.MountPoint) int {
-		return cmp.Compare(a.Source, b.Source)
-	})
+	// slices.SortStableFunc(mounts, func(a types.MountPoint, b types.MountPoint) int {
+	// 	return cmp.Compare(a.Source, b.Source)
+	// })
 
 	for i, mount := range mounts {
-		res.WriteString(mount.Source)
+		res.WriteString(mount)
 
 		if i < len(mounts)-1 {
 			res.WriteString(", ")

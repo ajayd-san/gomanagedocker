@@ -59,11 +59,12 @@ func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 			ID:         entry.ID,
 			ImageID:    entry.ImageID,
 			Created:    entry.Created,
-			SizeRw:     entry.SizeRw,
-			SizeRootFs: entry.SizeRootFs,
 			Names:      entry.Names,
 			State:      entry.State,
 			Command:    entry.Command,
+			SizeRw:     entry.SizeRw,
+			SizeRootFs: entry.SizeRootFs,
+			Mounts:     getMounts(entry.Mounts),
 			Ports:      toPort(entry.Ports),
 		}
 	}
@@ -81,6 +82,23 @@ func toPort(ports []et.Port) []types.Port {
 			ContainerPort: port.PrivatePort,
 			Proto:         port.Type,
 		}
+	}
+
+	return res
+}
+
+func getMounts(mounts []et.MountPoint) []string {
+
+	res := make([]string, len(mounts))
+
+	for i, mount := range mounts {
+		var entry strings.Builder
+
+		entry.WriteString(mount.Source)
+		entry.WriteString(":")
+		entry.WriteString(mount.Destination)
+
+		res[i] = entry.String()
 	}
 
 	return res

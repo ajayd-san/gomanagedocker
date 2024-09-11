@@ -62,8 +62,8 @@ type ContainerSummary struct {
 	// Status     string
 	SizeRw     int64
 	SizeRootFs int64
-	// Mounts []string
-	Ports []Port
+	Mounts     []string
+	Ports      []Port
 }
 
 type Port struct {
