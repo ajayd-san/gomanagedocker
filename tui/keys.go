@@ -111,7 +111,7 @@ var ImageKeymap = imgKeymap{
 	),
 	Prune: key.NewBinding(
 		key.WithKeys("p"),
-		key.WithHelp("p", "prune images"),
+		key.WithHelp("p", "prune"),
 	),
 	CopyId: key.NewBinding(
 		key.WithKeys("c"),
