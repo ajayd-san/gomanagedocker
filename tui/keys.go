@@ -48,11 +48,11 @@ var NavKeymap = navigationKeymap{
 	),
 	NextTab: key.NewBinding(
 		key.WithKeys("right", "l", "tab"),
-		key.WithHelp("->/l/tab", "next"),
+		key.WithHelp("→/l/tab", "next"),
 	),
 	PrevTab: key.NewBinding(
 		key.WithKeys("left", "h", "shift+tab"),
-		key.WithHelp("<-/h/S-tab", "prev"),
+		key.WithHelp("←/h/S-tab", "prev"),
 	),
 	NextItem: key.NewBinding(
 		key.WithKeys("down", "j"),
