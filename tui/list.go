@@ -152,7 +152,9 @@ func (m *listModel) updateTab(newlist []dockerRes) {
 
 func (m *listModel) updateExistigIds(newlistItems *[]dockerRes) {
 	for _, item := range *newlistItems {
-		m.ExistingIds[item.GetId()] = struct{}{}
+		if _, ok := m.ExistingIds[item.GetId()]; !ok {
+			m.ExistingIds[item.GetId()] = struct{}{}
+		}
 	}
 }
 

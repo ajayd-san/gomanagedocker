@@ -76,12 +76,16 @@ func TestListContainer(t *testing.T) {
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "running",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "2",
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "running",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 		}
 
@@ -108,24 +112,32 @@ func TestListContainer(t *testing.T) {
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "running",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "2",
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "running",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "3",
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "created",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "4",
 				SizeRw:     -1,
 				SizeRootFs: -1,
 				State:      "stopped",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 		}
 
@@ -151,24 +163,32 @@ func TestListContainer(t *testing.T) {
 				SizeRw:     200,
 				SizeRootFs: 400,
 				State:      "running",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "2",
 				SizeRw:     201,
 				SizeRootFs: 401,
 				State:      "running",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "3",
 				SizeRw:     202,
 				SizeRootFs: 402,
 				State:      "created",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 			{
 				ID:         "4",
 				SizeRw:     203,
 				SizeRootFs: 403,
 				State:      "stopped",
+				Ports:      []it.Port{},
+				Mounts:     []string{},
 			},
 		}
 

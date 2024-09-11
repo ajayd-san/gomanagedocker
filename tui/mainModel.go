@@ -104,7 +104,8 @@ func (m MainModel) Init() tea.Cmd {
 	clipboard.Init()
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
-	return tea.Batch(preloadCmd, doUpdateObjectsTick())
+	preloadSize := func() tea.Msg { return preloadSizeMap{} }
+	return tea.Batch(preloadCmd, preloadSize, doUpdateObjectsTick())
 }
 
 // Initializes and returns a new Model instance.
@@ -911,7 +912,7 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 
 		for _, newContainer := range newlist {
 			id := newContainer.GetId()
-			if _, ok := m.TabContent[CONTAINERS].ExistingIds[id]; !ok {
+			if _, ok := m.containerSizeTracker.sizeMap[id]; !ok {
 
 				if wg != nil {
 					wg.Add(1)

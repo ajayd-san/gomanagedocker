@@ -10,9 +10,8 @@ import (
 
 func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, error) {
 	// TODO: refactor this, using `With` methods
-	f := true
 	raw, err := containers.Inspect(pc.cli, id, &containers.InspectOptions{
-		Size: &f,
+		Size: boolPtr(true),
 	})
 
 	if err != nil {

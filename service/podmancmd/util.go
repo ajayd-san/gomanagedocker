@@ -38,10 +38,13 @@ func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
 			Names:   entry.Names,
 			State:   entry.State,
 			Command: strings.Join(entry.Command, " "),
-			// SizeRw:     0,
-			// SizeRootFs: 0,
-			Mounts: entry.Mounts,
-			Ports:  toPort(entry.Ports),
+			Mounts:  entry.Mounts,
+			Ports:   toPort(entry.Ports),
+		}
+
+		if entry.Size != nil {
+			res[index].SizeRw = entry.Size.RwSize
+			res[index].SizeRootFs = entry.Size.RootFsSize
 		}
 	}
 
