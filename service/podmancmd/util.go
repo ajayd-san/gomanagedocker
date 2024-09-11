@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ajayd-san/gomanagedocker/service/types"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
+	"github.com/containers/common/libnetwork/types"
 	"github.com/containers/podman/v5/libpod/define"
 	et "github.com/containers/podman/v5/pkg/domain/entities/types"
 )
 
-func toImageSummaryArr(summary []*et.ImageSummary) []types.ImageSummary {
-	res := make([]types.ImageSummary, len(summary))
+func toImageSummaryArr(summary []*et.ImageSummary) []it.ImageSummary {
+	res := make([]it.ImageSummary, len(summary))
 
 	for index, entry := range summary {
-		res[index] = types.ImageSummary{
+		res[index] = it.ImageSummary{
 			ID:         entry.ID,
 			Size:       entry.Size,
 			RepoTags:   entry.RepoTags,
@@ -26,17 +27,35 @@ func toImageSummaryArr(summary []*et.ImageSummary) []types.ImageSummary {
 	return res
 }
 
-func toContainerSummaryArr(summary []et.ListContainer) []types.ContainerSummary {
-	res := make([]types.ContainerSummary, len(summary))
+func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
+	res := make([]it.ContainerSummary, len(summary))
 
 	for index, entry := range summary {
-		res[index] = types.ContainerSummary{
+		res[index] = it.ContainerSummary{
 			ID:      entry.ID,
 			ImageID: entry.ImageID,
 			Created: entry.Created.Unix(),
 			Names:   entry.Names,
-			Command: strings.Join(entry.Command, " "),
 			State:   entry.State,
+			Command: strings.Join(entry.Command, " "),
+			// SizeRw:     0,
+			// SizeRootFs: 0,
+			Ports: toPort(entry.Ports),
+		}
+	}
+
+	return res
+}
+
+func toPort(ports []types.PortMapping) []it.Port {
+	res := make([]it.Port, len(ports))
+
+	for i, port := range ports {
+		res[i] = it.Port{
+			HostIP:        port.HostIP,
+			HostPort:      port.HostPort,
+			ContainerPort: port.ContainerPort,
+			Proto:         port.Protocol,
 		}
 	}
 
@@ -57,10 +76,10 @@ func toContainerSummaryArr(summary []et.ListContainer) []types.ContainerSummary 
 // 	}
 // }
 
-func toContainerSummary(info *define.InspectContainerData) types.ContainerSummary {
+func toContainerSummary(info *define.InspectContainerData) it.ContainerSummary {
 	// jcart, _ := json.MarshalIndent(info, "", "\t")
 	// log.Println(string(jcart))
-	res := types.ContainerSummary{
+	res := it.ContainerSummary{
 		ID:      info.ID,
 		ImageID: info.Image,
 		Created: info.Created.Unix(),
@@ -72,11 +91,11 @@ func toContainerSummary(info *define.InspectContainerData) types.ContainerSummar
 	return res
 }
 
-func toVolumeSummaryArr(entries []*et.VolumeListReport) []types.VolumeSummary {
-	res := make([]types.VolumeSummary, len(entries))
+func toVolumeSummaryArr(entries []*et.VolumeListReport) []it.VolumeSummary {
+	res := make([]it.VolumeSummary, len(entries))
 
 	for index, entry := range entries {
-		res[index] = types.VolumeSummary{
+		res[index] = it.VolumeSummary{
 			Name:       entry.Name,
 			CreatedAt:  entry.CreatedAt.String(),
 			Driver:     entry.Driver,

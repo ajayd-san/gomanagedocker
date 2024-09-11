@@ -64,6 +64,22 @@ func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 			Names:      entry.Names,
 			State:      entry.State,
 			Command:    entry.Command,
+			Ports:      toPort(entry.Ports),
+		}
+	}
+
+	return res
+}
+
+func toPort(ports []et.Port) []types.Port {
+	res := make([]types.Port, len(ports))
+
+	for i, port := range ports {
+		res[i] = types.Port{
+			HostIP:        port.IP,
+			HostPort:      port.PublicPort,
+			ContainerPort: port.PrivatePort,
+			Proto:         port.Type,
 		}
 	}
 

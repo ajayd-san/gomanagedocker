@@ -63,7 +63,14 @@ type ContainerSummary struct {
 	SizeRw     int64
 	SizeRootFs int64
 	// Mounts []string
-	// Ports []string
+	Ports []Port
+}
+
+type Port struct {
+	HostIP        string
+	HostPort      uint16
+	ContainerPort uint16
+	Proto         string
 }
 
 // // represents container state

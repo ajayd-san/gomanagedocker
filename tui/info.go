@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 )
 
@@ -81,9 +82,9 @@ func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker 
 	// if len(containerInfo.Mounts) > 0 {
 	// 	addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
 	// }
-	// if len(containerInfo.Ports) > 0 {
-	// 	addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
-	// }
+	if len(containerInfo.Ports) > 0 {
+		addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
+	}
 	return res.String()
 }
 
@@ -113,15 +114,15 @@ func mountPointString(mounts []types.MountPoint) string {
 }
 
 // converts []types.Port to human readable string
-func portsString(ports []types.Port) string {
+func portsString(ports []it.Port) string {
 	var res strings.Builder
 
 	for _, port := range ports {
 		var str string
-		if port.PublicPort == 0 {
-			str = fmt.Sprintf("%d/%s, ", port.PrivatePort, port.Type)
+		if port.HostPort == 0 {
+			str = fmt.Sprintf("%d/%s, ", port.ContainerPort, port.Proto)
 		} else {
-			str = fmt.Sprintf("%d -> %d/%s, ", port.PublicPort, port.PrivatePort, port.Type)
+			str = fmt.Sprintf("%d -> %d/%s, ", port.HostPort, port.ContainerPort, port.Proto)
 		}
 		res.WriteString(str)
 	}
