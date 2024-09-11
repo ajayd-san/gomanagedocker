@@ -29,7 +29,6 @@ env GOOS=darwin GOARCH=arm64 go build -o ./releases/darwin_arm64_$RELEASE/"gmd" 
 
 
 #windows
-
 echo "Building windows:amd64"
 env GOOS=windows GOARCH=amd64 go build -o ./releases/windows_amd64_$RELEASE/"gmd.exe" github.com/ajayd-san/gomanagedocker
 

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types/container"
 	dimage "github.com/docker/docker/api/types/image"
 	"github.com/google/go-cmp/cmp"
@@ -44,8 +44,25 @@ func TestListImages(t *testing.T) {
 	}
 
 	got := dclient.ListImages()
-	want := imgs
+	want := []it.ImageSummary{
+		{
+			Containers: 0,
+			ID:         "0",
+		},
 
+		{
+			Containers: 2,
+			ID:         "1",
+		},
+		{
+			Containers: 3,
+			ID:         "2",
+		},
+		{
+			Containers: 4,
+			ID:         "5",
+		},
+	}
 	assert.DeepEqual(t, got, want)
 }
 
@@ -79,7 +96,7 @@ func TestDeleteImage(t *testing.T) {
 	}
 
 	t.Run("No force required image test", func(t *testing.T) {
-		err := dclient.DeleteImage("0", dimage.RemoveOptions{})
+		err := dclient.DeleteImage("0", it.RemoveImageOptions{})
 		assert.NilError(t, err)
 
 		afterDeleteImgs := dclient.cli.(*MockApi).mockImages
@@ -89,12 +106,12 @@ func TestDeleteImage(t *testing.T) {
 	})
 
 	t.Run("Should fail, image has active containers", func(t *testing.T) {
-		err := dclient.DeleteImage("1", dimage.RemoveOptions{})
+		err := dclient.DeleteImage("1", it.RemoveImageOptions{})
 		assert.ErrorContains(t, err, "must be forced")
 	})
 
 	t.Run("With force", func(t *testing.T) {
-		err := dclient.DeleteImage("1", dimage.RemoveOptions{Force: true})
+		err := dclient.DeleteImage("1", it.RemoveImageOptions{Force: true})
 		assert.NilError(t, err)
 
 		// same reason as above, but this time we exclude last to elements
@@ -228,7 +245,7 @@ func TestBuildImage(t *testing.T) {
 	}
 
 	cwd, _ := os.Getwd()
-	opts := types.ImageBuildOptions{
+	opts := it.ImageBuildOptions{
 		Tags: []string{"test"},
 	}
 	res, err := dclient.BuildImage(cwd, opts)
@@ -243,53 +260,11 @@ func TestBuildImage(t *testing.T) {
 
 	got := dclient.ListImages()
 
-	index := slices.IndexFunc(got, func(entry dimage.Summary) bool {
+	index := slices.IndexFunc(got, func(entry it.ImageSummary) bool {
 		return slices.Equal(entry.RepoTags, []string{"test"})
 	})
 
 	if index == -1 {
 		t.Error("Could not find built image")
 	}
-}
-
-func TestSepPortMapping(t *testing.T) {
-	t.Run("Clean string, test mapping", func(t *testing.T) {
-		// format is host:container
-		testStr := "8080:80/tcp,1123:112,6969:9696/udp"
-		want := []PortBinding{
-			{
-				HostPort:      "8080",
-				ContainerPort: "80",
-				Proto:         "tcp",
-			},
-			{
-				"1123",
-				"112",
-				"tcp",
-			},
-			{
-				"6969",
-				"9696",
-				"udp",
-			},
-		}
-
-		got, err := GetPortMappingFromStr(testStr)
-
-		assert.NilError(t, err)
-
-		assert.DeepEqual(t, got, want)
-	})
-
-	t.Run("Empty port string", func(t *testing.T) {
-		testStr := ""
-		_, err := GetPortMappingFromStr(testStr)
-		assert.NilError(t, err)
-	})
-
-	t.Run("Invalid mapping, should throw error", func(t *testing.T) {
-		testStr := "8080:878:9/tcp"
-		_, err := GetPortMappingFromStr(testStr)
-		assert.Error(t, err, "Port Mapping 8080:878:9/tcp is invalid")
-	})
 }

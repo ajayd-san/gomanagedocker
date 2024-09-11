@@ -7,7 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
@@ -18,10 +20,21 @@ import (
 func TestNewModel(t *testing.T) {
 	CONFIG_TAB_ORDERING = []string{"images", "volumes"}
 
-	model := NewModel()
+	t.Run("with docker client", func(t *testing.T) {
+		client, _ := podmancmd.NewPodmanClient()
+		model := NewModel(client, it.Docker)
+		assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
+		assert.Equal(t, model.activeTab, tabId(0))
+		assert.Equal(t, model.serviceKind, it.Docker)
+	})
 
-	assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
-	assert.Equal(t, model.activeTab, tabId(0))
+	t.Run("with podman client", func(t *testing.T) {
+		client := dockercmd.NewDockerClient()
+		model := NewModel(client, it.Podman)
+		assert.DeepEqual(t, model.Tabs, CONFIG_TAB_ORDERING)
+		assert.Equal(t, model.activeTab, tabId(0))
+		assert.Equal(t, model.serviceKind, it.Podman)
+	})
 }
 
 func TestFetchNewData(t *testing.T) {
@@ -141,7 +154,8 @@ func TestFetchNewData(t *testing.T) {
 
 			for i := range len(newlist) {
 				img := newlist[i].(imageItem)
-				assert.DeepEqual(t, img.Summary, imgs[i])
+				assert.Equal(t, img.ImageSummary.ID, imgs[i].ID)
+				assert.DeepEqual(t, img.ImageSummary.RepoTags, imgs[i].RepoTags)
 			}
 		})
 
@@ -310,10 +324,19 @@ func TestRunBackground(t *testing.T) {
 }
 
 func TestGetRegexMatch(t *testing.T) {
-	str := "Step 4/4 : RUN echo \"alpine\""
-	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+	reg := regexp.MustCompile(`(?i)Step\s(\d+)\/(\d+)\s?:\s(.*)`)
+	t.Run("docker step", func(t *testing.T) {
+		str := "Step 4/4 : RUN echo \"alpine\""
 
-	matches := reg.FindStringSubmatch(str)
-	assert.DeepEqual(t, matches, []string{str, "4", "4", "RUN echo \"alpine\""})
+		matches := reg.FindStringSubmatch(str)
+		assert.DeepEqual(t, matches, []string{str, "4", "4", "RUN echo \"alpine\""})
+	})
+
+	t.Run("podman step", func(t *testing.T) {
+		str := "STEP 3/5: RUN sleep 2"
+
+		matches := reg.FindStringSubmatch(str)
+		assert.DeepEqual(t, matches, []string{str, "3", "5", "RUN sleep 2"})
+	})
 
 }

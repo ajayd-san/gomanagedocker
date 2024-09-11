@@ -4,15 +4,16 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 	"gotest.tools/v3/assert"
 )
 
-func setupTest(t *testing.T) dockercmd.DockerClient {
+func setupMockDockerClient(t *testing.T) service.Service {
 	api := dockercmd.MockApi{}
 
 	containers := []types.Container{
@@ -101,17 +102,16 @@ func TestToggleStartStopContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"a"},
 						ID:         "1aaaaaaaa",
 						SizeRw:     1e+9,
 						SizeRootFs: 2e+9,
 						State:      "running",
-						Status:     "",
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -130,7 +130,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -139,7 +139,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "3aaaaaaaa",
 						SizeRw:     201,
@@ -157,7 +157,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -174,7 +174,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 				for i, container := range testCase.containers {
 					id := container.GetId()
 
-					index := slices.IndexFunc(updatedContainers, func(elem types.Container) bool {
+					index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
 						return elem.ID == id
 					})
 
@@ -192,7 +192,7 @@ func TestToggleStartStopContainer(t *testing.T) {
 }
 
 func TestTogglePauseResumeContainer(t *testing.T) {
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 
 	tests := []struct {
 		containers []dockerRes
@@ -202,17 +202,16 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"a"},
 						ID:         "1aaaaaaaa",
 						SizeRw:     1e+9,
 						SizeRootFs: 2e+9,
 						State:      "running",
-						Status:     "",
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -231,7 +230,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -240,7 +239,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "3aaaaaaaa",
 						SizeRw:     201,
@@ -273,7 +272,7 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 				for i, container := range testCase.containers {
 					id := container.GetId()
 
-					index := slices.IndexFunc(updatedContainers, func(elem types.Container) bool {
+					index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
 						return elem.ID == id
 					})
 
@@ -307,17 +306,16 @@ func TestContainerDeleteBulk(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"a"},
 						ID:         "1aaaaaaaa",
 						SizeRw:     1e+9,
 						SizeRootFs: 2e+9,
 						State:      "running",
-						Status:     "",
 					},
 				},
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -335,7 +333,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 		{
 			containers: []dockerRes{
 				containerItem{
-					types.Container{
+					it.ContainerSummary{
 						Names:      []string{"b"},
 						ID:         "2aaaaaaaa",
 						SizeRw:     201,
@@ -350,14 +348,14 @@ func TestContainerDeleteBulk(t *testing.T) {
 		},
 	}
 
-	opts := container.RemoveOptions{
+	opts := it.ContainerRemoveOpts{
 		RemoveVolumes: false,
 		RemoveLinks:   false,
 		Force:         true,
 	}
 
 	for _, testCase := range tests {
-		mock := setupTest(t)
+		mock := setupMockDockerClient(t)
 		mock.ToggleContainerListAll()
 
 		t.Run("Force Delete Exising Container", func(t *testing.T) {
@@ -371,7 +369,7 @@ func TestContainerDeleteBulk(t *testing.T) {
 			t.Run("Confirm container deleted", func(t *testing.T) {
 				containers := mock.ListContainers(true)
 
-				exists := slices.ContainsFunc(containers, func(elem types.Container) bool {
+				exists := slices.ContainsFunc(containers, func(elem it.ContainerSummary) bool {
 					for _, c := range testCase.containers {
 						if elem.ID == c.GetId() {
 							return true
@@ -406,12 +404,12 @@ func TestContainerDelete(t *testing.T) {
 		ID        string
 		notifWant string
 		errorStr  string
-		opts      container.RemoveOptions
+		opts      it.ContainerRemoveOpts
 	}{
 		{
 			ID:        "2aaaaaaaa",
 			notifWant: listStatusMessageStyle.Render("Deleted 2aaaaaaa"),
-			opts: container.RemoveOptions{
+			opts: it.ContainerRemoveOpts{
 				RemoveVolumes: false,
 				RemoveLinks:   false,
 				Force:         true,
@@ -433,7 +431,7 @@ func TestContainerDelete(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -454,7 +452,7 @@ func TestContainerDelete(t *testing.T) {
 			t.Run("Confirm container deleted", func(t *testing.T) {
 				containers := mock.ListContainers(false)
 
-				exists := slices.ContainsFunc(containers, func(elem types.Container) bool {
+				exists := slices.ContainsFunc(containers, func(elem it.ContainerSummary) bool {
 					if elem.ID == testCase.ID {
 						return true
 					}
@@ -505,14 +503,14 @@ func TestImageDelete(t *testing.T) {
 		ID        string
 		notifWant string
 		errorStr  string
-		opts      image.RemoveOptions
+		opts      it.RemoveImageOptions
 	}{
 		{
 			ID:        "0bbbbbbbb",
 			notifWant: listStatusMessageStyle.Render("Deleted 0bbbbbbb"),
-			opts: image.RemoveOptions{
-				Force:         false,
-				PruneChildren: false,
+			opts: it.RemoveImageOptions{
+				Force:   false,
+				NoPrune: true,
 			},
 		},
 		{
@@ -527,7 +525,7 @@ func TestImageDelete(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -548,7 +546,7 @@ func TestImageDelete(t *testing.T) {
 			t.Run("Confirm image deleted", func(t *testing.T) {
 				images := mock.ListImages()
 
-				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
 					if elem.ID == testCase.ID {
 						return true
 					}
@@ -577,12 +575,12 @@ func TestImageDeleteBulk(t *testing.T) {
 		imgs   []dockerRes
 		notifs []string
 		errors []string
-		opts   image.RemoveOptions
+		opts   it.RemoveImageOptions
 	}{
 		{
 			imgs: []dockerRes{
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "0bbbbbbbb",
 						RepoTags:   []string{"a"},
@@ -590,7 +588,7 @@ func TestImageDeleteBulk(t *testing.T) {
 				},
 
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "1bbbbbbbb",
 						RepoTags:   []string{"b"},
@@ -602,15 +600,15 @@ func TestImageDeleteBulk(t *testing.T) {
 				listStatusMessageStyle.Render("Deleted 1bbbbbbb"),
 				listStatusMessageStyle.Render("Deleted 2 images"),
 			},
-			opts: image.RemoveOptions{
-				Force:         true,
-				PruneChildren: false,
+			opts: it.RemoveImageOptions{
+				Force:   true,
+				NoPrune: true,
 			},
 		},
 		{
 			imgs: []dockerRes{
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "this does not exist",
 						RepoTags:   []string{"a"},
@@ -618,7 +616,7 @@ func TestImageDeleteBulk(t *testing.T) {
 				},
 
 				imageItem{
-					image.Summary{
+					it.ImageSummary{
 						Containers: 0,
 						ID:         "1bbbbbbbb",
 						RepoTags:   []string{"b"},
@@ -628,15 +626,15 @@ func TestImageDeleteBulk(t *testing.T) {
 			notifs: []string{
 				listStatusMessageStyle.Render("Deleted 1bbbbbbb"),
 			},
-			opts: image.RemoveOptions{
-				Force:         true,
-				PruneChildren: false,
+			opts: it.RemoveImageOptions{
+				Force:   true,
+				NoPrune: true,
 			},
 		},
 	}
 
 	for _, testCase := range tests {
-		mock := setupTest(t)
+		mock := setupMockDockerClient(t)
 		mock.ToggleContainerListAll()
 		t.Run("Force Delete Exising image", func(t *testing.T) {
 
@@ -663,7 +661,7 @@ func TestImageDeleteBulk(t *testing.T) {
 			t.Run("Confirm image deleted", func(t *testing.T) {
 				images := mock.ListImages()
 
-				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
 					for _, dres := range testCase.imgs {
 						if elem.ID == dres.GetId() {
 							return true
@@ -714,7 +712,7 @@ func TestDeleteVolume(t *testing.T) {
 		},
 	}
 
-	mock := setupTest(t)
+	mock := setupMockDockerClient(t)
 	mock.ToggleContainerListAll()
 
 	for _, testCase := range tests {
@@ -735,7 +733,7 @@ func TestDeleteVolume(t *testing.T) {
 			t.Run("Confirm image deleted", func(t *testing.T) {
 				images := mock.ListImages()
 
-				exists := slices.ContainsFunc(images, func(elem image.Summary) bool {
+				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
 					if elem.ID == testCase.Id {
 						return true
 					}
@@ -758,4 +756,16 @@ func TestDeleteVolume(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestToggleListAll(t *testing.T) {
+	t.Run("Docker", func(t *testing.T) {
+		dockerClient := setupMockDockerClient(t)
+		assert.Assert(t, !dockerClient.GetListOptions().All)
+		dockerClient.ToggleContainerListAll()
+		t.Log(dockerClient.GetListOptions().All)
+		assert.Assert(t, dockerClient.GetListOptions().All)
+	})
+
+	//TODO: test for podman
 }

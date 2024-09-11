@@ -7,11 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/volume"
 )
 
 type status int
@@ -45,10 +43,10 @@ type dockerRes interface {
 }
 
 type imageItem struct {
-	image.Summary
+	it.ImageSummary
 }
 
-func makeImageItems(dockerlist []image.Summary) []dockerRes {
+func makeImageItems(dockerlist []it.ImageSummary) []dockerRes {
 	res := make([]dockerRes, 0)
 
 	for i := range dockerlist {
@@ -56,7 +54,7 @@ func makeImageItems(dockerlist []image.Summary) []dockerRes {
 			continue
 		}
 
-		res = append(res, imageItem{Summary: dockerlist[i]})
+		res = append(res, imageItem{dockerlist[i]})
 	}
 
 	return res
@@ -96,13 +94,13 @@ func (i imageItem) Description() string {
 func (i imageItem) FilterValue() string { return i.getName() }
 
 type containerItem struct {
-	types.Container
+	it.ContainerSummary
 }
 
-func makeContainerItems(dockerlist []types.Container) []dockerRes {
+func makeContainerItems(dockerlist []it.ContainerSummary) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
-	slices.SortFunc(dockerlist, func(a types.Container, b types.Container) int {
+	slices.SortFunc(dockerlist, func(a it.ContainerSummary, b it.ContainerSummary) int {
 
 		if statusMap[a.State] < statusMap[b.State] {
 			return -1
@@ -115,7 +113,7 @@ func makeContainerItems(dockerlist []types.Container) []dockerRes {
 	})
 
 	for i := range dockerlist {
-		res[i] = containerItem{Container: dockerlist[i]}
+		res[i] = containerItem{dockerlist[i]}
 	}
 
 	return res
@@ -171,7 +169,7 @@ func (i containerItem) Description() string {
 func (i containerItem) FilterValue() string { return i.getLabel() }
 
 type VolumeItem struct {
-	volume.Volume
+	it.VolumeSummary
 }
 
 func (v VolumeItem) FilterValue() string {
@@ -192,21 +190,18 @@ func (v VolumeItem) getName() string {
 }
 
 func (v VolumeItem) getSize() float64 {
-	if v.UsageData == nil {
-		return -1
-	}
-	return float64(v.UsageData.Size)
+	return float64(v.UsageData)
 }
 
 func (i VolumeItem) Title() string { return i.getName() }
 
 func (i VolumeItem) Description() string { return "" }
 
-func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
+func makeVolumeItem(dockerlist []it.VolumeSummary) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
 	for i, volume := range dockerlist {
-		res[i] = VolumeItem{Volume: *volume}
+		res[i] = VolumeItem{VolumeSummary: volume}
 	}
 
 	sort.Slice(res, func(i, j int) bool {

@@ -4,6 +4,9 @@ alias r := run
 run:
     go run main.go --debug
 
+runp:
+    go run main.go p --debug
+
 # run all tests, disable caching
 test:
     go test ./... -count=1
@@ -17,7 +20,7 @@ race:
 
 # start debug server
 debug-server: 
-    dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 . -- --debug
+    dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 --check-go-version=false . -- p --debug
 
 # connect to debug server
 debug-connect:
