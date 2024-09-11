@@ -343,7 +343,7 @@ notificationLoop:
 
 				case key.Matches(assertedMsg, m.keymap.image.Scout):
 					curItem := m.getSelectedItem()
-					if curItem != nil && !m.isCurrentTabInBulkMode() && m.serviceKind == it.Docker {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						dockerRes := curItem.(dockerRes)
 						imageInfo := dockerRes.(imageItem)
 						imageName := imageInfo.RepoTags[0]

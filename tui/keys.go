@@ -102,6 +102,12 @@ func NewKeyMap(session it.ServiceType) KeyMap {
 			key.WithHelp("x", "run and exec"),
 		),
 	}
+
+	// if session is it.Podman, disable Scout since it is not supported
+	if session == it.Podman {
+		ImageKeymap.Scout.Unbind()
+	}
+
 	imageKeymapBulk := imgKeymapBulk{
 		DeleteForce: key.NewBinding(
 			key.WithKeys("D"),
