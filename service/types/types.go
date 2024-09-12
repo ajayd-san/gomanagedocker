@@ -132,3 +132,13 @@ type PortBinding struct {
 	ContainerPort string
 	Proto         string
 }
+
+// Podman
+
+type PodsPruneReport struct {
+	Removed int
+}
+
+type PodsRemoveReport struct {
+	Removed int
+}
