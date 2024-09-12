@@ -24,6 +24,7 @@ var (
 	IMAGES     tabId
 	CONTAINERS tabId
 	VOLUMES    tabId
+	PODS       tabId
 )
 
 var CONFIG_POLLING_TIME time.Duration
@@ -47,7 +48,7 @@ func StartTUI(debug bool, serviceKind types.ServiceType) error {
 	}
 
 	readConfig()
-	loadConfig()
+	loadConfig(serviceKind)
 
 	var client service.Service
 	if serviceKind == types.Docker {
@@ -83,11 +84,17 @@ func readConfig() {
 	config.ReadConfig(globalConfig, configPath+xdgPathTail)
 }
 
-func loadConfig() {
+func loadConfig(serviceKind types.ServiceType) {
 	CONFIG_POLLING_TIME = globalConfig.Duration("config.Polling-Time") * time.Millisecond
 	CONFIG_NOTIFICATION_TIMEOUT = globalConfig.Duration("config.Notification-Timeout") * time.Millisecond
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
-	CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order")
+
+	switch serviceKind {
+	case types.Docker:
+		CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order.Docker")
+	case types.Podman:
+		CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order.Podman")
+	}
 	setTabConstants(CONFIG_TAB_ORDERING)
 }
 
@@ -115,6 +122,12 @@ func setTabConstants(configOrder []string) TabOrderingMap {
 		VOLUMES = index
 	} else {
 		VOLUMES = 999
+	}
+
+	if index, ok := tabIndexMap["pods"]; ok {
+		PODS = index
+	} else {
+		PODS = 999
 	}
 	return tabIndexMap
 }
