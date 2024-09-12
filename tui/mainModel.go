@@ -64,6 +64,7 @@ type MainModel struct {
 	windowTooSmall      bool
 	displayInfoBox      bool
 	windowtoosmallModel WindowTooSmallModel
+	keymap              KeyMap
 	//  handles navigation keymap generation
 	navKeymap help.Model
 	// handles tab specific keymap generation, i have no idea why I named it `helpGen`
@@ -111,6 +112,7 @@ func (m MainModel) Init() tea.Cmd {
 // Initializes and returns a new Model instance.
 func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
+	keymap := NewKeyMap(serviceType)
 
 	for tabid, tabName := range CONFIG_TAB_ORDERING {
 		var objectHelp help.KeyMap
@@ -118,14 +120,14 @@ func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 
 		switch tabName {
 		case "images":
-			objectHelp = ImageKeymap
-			objectHelpBulk = imageKeymapBulk
+			objectHelp = keymap.image
+			objectHelpBulk = keymap.imageBulk
 		case "containers":
-			objectHelp = ContainerKeymap
-			objectHelpBulk = ContainerKeymapBulk
+			objectHelp = keymap.container
+			objectHelpBulk = keymap.containerBulk
 		case "volumes":
-			objectHelp = VolumeKeymap
-			objectHelpBulk = volumeKeymapBulk
+			objectHelp = keymap.volume
+			objectHelpBulk = keymap.volumeBulk
 		}
 		contents[tabid] = InitList(tabId(tabid), objectHelp, objectHelpBulk)
 	}
@@ -148,6 +150,7 @@ func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 		displayInfoBox:                 true,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
+		keymap:                         keymap,
 		helpGen:                        helper,
 		navKeymap:                      NavKeymap,
 		activeTab:                      firstTab,
@@ -193,7 +196,7 @@ notificationLoop:
 		m.activeDialog = update
 
 		// if keymsg is <Esc> then close dialog
-		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Back) {
+		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, m.keymap.navigation.Back) {
 			if m.dialogOpCancel != nil {
 				m.dialogOpCancel()
 				// this might be required, in the future
@@ -270,16 +273,16 @@ notificationLoop:
 	case tea.KeyMsg:
 		if !m.getActiveList().SettingFilter() && !m.showDialog {
 			switch {
-			case key.Matches(assertedMsg, NavKeymap.Quit):
+			case key.Matches(assertedMsg, m.keymap.navigation.Quit):
 				return m, tea.Quit
-			case key.Matches(assertedMsg, NavKeymap.NextTab):
+			case key.Matches(assertedMsg, m.keymap.navigation.NextTab):
 				m.nextTab()
-			case key.Matches(assertedMsg, NavKeymap.PrevTab):
+			case key.Matches(assertedMsg, m.keymap.navigation.PrevTab):
 				m.prevTab()
-			case key.Matches(assertedMsg, NavKeymap.Select):
+			case key.Matches(assertedMsg, m.keymap.navigation.Select):
 				msg = itemSelect{}
 				break
-			case key.Matches(assertedMsg, NavKeymap.Back):
+			case key.Matches(assertedMsg, m.keymap.navigation.Back):
 				if m.getActiveTab().inBulkMode() {
 					msg = clearSelection{}
 					break
@@ -288,7 +291,7 @@ notificationLoop:
 
 			if m.activeTab == IMAGES {
 				switch {
-				case key.Matches(assertedMsg, ImageKeymap.Run):
+				case key.Matches(assertedMsg, m.keymap.image.Run):
 					curItem := m.getSelectedItem()
 
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
@@ -301,7 +304,7 @@ notificationLoop:
 						// go m.runBackground(op)
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.Delete):
+				case key.Matches(assertedMsg, m.keymap.image.Delete):
 					curItem := m.getSelectedItem()
 
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
@@ -313,7 +316,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.DeleteForce):
+				case key.Matches(assertedMsg, m.keymap.image.DeleteForce):
 					items := m.getSelectedItems()
 
 					deleteOpts := it.RemoveImageOptions{
@@ -332,16 +335,16 @@ notificationLoop:
 
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ImageKeymap.Prune):
+				case key.Matches(assertedMsg, m.keymap.image.Prune):
 					if !m.isCurrentTabInBulkMode() {
 						m.activeDialog = getPruneImagesDialog(make(map[string]string))
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.Scout):
+				case key.Matches(assertedMsg, m.keymap.image.Scout):
 					curItem := m.getSelectedItem()
-					if curItem != nil && !m.isCurrentTabInBulkMode() && m.serviceKind == it.Docker {
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						dockerRes := curItem.(dockerRes)
 						imageInfo := dockerRes.(imageItem)
 						imageName := imageInfo.RepoTags[0]
@@ -365,7 +368,7 @@ notificationLoop:
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
-				case key.Matches(assertedMsg, ImageKeymap.CopyId):
+				case key.Matches(assertedMsg, m.keymap.image.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -374,7 +377,7 @@ notificationLoop:
 						op()
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.RunAndExec):
+				case key.Matches(assertedMsg, m.keymap.image.RunAndExec):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -406,7 +409,7 @@ notificationLoop:
 						}))
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.Build):
+				case key.Matches(assertedMsg, m.keymap.image.Build):
 					if !m.isCurrentTabInBulkMode() {
 						m.activeDialog = getBuildImageDialog(make(map[string]string))
 						m.showDialog = true
@@ -416,31 +419,31 @@ notificationLoop:
 
 			} else if m.activeTab == CONTAINERS {
 				switch {
-				case key.Matches(assertedMsg, ContainerKeymap.ToggleListAll):
+				case key.Matches(assertedMsg, m.keymap.container.ToggleListAll):
 					toggleListAllContainers(m.dockerClient, m.activeTab, m.notificationChan)
 
-				case key.Matches(assertedMsg, ContainerKeymap.ToggleStartStop):
+				case key.Matches(assertedMsg, m.keymap.container.ToggleStartStop):
 					selectedItems := m.getSelectedItems()
 
 					op := toggleStartStopContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
 					go m.runBackground(op)
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.TogglePause):
+				case key.Matches(assertedMsg, m.keymap.container.TogglePause):
 					selectedItems := m.getSelectedItems()
 
 					op := togglePauseResumeContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
 					go m.runBackground(op)
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.Restart):
+				case key.Matches(assertedMsg, m.keymap.container.Restart):
 					selectedItems := m.getSelectedItems()
 
 					op := toggleRestartContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
 					go m.runBackground(op)
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.Delete):
+				case key.Matches(assertedMsg, m.keymap.container.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						containerInfo := curItem.(dockerRes)
@@ -450,7 +453,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
+				case key.Matches(assertedMsg, m.keymap.container.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
 					deleteOpts := it.ContainerRemoveOpts{
@@ -471,14 +474,14 @@ notificationLoop:
 
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.Prune):
+				case key.Matches(assertedMsg, m.keymap.container.Prune):
 					if !m.isCurrentTabInBulkMode() {
 						m.activeDialog = getPruneContainersDialog(make(map[string]string))
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.Exec):
+				case key.Matches(assertedMsg, m.keymap.container.Exec):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						container := curItem.(containerItem)
@@ -510,7 +513,7 @@ notificationLoop:
 						}
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.CopyId):
+				case key.Matches(assertedMsg, m.keymap.container.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -520,7 +523,7 @@ notificationLoop:
 						op()
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.ShowLogs):
+				case key.Matches(assertedMsg, m.keymap.container.ShowLogs):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -540,7 +543,7 @@ notificationLoop:
 
 			} else if m.activeTab == VOLUMES {
 				switch {
-				case key.Matches(assertedMsg, VolumeKeymap.Prune):
+				case key.Matches(assertedMsg, m.keymap.volume.Prune):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						volumeId := curItem.(dockerRes).GetId()
@@ -549,7 +552,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, VolumeKeymap.Delete):
+				case key.Matches(assertedMsg, m.keymap.volume.Delete):
 
 					curItem := m.getSelectedItem()
 
@@ -560,7 +563,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, VolumeKeymap.DeleteForce):
+				case key.Matches(assertedMsg, m.keymap.volume.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
 					op := volumeDeleteBulk(m.dockerClient, selectedItems, true, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
@@ -568,7 +571,7 @@ notificationLoop:
 
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
+				case key.Matches(assertedMsg, m.keymap.volume.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -862,7 +865,7 @@ func (m MainModel) View() string {
 		return helpText
 	}
 
-	navKeyBinds := AlignHelpText(m.navKeymap.View(NavKeymap))
+	navKeyBinds := AlignHelpText(m.navKeymap.View(m.keymap.navigation))
 	tabKeyBindsStr = AlignHelpText(tabKeyBindsStr)
 
 	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabKeyBindsStr)

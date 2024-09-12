@@ -70,8 +70,10 @@ func TestUpdateExistingIds(t *testing.T) {
 	CONTAINERS = 0
 	IMAGES = 1
 
+	keymap := NewKeyMap(it.Docker)
+
 	t.Run("Assert container Ids", func(t *testing.T) {
-		contList := InitList(0, ContainerKeymap, ContainerKeymapBulk)
+		contList := InitList(0, keymap.container, keymap.containerBulk)
 		dres := makeContainerItems(containers)
 		contList.updateExistigIds(&dres)
 		want := map[string]struct{}{
@@ -85,7 +87,7 @@ func TestUpdateExistingIds(t *testing.T) {
 	})
 
 	t.Run("Assert image Ids", func(t *testing.T) {
-		imgsList := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+		imgsList := InitList(IMAGES, keymap.image, keymap.imageBulk)
 		dres := makeImageItems(imgs)
 		imgsList.updateExistigIds(&dres)
 		want := map[string]struct{}{
@@ -126,7 +128,9 @@ func TestUpdateTab(t *testing.T) {
 		},
 	}
 
-	list := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+	keymap := NewKeyMap(it.Docker)
+
+	list := InitList(IMAGES, keymap.image, keymap.imageBulk)
 	t.Run("Assert Images subset", func(t *testing.T) {
 		subset := imgs[:2]
 		dres := makeImageItems(subset)
@@ -186,7 +190,8 @@ func TestUpdate(t *testing.T) {
 		},
 	}
 
-	imgList := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+	keymap := NewKeyMap(it.Docker)
+	imgList := InitList(IMAGES, keymap.image, keymap.imageBulk)
 
 	t.Run("Update images", func(t *testing.T) {
 		dres := makeImageItems(imgs)
@@ -241,7 +246,8 @@ func TestEmptyList(t *testing.T) {
 		},
 	}
 
-	imgList := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+	keymap := NewKeyMap(it.Docker)
+	imgList := InitList(IMAGES, keymap.image, keymap.imageBulk)
 
 	t.Run("List with items", func(t *testing.T) {
 		dres := makeImageItems(imgs)
