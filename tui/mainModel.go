@@ -128,6 +128,9 @@ func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 		case "volumes":
 			objectHelp = keymap.volume
 			objectHelpBulk = keymap.volumeBulk
+		case "pods":
+			objectHelp = keymap.pods
+			objectHelpBulk = keymap.podsBulk
 		}
 		contents[tabid] = InitList(tabId(tabid), objectHelp, objectHelpBulk)
 	}

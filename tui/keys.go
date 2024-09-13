@@ -17,6 +17,8 @@ type KeyMap struct {
 	containerBulk contKeymapBulk
 	volume        volKeymap
 	volumeBulk    volKeymapBulk
+	pods          podsKeymap
+	podsBulk      podsKeymapBulk
 }
 
 func NewKeyMap(session it.ServiceType) KeyMap {
@@ -219,6 +221,64 @@ func NewKeyMap(session it.ServiceType) KeyMap {
 		),
 	}
 
+	podsKeymap := podsKeymap{
+		ToggleStartStop: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "toggle Start/Stop"),
+		),
+		TogglePause: key.NewBinding(
+			key.WithKeys("t"),
+			key.WithHelp("t", "toggle Pause/unPause"),
+		),
+		Restart: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "restart"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "delete"),
+		),
+		DeleteForce: key.NewBinding(
+			key.WithKeys("D"),
+			key.WithHelp("D", "delete (force)"),
+		),
+		Prune: key.NewBinding(
+			key.WithKeys("p"),
+			key.WithHelp("p", "prune"),
+		),
+		CopyId: key.NewBinding(
+			key.WithKeys("c"),
+			key.WithHelp("c", "copy ID"),
+		),
+		ShowLogs: key.NewBinding(
+			key.WithKeys("L"),
+			key.WithHelp("L", "Show Logs"),
+		),
+	}
+
+	podsKeymapBulk := podsKeymapBulk{
+		ToggleStartStop: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "Bulk toggle Start/Stop"),
+		),
+		TogglePause: key.NewBinding(
+			key.WithKeys("t"),
+			key.WithHelp("t", "Bulk toggle Pause/unPause"),
+		),
+		Restart: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "Bulk restart"),
+		),
+		DeleteForce: key.NewBinding(
+			key.WithKeys("D"),
+			key.WithHelp("D", "Bulk delete (force)"),
+		),
+		ExitSelectionMode: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "exit selection mode"),
+		),
+	}
+
 	return KeyMap{
 		sessionKind:   session,
 		navigation:    NavKeymap,
@@ -228,6 +288,8 @@ func NewKeyMap(session it.ServiceType) KeyMap {
 		containerBulk: ContainerKeymapBulk,
 		volume:        VolumeKeymap,
 		volumeBulk:    volumeKeymapBulk,
+		pods:          podsKeymap,
+		podsBulk:      podsKeymapBulk,
 	}
 }
 
@@ -409,6 +471,62 @@ func (vo volKeymapBulk) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{vo.DeleteForce}, {vo.ExitSelectionMode},
 	}
+}
+
+type podsKeymap struct {
+	// ToggleListAll   key.Binding
+	ToggleStartStop key.Binding
+	TogglePause     key.Binding
+	Restart         key.Binding
+	Delete          key.Binding
+	DeleteForce     key.Binding
+	Prune           key.Binding
+	CopyId          key.Binding
+	ShowLogs        key.Binding
+}
+
+func (m podsKeymap) FullHelp() [][]key.Binding {
+	bindings := []key.Binding{
+		m.ToggleStartStop,
+		m.Restart,
+		m.TogglePause,
+		m.Delete,
+		m.DeleteForce,
+		m.Prune,
+		m.CopyId,
+		m.ShowLogs,
+	}
+
+	return packKeybindings(bindings, KeymapAvailableWidth)
+}
+
+func (m podsKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{}
+}
+
+type podsKeymapBulk struct {
+	// ToggleListAll     key.Binding
+	ToggleStartStop   key.Binding
+	TogglePause       key.Binding
+	Restart           key.Binding
+	DeleteForce       key.Binding
+	ExitSelectionMode key.Binding
+}
+
+func (co podsKeymapBulk) FullHelp() [][]key.Binding {
+	bindings := []key.Binding{
+		co.ToggleStartStop,
+		co.Restart,
+		co.TogglePause,
+		co.DeleteForce,
+		co.ExitSelectionMode,
+	}
+
+	return packKeybindings(bindings, KeymapAvailableWidth)
+}
+
+func (m podsKeymapBulk) ShortHelp() []key.Binding {
+	return []key.Binding{}
 }
 
 func packKeybindings(keybindings []key.Binding, width int) [][]key.Binding {
