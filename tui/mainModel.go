@@ -22,6 +22,7 @@ import (
 	"golang.design/x/clipboard"
 
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
@@ -583,6 +584,95 @@ notificationLoop:
 						op()
 					}
 				}
+			} else if m.activeTab == PODS {
+				switch {
+				case key.Matches(assertedMsg, m.keymap.pods.ToggleStartStop):
+					selectedItems := m.getSelectedItems()
+
+					op := toggleStartStopContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					go m.runBackground(op)
+					cmds = append(cmds, clearSelectionCmd())
+
+				case key.Matches(assertedMsg, m.keymap.pods.TogglePause):
+					selectedItems := m.getSelectedItems()
+
+					op := togglePauseResumeContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					go m.runBackground(op)
+					cmds = append(cmds, clearSelectionCmd())
+
+				case key.Matches(assertedMsg, m.keymap.pods.Restart):
+					selectedItems := m.getSelectedItems()
+
+					op := toggleRestartContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					go m.runBackground(op)
+					cmds = append(cmds, clearSelectionCmd())
+
+				case key.Matches(assertedMsg, m.keymap.pods.Delete):
+					curItem := m.getSelectedItem()
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
+						containerInfo := curItem.(dockerRes)
+						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.GetId()})
+						m.activeDialog = dialog
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.DeleteForce):
+					selectedItems := m.getSelectedItems()
+
+					deleteOpts := it.ContainerRemoveOpts{
+						RemoveVolumes: false,
+						RemoveLinks:   false,
+						Force:         true,
+					}
+
+					op := containerDeleteBulk(
+						m.dockerClient,
+						selectedItems,
+						deleteOpts,
+						m.activeTab,
+						m.notificationChan,
+						m.possibleLongRunningOpErrorChan,
+					)
+					go m.runBackground(op)
+
+					cmds = append(cmds, clearSelectionCmd())
+
+				case key.Matches(assertedMsg, m.keymap.pods.Prune):
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getPruneContainersDialog(make(map[string]string))
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.CopyId):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
+						object := currentItem.(dockerRes)
+						op := copyIdToClipboard(object, m.activeTab, m.notificationChan)
+
+						op()
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.ShowLogs):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
+						dres := currentItem.(containerItem)
+						if dres.State == "running" {
+							id := dres.GetId()
+							cmd := m.dockerClient.LogsCmd(id)
+							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+								if err.Error() != "exit status 1" {
+									m.possibleLongRunningOpErrorChan <- err
+								}
+								return nil
+							}))
+						}
+					}
+				}
+
 			}
 
 		}
@@ -942,6 +1032,11 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 		// TODO: handle errors
 		newVolumes, _ := m.dockerClient.ListVolumes()
 		newlist = makeVolumeItem(newVolumes)
+	case PODS:
+		if client, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+			newPods, _ := client.ListPods()
+			newlist = makePodItem(newPods)
+		}
 	}
 
 	return newlist
@@ -975,6 +1070,11 @@ func (m MainModel) populateInfoBox(item list.Item) string {
 	case VOLUMES:
 		if vt, ok := temp.(VolumeItem); ok {
 			info := populateVolumeInfoBox(vt)
+			return moreInfoStyle.Render(info)
+		}
+	case PODS:
+		if pt, ok := temp.(PodItem); ok {
+			info := populatePodsInfoBox(pt)
 			return moreInfoStyle.Render(info)
 		}
 	}

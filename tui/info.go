@@ -85,6 +85,16 @@ func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker 
 	return res.String()
 }
 
+func populatePodsInfoBox(pod PodItem) string {
+	var res strings.Builder
+	addEntry(&res, "Name: ", pod.Name)
+	addEntry(&res, "ID:", pod.Id)
+	addEntry(&res, "Status: ", pod.Status)
+	addEntry(&res, "Containers: ", strconv.Itoa(len(pod.Containers)))
+
+	return res.String()
+}
+
 // UTIL
 func addEntry(res *strings.Builder, label string, val string) {
 	label = infoEntryLabel.Render(label)

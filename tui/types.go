@@ -10,6 +10,7 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/containers/podman/v5/pkg/domain/entities/types"
 )
 
 type status int
@@ -207,6 +208,65 @@ func makeVolumeItem(dockerlist []it.VolumeSummary) []dockerRes {
 	sort.Slice(res, func(i, j int) bool {
 		return res[i].getName() < res[j].getName()
 	})
+
+	return res
+}
+
+type PodItem struct {
+	types.ListPodsReport
+}
+
+func (po PodItem) getSize() float64 {
+	return 0
+}
+
+func (po PodItem) getLabel() string {
+	return po.Name
+}
+
+func (po PodItem) getName() string {
+	return po.Name
+}
+
+func (po PodItem) GetId() string {
+	return po.Id
+}
+
+func (po PodItem) Title() string {
+	return po.Name
+}
+
+func (po PodItem) Description() string {
+	state := po.Status
+	switch state {
+	case "running":
+		state = containerRunningStyle.Render(state)
+	case "exited":
+		state = containerExitedStyle.Render(state)
+	case "created":
+		state = containerCreatedStyle.Render(state)
+	case "restarting":
+		state = containerRestartingStyle.Render(state)
+	case "dead":
+		state = containerDeadStyle.Render(state)
+	}
+	return makeDescriptionString(po.Id[:15], state, len(po.Id[:15]))
+}
+
+// FilterValue is the value we use when filtering against this item when
+// we're filtering the list.
+func (po PodItem) FilterValue() string {
+	return po.Name
+}
+
+func makePodItem(dockerlist []*types.ListPodsReport) []dockerRes {
+	res := make([]dockerRes, len(dockerlist))
+
+	for i, item := range dockerlist {
+		res[i] = PodItem{
+			ListPodsReport: *item,
+		}
+	}
 
 	return res
 }
