@@ -583,3 +583,45 @@ func togglePauseResumePods(
 		return nil
 	}
 }
+
+func restartPods(
+	client *podmancmd.PodmanClient,
+	pods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, pod := range pods {
+			podId := pod.GetId()
+
+			wg.Add(1)
+			go func() {
+				err := client.RestartPod(podId)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Restarted %s", podId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		restartedPods := successCounter.Load()
+		if restartedPods > 1 {
+			msg := fmt.Sprintf("Restarted %d Pods", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
+		return nil
+	}
+}

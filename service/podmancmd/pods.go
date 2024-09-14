@@ -28,7 +28,7 @@ func (pc *PodmanClient) ResumePods(id string) error {
 	return err
 }
 
-func (pc *PodmanClient) RestartPods(id string) error {
+func (pc *PodmanClient) RestartPod(id string) error {
 	_, err := pods.Restart(pc.cli, id, nil)
 	return err
 }
