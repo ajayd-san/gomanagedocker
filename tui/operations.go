@@ -517,3 +517,69 @@ func ToggleStartStopPods(
 		return nil
 	}
 }
+
+// Returns func that calls dockercmd api to toggle pause/resume container, and sends notification to `notificaitonChan`
+func togglePauseResumePods(
+	client *podmancmd.PodmanClient,
+	pods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounterPaused atomic.Uint32
+		var successCounterResumed atomic.Uint32
+
+		for _, pod := range pods {
+
+			wg.Add(1)
+			go func() {
+				podInfo := pod.(PodItem)
+				podId := podInfo.GetId()
+				state := strings.ToLower(podInfo.Status)
+				err := client.TogglePauseResumePod(podId, state)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := ""
+					if state == "running" {
+						msg = "Paused " + podId[:8]
+						successCounterPaused.Add(1)
+					} else {
+						msg = "Resumed " + podId[:8]
+						successCounterResumed.Add(1)
+					}
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+				}
+				wg.Done()
+			}()
+		}
+
+		// send notification
+		wg.Wait()
+
+		resumedPods := successCounterResumed.Load()
+		pausedPods := successCounterPaused.Load()
+
+		if resumedPods+pausedPods > 1 {
+			var msg string
+			if pausedPods > 0 {
+				msg = fmt.Sprintf("Paused: %d", pausedPods)
+			}
+			if resumedPods > 0 {
+				if msg == "" {
+					msg = fmt.Sprintf("Resumed: %d", resumedPods)
+				} else {
+					msg = fmt.Sprintf("%s, Resumed: %d", msg, resumedPods)
+				}
+			}
+			msg = fmt.Sprintf("%s containers", msg)
+			notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+			notificationChan <- notif
+		}
+		return nil
+	}
+}

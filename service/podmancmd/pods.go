@@ -62,7 +62,7 @@ func (pc *PodmanClient) ToggleStartStopPod(id string, isRunning bool) error {
 	return err
 }
 
-func (pc *PodmanClient) TogglePauseResumePods(id string, state string) error {
+func (pc *PodmanClient) TogglePauseResumePod(id string, state string) error {
 	var err error
 	if state == "paused" {
 		_, err = pods.Unpause(pc.cli, id, nil)

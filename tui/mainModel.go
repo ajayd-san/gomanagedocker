@@ -596,11 +596,13 @@ notificationLoop:
 					}
 
 				case key.Matches(assertedMsg, m.keymap.pods.TogglePause):
-					selectedItems := m.getSelectedItems()
 
-					op := togglePauseResumeContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
-					go m.runBackground(op)
-					cmds = append(cmds, clearSelectionCmd())
+					if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+						selectedItems := m.getSelectedItems()
+						op := togglePauseResumePods(podmanClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+						go m.runBackground(op)
+						cmds = append(cmds, clearSelectionCmd())
+					}
 
 				case key.Matches(assertedMsg, m.keymap.pods.Restart):
 					selectedItems := m.getSelectedItems()
