@@ -236,6 +236,10 @@ func (po PodItem) Title() string {
 	return po.Name
 }
 
+func (po PodItem) getState() string {
+	return strings.ToLower(po.Status)
+}
+
 func (po PodItem) Description() string {
 	state := po.Status
 	switch state {

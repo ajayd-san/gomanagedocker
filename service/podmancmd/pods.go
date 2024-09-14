@@ -2,6 +2,7 @@ package podmancmd
 
 import (
 	"fmt"
+	"os/exec"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/podman/v5/pkg/bindings/pods"
@@ -91,4 +92,8 @@ func (pc *PodmanClient) DeletePod(id string, force bool) (*it.PodsRemoveReport, 
 	return &it.PodsRemoveReport{
 		Removed: len(report.RemovedCtrs),
 	}, nil
+}
+
+func (pc *PodmanClient) LogsCmdPods(id string) *exec.Cmd {
+	return exec.Command("podman", "pod", "logs", "--follow", "--color", id)
 }

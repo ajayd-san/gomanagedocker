@@ -653,7 +653,6 @@ notificationLoop:
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						object := currentItem.(dockerRes)
 						op := copyIdToClipboard(object, m.activeTab, m.notificationChan)
-
 						op()
 					}
 
@@ -661,16 +660,18 @@ notificationLoop:
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
-						dres := currentItem.(containerItem)
-						if dres.State == "running" {
-							id := dres.GetId()
-							cmd := m.dockerClient.LogsCmd(id)
-							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
-								if err.Error() != "exit status 1" {
-									m.possibleLongRunningOpErrorChan <- err
-								}
-								return nil
-							}))
+						dres := currentItem.(PodItem)
+						if dres.getState() == "running" {
+							if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+								id := dres.GetId()
+								cmd := podmanClient.LogsCmdPods(id)
+								cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+									if err.Error() != "exit status 1" {
+										m.possibleLongRunningOpErrorChan <- err
+									}
+									return nil
+								}))
+							}
 						}
 					}
 				}
