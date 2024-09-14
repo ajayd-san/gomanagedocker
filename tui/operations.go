@@ -667,3 +667,17 @@ func PodsDeleteBulk(
 		return nil
 	}
 }
+
+func podsPrune(client *podmancmd.PodmanClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		pruneReport, err := client.PrunePods()
+
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Pruned %d pods", pruneReport.Removed)
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		return nil
+	}
+}

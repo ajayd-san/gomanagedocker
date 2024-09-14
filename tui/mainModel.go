@@ -642,7 +642,7 @@ notificationLoop:
 
 				case key.Matches(assertedMsg, m.keymap.pods.Prune):
 					if !m.isCurrentTabInBulkMode() {
-						m.activeDialog = getPruneContainersDialog(make(map[string]string))
+						m.activeDialog = getPrunePodsDialog(make(map[string]string))
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
@@ -859,6 +859,17 @@ notificationLoop:
 			}
 
 			go m.runBackground(op)
+
+		case dialogPrunePods:
+			userChoices := dialogRes.UserChoices
+
+			if userChoices["confirmPrunePods"].(string) == "Yes" {
+				if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+					op := podsPrune(podmanClient, m.activeTab, m.notificationChan)
+					go m.runBackground(op)
+				}
+			}
+
 		}
 
 	}

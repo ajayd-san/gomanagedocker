@@ -9,16 +9,24 @@ import (
 )
 
 const (
+	// containers
 	dialogRemoveContainer teadialog.DialogType = iota
 	dialogPruneContainers
+
+	// images
 	dialogRemoveImage
 	dialogPruneImages
 	dialogRunImage
-	dialogPruneVolumes
-	dialogRemoveVolumes
 	dialogImageScout
 	dialogImageBuild
 	dialogImageBuildProgress
+
+	// volumes
+	dialogPruneVolumes
+	dialogRemoveVolumes
+
+	// pods
+	dialogPrunePods
 )
 
 func getRunImageDialog(storage map[string]string) teadialog.Dialog {
@@ -145,4 +153,13 @@ func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 		progressBar:  progressBar,
 		inner:        &infoCard,
 	}
+}
+
+// PODS
+func getPrunePodsDialog(storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeOptionPrompt("confirmPrunePods", "This will remove all stopped pods, are your sure?", []string{"Yes", "No"}),
+	}
+
+	return teadialog.InitDialogWithPrompt("Prune Pods: ", prompts, dialogPrunePods, storage)
 }
