@@ -137,6 +137,17 @@ func (m *listModel) updateTab(newlist []dockerRes) {
 		case VOLUMES:
 			// newA := a.(VolumeItem)
 			// newB := b.(VolumeItem)
+		case PODS:
+			newA := a.(PodItem)
+			newB := b.(PodItem)
+
+			if newA.Status != newB.Status {
+				return false
+			}
+
+			if len(newA.Containers) != len(newB.Containers) {
+				return false
+			}
 		}
 
 		return true

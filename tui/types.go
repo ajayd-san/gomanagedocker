@@ -263,11 +263,12 @@ func makePodItem(dockerlist []*types.ListPodsReport) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
 	for i, item := range dockerlist {
+		// cuz we use lower case version of status
+		item.Status = strings.ToLower(item.Status)
 		res[i] = PodItem{
 			ListPodsReport: *item,
 		}
 	}
-
 	return res
 }
 

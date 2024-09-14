@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
 	"github.com/ajayd-san/gomanagedocker/service/types"
 	"golang.design/x/clipboard"
 )
@@ -448,5 +449,71 @@ func volumePrune(client service.Service, activeTab tabId, notificationChan chan 
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 
+	}
+}
+
+// Pods
+func ToggleStartStopPods(
+	client podmancmd.PodmanClient,
+	selectedPods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+		var successCounterStarted atomic.Uint32
+		var successCounterStopped atomic.Uint32
+		var wg sync.WaitGroup
+
+		for _, dres := range selectedPods {
+			wg.Add(1)
+			go func() {
+				pod := dres.(PodItem)
+				isRunning := pod.Status == "running"
+				err := client.ToggleStartStopPod(pod.Id, isRunning)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					notifMsg := ""
+					if isRunning {
+						notifMsg = fmt.Sprintf("Stopped %s", pod.Id[:8])
+						successCounterStopped.Add(1)
+					} else {
+						notifMsg = fmt.Sprintf("Started %s", pod.Id[:8])
+						successCounterStarted.Add(1)
+					}
+					notificationChan <- notificationMetadata{
+						listId: activeTab,
+						msg:    listStatusMessageStyle.Render(notifMsg),
+					}
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		startedPods := successCounterStarted.Load()
+		stoppedPods := successCounterStopped.Load()
+
+		if startedPods+stoppedPods > 1 {
+			var msg string
+			if stoppedPods > 0 {
+				msg = fmt.Sprintf("Stopped: %d", stoppedPods)
+			}
+			if startedPods > 0 {
+				if msg == "" {
+					msg = fmt.Sprintf("Started: %d", startedPods)
+				} else {
+					msg = fmt.Sprintf("%s, Started: %d", msg, startedPods)
+				}
+			}
+			msg = fmt.Sprintf("%s containers", msg)
+			notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+			notificationChan <- notif
+		}
+		return nil
 	}
 }
