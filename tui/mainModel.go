@@ -616,8 +616,9 @@ notificationLoop:
 				case key.Matches(assertedMsg, m.keymap.pods.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
-						containerInfo := curItem.(dockerRes)
-						dialog := getRemoveContainerDialog(map[string]string{"ID": containerInfo.GetId()})
+						podInfo := curItem.(PodItem)
+						running := podInfo.getRunningContainers()
+						dialog := getRemovePodDialog(running, map[string]string{"ID": podInfo.GetId()})
 						m.activeDialog = dialog
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
@@ -870,6 +871,17 @@ notificationLoop:
 				}
 			}
 
+		case dialogDeletePod:
+			userChoices := dialogRes.UserChoices
+			storage := dialogRes.UserStorage
+
+			force := userChoices["force"].(bool)
+
+			if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+				op := podDelete(podmanClient, storage["ID"], force, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
+
+			}
 		}
 
 	}

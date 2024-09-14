@@ -240,6 +240,18 @@ func (po PodItem) getState() string {
 	return strings.ToLower(po.Status)
 }
 
+// returns count of running container
+func (po PodItem) getRunningContainers() int {
+	var counter int
+	for _, cont := range po.Containers {
+		if cont.Status == "running" {
+			counter += 1
+		}
+	}
+
+	return counter
+}
+
 func (po PodItem) Description() string {
 	state := po.Status
 	switch state {

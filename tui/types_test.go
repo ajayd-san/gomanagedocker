@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ajayd-san/gomanagedocker/service/types"
+	podmanTypes "github.com/containers/podman/v5/pkg/domain/entities/types"
 	"gotest.tools/v3/assert"
 )
 
@@ -95,4 +96,37 @@ func TestTransformListNames(t *testing.T) {
 		// should not panic
 		transformListNames(names)
 	})
+}
+
+func TestGetRunningContainers(t *testing.T) {
+	item := PodItem{
+		ListPodsReport: podmanTypes.ListPodsReport{
+			Containers: []*podmanTypes.ListPodContainer{
+				{
+					Id:     "a",
+					Status: "running",
+				},
+				{
+					Id:     "b",
+					Status: "running",
+				},
+				{
+					Id:     "c",
+					Status: "running",
+				},
+				{
+					Id:     "d",
+					Status: "exited",
+				},
+			},
+			Id:     "1234",
+			Name:   "mario",
+			Status: "running",
+		},
+	}
+
+	got := item.getRunningContainers()
+	want := 3
+
+	assert.Equal(t, got, want)
 }

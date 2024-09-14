@@ -90,7 +90,7 @@ func (pc *PodmanClient) DeletePod(id string, force bool) (*it.PodsRemoveReport, 
 	}
 
 	return &it.PodsRemoveReport{
-		Removed: len(report.RemovedCtrs),
+		RemovedCtrs: len(report.RemovedCtrs),
 	}, nil
 }
 

@@ -215,7 +215,13 @@ func toggleRestartContainer(
 }
 
 // Returns func that calls dockercmd api to deletes container using `opts` as options and sends notification to notificationChan
-func containerDelete(client service.Service, containerId string, opts types.ContainerRemoveOpts, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func containerDelete(
+	client service.Service,
+	containerId string,
+	opts types.ContainerRemoveOpts,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+) Operation {
 	return func() error {
 		err := client.DeleteContainer(containerId, opts)
 
@@ -677,6 +683,21 @@ func podsPrune(client *podmancmd.PodmanClient, activeTab tabId, notificationChan
 		}
 
 		msg := fmt.Sprintf("Pruned %d pods", pruneReport.Removed)
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		return nil
+	}
+}
+
+func podDelete(client *podmancmd.PodmanClient, id string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		//TODO: use the report to display notificaiton?
+		_, err := client.DeletePod(id, force)
+
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Deleted pod %s", id[:8])
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 	}

@@ -140,5 +140,5 @@ type PodsPruneReport struct {
 }
 
 type PodsRemoveReport struct {
-	Removed int
+	RemovedCtrs int
 }
