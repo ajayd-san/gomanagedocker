@@ -625,3 +625,45 @@ func restartPods(
 		return nil
 	}
 }
+
+func PodsDeleteBulk(
+	client *podmancmd.PodmanClient,
+	pods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, podInfo := range pods {
+
+			wg.Add(1)
+			go func() {
+				containerId := podInfo.GetId()
+				//TODO: use report to display number of pods deleted
+				_, err := client.DeletePod(containerId, true)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Deleted %s", containerId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		if successCounter.Load() > 1 {
+			msg := fmt.Sprintf("Deleted %d pods", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
+		return nil
+	}
+}

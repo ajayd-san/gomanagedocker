@@ -624,25 +624,21 @@ notificationLoop:
 					}
 
 				case key.Matches(assertedMsg, m.keymap.pods.DeleteForce):
-					selectedItems := m.getSelectedItems()
 
-					deleteOpts := it.ContainerRemoveOpts{
-						RemoveVolumes: false,
-						RemoveLinks:   false,
-						Force:         true,
+					if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+						selectedItems := m.getSelectedItems()
+
+						op := PodsDeleteBulk(
+							podmanClient,
+							selectedItems,
+							m.activeTab,
+							m.notificationChan,
+							m.possibleLongRunningOpErrorChan,
+						)
+						go m.runBackground(op)
+
+						cmds = append(cmds, clearSelectionCmd())
 					}
-
-					op := containerDeleteBulk(
-						m.dockerClient,
-						selectedItems,
-						deleteOpts,
-						m.activeTab,
-						m.notificationChan,
-						m.possibleLongRunningOpErrorChan,
-					)
-					go m.runBackground(op)
-
-					cmds = append(cmds, clearSelectionCmd())
 
 				case key.Matches(assertedMsg, m.keymap.pods.Prune):
 					if !m.isCurrentTabInBulkMode() {
