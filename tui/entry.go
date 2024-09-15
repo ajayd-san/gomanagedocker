@@ -22,9 +22,18 @@ var (
 	VOLUMES    tabId
 )
 
-var CONFIG_POLLING_TIME time.Duration
-var CONFIG_TAB_ORDERING []string
-var CONFIG_NOTIFICATION_TIMEOUT time.Duration
+var (
+	CONFIG_POLLING_TIME         time.Duration
+	CONFIG_TAB_ORDERING         []string
+	CONFIG_NOTIFICATION_TIMEOUT time.Duration
+	NavKeymap                   *navigationKeymap
+	ImageKeymap                 *imgKeymap
+	imageKeymapBulk             *imgKeymapBulk
+	ContainerKeymap             *contKeymap
+	ContainerKeymapBulk         *contKeymapBulk
+	VolumeKeymap                *volKeymap
+	volumeKeymapBulk            *volKeymapBulk
+)
 
 var globalConfig = koanf.New(".")
 
@@ -42,8 +51,10 @@ func StartTUI(debug bool) error {
 		log.SetOutput(io.Discard)
 	}
 
+	fmt.Println(tea.KeySpace.String())
 	readConfig()
 	loadConfig()
+	loadKeyBindings()
 
 	m := NewModel()
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
@@ -64,7 +75,6 @@ func StartTUI(debug bool) error {
 
 func readConfig() {
 	configPath, err := os.UserConfigDir()
-
 	if err != nil {
 		log.Println("$HOME could not be determined")
 	}
@@ -78,6 +88,17 @@ func loadConfig() {
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
 	CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order")
 	setTabConstants(CONFIG_TAB_ORDERING)
+}
+
+func loadKeyBindings() {
+	keybinds := initKeyBindingsConstant()
+	NavKeymap = keybinds.initNavigationKeys()
+	ImageKeymap = keybinds.initImageKeys()
+	imageKeymapBulk = keybinds.initImageKeysBulk()
+	ContainerKeymap = keybinds.initContainerKeys()
+	ContainerKeymapBulk = keybinds.initContainerKeysBulk()
+	VolumeKeymap = keybinds.initVolumeKeys()
+	volumeKeymapBulk = keybinds.initVolumeKeysBulk()
 }
 
 // set tab variables, AKA IMAGES, CONTAINERS, VOLUMES, etc.
