@@ -962,7 +962,8 @@ func (m MainModel) View() string {
 
 	infobox := ""
 	if curItem != nil && m.displayInfoBox {
-		infobox = m.populateInfoBox(curItem)
+		infobox = curItem.(InfoBoxer).InfoBox()
+		infobox = moreInfoStyle.Render(infobox)
 	}
 
 	// TODO: align info box to right edge of the window
@@ -1030,7 +1031,7 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 
 	case CONTAINERS:
 		newContainers := m.dockerClient.ListContainers(false)
-		newlist = makeContainerItems(newContainers)
+		newlist = makeContainerItems(newContainers, m.imageIdToNameMap, m.containerSizeTracker)
 
 		for _, newContainer := range newlist {
 			id := newContainer.GetId()
@@ -1075,36 +1076,6 @@ func (m MainModel) updateContent(tab tabId) MainModel {
 	listM, _ := m.TabContent[tab].Update(newlist)
 	m.TabContent[tab] = listM.(listModel)
 	return m
-}
-
-// Generates info box for the current list item
-func (m MainModel) populateInfoBox(item list.Item) string {
-	temp, _ := item.(dockerRes)
-	switch m.activeTab {
-	case IMAGES:
-		if it, ok := temp.(imageItem); ok {
-			info := populateImageInfoBox(it)
-			return moreInfoStyle.Render(info)
-		}
-
-	case CONTAINERS:
-		if ct, ok := temp.(containerItem); ok {
-			info := populateContainerInfoBox(ct, &m.containerSizeTracker, m.imageIdToNameMap)
-			return moreInfoStyle.Render(info)
-		}
-
-	case VOLUMES:
-		if vt, ok := temp.(VolumeItem); ok {
-			info := populateVolumeInfoBox(vt)
-			return moreInfoStyle.Render(info)
-		}
-	case PODS:
-		if pt, ok := temp.(PodItem); ok {
-			info := populatePodsInfoBox(pt)
-			return moreInfoStyle.Render(info)
-		}
-	}
-	return ""
 }
 
 // Util

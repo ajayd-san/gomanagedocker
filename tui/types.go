@@ -96,9 +96,14 @@ func (i imageItem) FilterValue() string { return i.getName() }
 
 type containerItem struct {
 	it.ContainerSummary
+	ImageName string
 }
 
-func makeContainerItems(dockerlist []it.ContainerSummary) []dockerRes {
+func makeContainerItems(
+	dockerlist []it.ContainerSummary,
+	imageIdToNameMap map[string]string,
+	containerSizeTracker ContainerSizeManager,
+) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
 	slices.SortFunc(dockerlist, func(a it.ContainerSummary, b it.ContainerSummary) int {
@@ -114,7 +119,18 @@ func makeContainerItems(dockerlist []it.ContainerSummary) []dockerRes {
 	})
 
 	for i := range dockerlist {
-		res[i] = containerItem{dockerlist[i]}
+		newItem := containerItem{
+			ContainerSummary: dockerlist[i],
+		}
+		newItem.ImageName = imageIdToNameMap[newItem.ImageID]
+		if containerSizeTracker.mu.TryLock() {
+			containerSizeInfo := containerSizeTracker.sizeMap[newItem.ID]
+			newItem.SizeRw = containerSizeInfo.sizeRw
+			newItem.SizeRootFs = containerSizeInfo.rootFs
+			containerSizeTracker.mu.Unlock()
+		}
+
+		res[i] = newItem
 	}
 
 	return res

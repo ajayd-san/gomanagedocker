@@ -9,68 +9,53 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 )
 
-func populateImageInfoBox(imageinfo imageItem) string {
+type InfoBoxer interface {
+	InfoBox() string
+}
+
+func (im imageItem) InfoBox() string {
 	var res strings.Builder
-	id := strings.TrimPrefix(imageinfo.ID, "sha256:")
+	id := strings.TrimPrefix(im.ID, "sha256:")
 	id = trimToLength(id, moreInfoStyle.GetWidth())
 	addEntry(&res, "id: ", id)
-	addEntry(&res, "Name: ", imageinfo.getName())
-	sizeInGb := float64(imageinfo.getSize())
+	addEntry(&res, "Name: ", im.getName())
+	sizeInGb := float64(im.getSize())
 	addEntry(&res, "Size: ", strconv.FormatFloat(sizeInGb, 'f', 2, 64)+"GB")
-	if imageinfo.Containers != -1 {
-		addEntry(&res, "Containers: ", strconv.Itoa(int(imageinfo.Containers)))
+	if im.Containers != -1 {
+		addEntry(&res, "Containers: ", strconv.Itoa(int(im.Containers)))
 	}
-	addEntry(&res, "Created: ", time.Unix(imageinfo.Created, 0).Format(time.UnixDate))
+	addEntry(&res, "Created: ", time.Unix(im.Created, 0).Format(time.UnixDate))
 	return res.String()
 }
 
-func populateVolumeInfoBox(volumeInfo VolumeItem) string {
-	var res strings.Builder
-
-	addEntry(&res, "Name: ", volumeInfo.getName())
-	addEntry(&res, "Created: ", volumeInfo.CreatedAt)
-	addEntry(&res, "Driver: ", volumeInfo.Driver)
-
-	mntPt := trimToLength(volumeInfo.Mountpoint, moreInfoStyle.GetWidth())
-	addEntry(&res, "Mount Point: ", mntPt)
-
-	if size := volumeInfo.getSize(); size != -1 {
-		addEntry(&res, "Size: ", fmt.Sprintf("%f", size))
-	} else {
-		addEntry(&res, "Size: ", "Not Available")
-	}
-
-	return res.String()
-}
-
-func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker *ContainerSizeManager, imageIdToNameMap map[string]string) string {
+func (containerInfo containerItem) InfoBox() string {
 	var res strings.Builder
 
 	id := trimToLength(containerInfo.ID, moreInfoStyle.GetWidth())
 	addEntry(&res, "ID: ", id)
 	addEntry(&res, "Name: ", containerInfo.getName())
-	addEntry(&res, "Image: ", imageIdToNameMap[containerInfo.ImageID])
+	addEntry(&res, "Image: ", containerInfo.ImageName)
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
 
 	//this is a pretty trivial refactor to make this look cleaner, but I'm too lazy to do this
 	// whoever completes this bounty will win......nothing (except my heart)
-	if mutexok := containerSizeTracker.mu.TryLock(); mutexok {
-		if containerSizeInfo, ok := containerSizeTracker.sizeMap[containerInfo.ID]; ok {
-			rootSizeInGb := float64(containerSizeInfo.rootFs) / float64(1e+9)
-			SizeRwInGb := float64(containerSizeInfo.sizeRw) / float64(1e+9)
+	// if mutexok := containerSizeTracker.mu.TryLock(); mutexok {
+	// 	if containerSizeInfo, ok := containerSizeTracker.sizeMap[containerInfo.ID]; ok {
+	// 		rootSizeInGb := float64(containerSizeInfo.rootFs) / float64(1e+9)
+	// 		SizeRwInGb := float64(containerSizeInfo.sizeRw) / float64(1e+9)
 
-			addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
-			addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
-		} else {
-			addEntry(&res, "Root FS Size: ", "Calculating...")
-			addEntry(&res, "SizeRw: ", "Calculating...")
-		}
+	// 		addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
+	// 		addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
+	// 	} else {
+	// 		addEntry(&res, "Root FS Size: ", "Calculating...")
+	// 		addEntry(&res, "SizeRw: ", "Calculating...")
+	// 	}
 
-		containerSizeTracker.mu.Unlock()
-	} else {
-		addEntry(&res, "Root FS Size: ", "Calculating...")
-		addEntry(&res, "SizeRw: ", "Calculating...")
-	}
+	// 	containerSizeTracker.mu.Unlock()
+	// } else {
+	// 	addEntry(&res, "Root FS Size: ", "Calculating...")
+	// 	addEntry(&res, "SizeRw: ", "Calculating...")
+	// }
 
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)
@@ -85,12 +70,31 @@ func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker 
 	return res.String()
 }
 
-func populatePodsInfoBox(pod PodItem) string {
+func (vi VolumeItem) InfoBox() string {
 	var res strings.Builder
-	addEntry(&res, "Name: ", pod.Name)
-	addEntry(&res, "ID:", pod.Id)
-	addEntry(&res, "Status: ", pod.Status)
-	addEntry(&res, "Containers: ", strconv.Itoa(len(pod.Containers)))
+
+	addEntry(&res, "Name: ", vi.getName())
+	addEntry(&res, "Created: ", vi.CreatedAt)
+	addEntry(&res, "Driver: ", vi.Driver)
+
+	mntPt := trimToLength(vi.Mountpoint, moreInfoStyle.GetWidth())
+	addEntry(&res, "Mount Point: ", mntPt)
+
+	if size := vi.getSize(); size != -1 {
+		addEntry(&res, "Size: ", fmt.Sprintf("%f", size))
+	} else {
+		addEntry(&res, "Size: ", "Not Available")
+	}
+
+	return res.String()
+}
+
+func (pi PodItem) InfoBox() string {
+	var res strings.Builder
+	addEntry(&res, "Name: ", pi.Name)
+	addEntry(&res, "ID:", pi.Id)
+	addEntry(&res, "Status: ", pi.Status)
+	addEntry(&res, "Containers: ", strconv.Itoa(len(pi.Containers)))
 
 	return res.String()
 }
