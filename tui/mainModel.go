@@ -107,7 +107,11 @@ func (m MainModel) Init() tea.Cmd {
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
 	preloadSize := func() tea.Msg { return preloadSizeMap{} }
-	return tea.Batch(preloadCmd, preloadSize, doUpdateObjectsTick())
+	delayedInitialTick := func() tea.Msg {
+		time.Sleep(2 * time.Second)
+		return TickMsg{}
+	}
+	return tea.Batch(preloadCmd, preloadSize, delayedInitialTick)
 }
 
 // Initializes and returns a new Model instance.
@@ -222,11 +226,12 @@ notificationLoop:
 		//FIXME: use a range on TAB_ORDERING to preload lists
 
 		for tabid := range CONFIG_TAB_ORDERING {
-			m = m.updateContent(tabId(tabid))
+			m = m.updateContent(tabId(tabid), true)
 		}
 
 	case TickMsg:
-		m = m.updateContent(m.activeTab)
+		log.Println("Got tick mesage")
+		m = m.updateContent(m.activeTab, false)
 
 		cmds = append(cmds, doUpdateObjectsTick())
 
@@ -1006,7 +1011,7 @@ func (m MainModel) View() string {
 Fetches new data from the docker api and returns []dockerRes, also updates other required fields depending on the tabId passed.
 Passing `wg` is optional and is add is added for the sole purpose of testing.
 */
-func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
+func (m MainModel) fetchNewData(tab tabId, first bool, wg *sync.WaitGroup) []dockerRes {
 	var newlist []dockerRes
 	switch tab {
 	case IMAGES:
@@ -1033,26 +1038,28 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 		newContainers := m.dockerClient.ListContainers(false)
 		newlist = makeContainerItems(newContainers, m.imageIdToNameMap, m.containerSizeTracker)
 
-		for _, newContainer := range newlist {
-			id := newContainer.GetId()
-			if _, ok := m.containerSizeTracker.sizeMap[id]; !ok {
+		if !first {
+			go func() {
+				for _, newContainer := range newlist {
+					id := newContainer.GetId()
+					if _, ok := m.containerSizeTracker.sizeMap[id]; !ok {
+						if wg != nil {
+							wg.Add(1)
+						}
+						if wg != nil {
+							defer wg.Done()
+						}
+						containerInfo, err := m.dockerClient.InspectContainer(id)
 
-				if wg != nil {
-					wg.Add(1)
+						if err != nil {
+							panic(err)
+						}
+
+						updateContainerSizeMap(*containerInfo, &m.containerSizeTracker)
+					}
 				}
-				go func() {
-					if wg != nil {
-						defer wg.Done()
-					}
-					containerInfo, err := m.dockerClient.InspectContainer(id)
 
-					if err != nil {
-						panic(err)
-					}
-
-					updateContainerSizeMap(*containerInfo, &m.containerSizeTracker)
-				}()
-			}
+			}()
 		}
 
 	case VOLUMES:
@@ -1070,8 +1077,8 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 }
 
 // fetches new docker data and updates the list in the current tab.
-func (m MainModel) updateContent(tab tabId) MainModel {
-	newlist := m.fetchNewData(tab, nil)
+func (m MainModel) updateContent(tab tabId, first bool) MainModel {
+	newlist := m.fetchNewData(tab, first, nil)
 	// m.TabContent[tab] = m.TabContent[tab].updateTab(m.dockerClient)
 	listM, _ := m.TabContent[tab].Update(newlist)
 	m.TabContent[tab] = listM.(listModel)
