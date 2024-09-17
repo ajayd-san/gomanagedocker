@@ -54,19 +54,23 @@ func toImageSummaryArr(summary []image.Summary) []types.ImageSummary {
 func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 	res := make([]types.ContainerSummary, len(summary))
 
-	for index, entry := range summary {
-		res[index] = types.ContainerSummary{
-			ID:         entry.ID,
-			ImageID:    entry.ImageID,
-			Created:    entry.Created,
-			Names:      entry.Names,
-			State:      entry.State,
-			Command:    entry.Command,
-			SizeRw:     entry.SizeRw,
-			SizeRootFs: entry.SizeRootFs,
-			Mounts:     getMounts(entry.Mounts),
-			Ports:      toPort(entry.Ports),
+	for i, entry := range summary {
+		item := types.ContainerSummary{
+			ID:      entry.ID,
+			ImageID: entry.ImageID,
+			Created: entry.Created,
+			Names:   entry.Names,
+			State:   entry.State,
+			Command: entry.Command,
+			Mounts:  getMounts(entry.Mounts),
+			Ports:   toPort(entry.Ports),
+			Size: &types.SizeInfo{
+				Rw:     entry.SizeRw,
+				RootFs: entry.SizeRootFs,
+			},
 		}
+
+		res[i] = item
 	}
 
 	return res
@@ -129,12 +133,11 @@ func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData 
 		// Command:    info.Command,
 	}
 
-	if info.SizeRootFs != nil {
-		res.SizeRootFs = *info.SizeRootFs
-	}
-
-	if info.SizeRw != nil {
-		res.SizeRw = *info.SizeRw
+	if info.SizeRootFs != nil && info.SizeRw != nil {
+		res.Size = &types.SizeInfo{
+			Rw:     *info.SizeRw,
+			RootFs: *info.SizeRootFs,
+		}
 	}
 
 	return &types.InspectContainerData{ContainerSummary: res}

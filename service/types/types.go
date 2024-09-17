@@ -60,10 +60,14 @@ type ContainerSummary struct {
 	State   string
 	Command string
 	// Status     string
-	SizeRw     int64
-	SizeRootFs int64
-	Mounts     []string
-	Ports      []Port
+	Size   *SizeInfo
+	Mounts []string
+	Ports  []Port
+}
+
+type SizeInfo struct {
+	Rw     int64
+	RootFs int64
 }
 
 type Port struct {

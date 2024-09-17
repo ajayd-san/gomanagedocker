@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -37,25 +38,17 @@ func (containerInfo containerItem) InfoBox() string {
 	addEntry(&res, "Image: ", containerInfo.ImageName)
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
 
-	//this is a pretty trivial refactor to make this look cleaner, but I'm too lazy to do this
-	// whoever completes this bounty will win......nothing (except my heart)
-	// if mutexok := containerSizeTracker.mu.TryLock(); mutexok {
-	// 	if containerSizeInfo, ok := containerSizeTracker.sizeMap[containerInfo.ID]; ok {
-	// 		rootSizeInGb := float64(containerSizeInfo.rootFs) / float64(1e+9)
-	// 		SizeRwInGb := float64(containerSizeInfo.sizeRw) / float64(1e+9)
+	if containerInfo.Size != nil {
+		log.Println("In infobox: ", containerInfo.Size)
+		rootSizeInGb := float64(containerInfo.Size.RootFs) / float64(1e+9)
+		SizeRwInGb := float64(containerInfo.Size.Rw) / float64(1e+9)
 
-	// 		addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
-	// 		addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
-	// 	} else {
-	// 		addEntry(&res, "Root FS Size: ", "Calculating...")
-	// 		addEntry(&res, "SizeRw: ", "Calculating...")
-	// 	}
-
-	// 	containerSizeTracker.mu.Unlock()
-	// } else {
-	// 	addEntry(&res, "Root FS Size: ", "Calculating...")
-	// 	addEntry(&res, "SizeRw: ", "Calculating...")
-	// }
+		addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
+		addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
+	} else {
+		addEntry(&res, "Root FS Size: ", "Calculating...")
+		addEntry(&res, "SizeRw: ", "Calculating...")
+	}
 
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)

@@ -43,8 +43,8 @@ func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
 		}
 
 		if entry.Size != nil {
-			res[index].SizeRw = entry.Size.RwSize
-			res[index].SizeRootFs = entry.Size.RootFsSize
+			res[index].Size.Rw = entry.Size.RwSize
+			res[index].Size.RootFs = entry.Size.RootFsSize
 		}
 	}
 

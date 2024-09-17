@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -1165,20 +1166,25 @@ func copyToClipboard(str string) {
 func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
+	log.Println("prepopulate----------")
 	for _, info := range containerInfoWithSize {
+		log.Println(info.ID)
 		m.containerSizeTracker.sizeMap[info.ID] = ContainerSize{
-			sizeRw: info.SizeRw,
-			rootFs: info.SizeRootFs,
+			sizeRw: info.Size.Rw,
+			rootFs: info.Size.RootFs,
 		}
 	}
+
+	log.Println("prepopulate----------")
 }
 
 // Adds size info from containerInfo to containersizeTracker. Meant to be used on demand when new container gets added.
 func updateContainerSizeMap(containerInfo it.InspectContainerData, containerSizeTracker *ContainerSizeManager) {
+	log.Println("Resetting: ", containerInfo.ID, containerInfo.Size)
 	containerSizeTracker.mu.Lock()
 	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
-		sizeRw: containerInfo.SizeRw,
-		rootFs: containerInfo.SizeRootFs,
+		sizeRw: containerInfo.Size.Rw,
+		rootFs: containerInfo.Size.RootFs,
 	}
 	containerSizeTracker.mu.Unlock()
 }

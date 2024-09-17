@@ -2,6 +2,7 @@ package tui
 
 import (
 	"cmp"
+	"log"
 	"slices"
 	"sort"
 	"strconv"
@@ -124,14 +125,23 @@ func makeContainerItems(
 		}
 		newItem.ImageName = imageIdToNameMap[newItem.ImageID]
 		if containerSizeTracker.mu.TryLock() {
-			containerSizeInfo := containerSizeTracker.sizeMap[newItem.ID]
-			newItem.SizeRw = containerSizeInfo.sizeRw
-			newItem.SizeRootFs = containerSizeInfo.rootFs
+			if containerSizeInfo, ok := containerSizeTracker.sizeMap[newItem.ID]; ok {
+				newItem.Size = &it.SizeInfo{
+					Rw:     containerSizeInfo.sizeRw,
+					RootFs: containerSizeInfo.rootFs,
+				}
+			}
 			containerSizeTracker.mu.Unlock()
 		}
 
 		res[i] = newItem
 	}
+
+	log.Println("------------------------")
+	for _, items := range res {
+		log.Println(items.(containerItem).Size)
+	}
+	log.Println("------------------------")
 
 	return res
 }
@@ -142,7 +152,7 @@ func (c containerItem) GetId() string {
 }
 
 func (c containerItem) getSize() float64 {
-	return float64(c.SizeRw) / float64(1e+9)
+	panic("unimplemented")
 }
 
 func (c containerItem) getLabel() string {
