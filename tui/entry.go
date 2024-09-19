@@ -51,7 +51,6 @@ func StartTUI(debug bool) error {
 		log.SetOutput(io.Discard)
 	}
 
-	fmt.Println(tea.KeySpace.String())
 	readConfig()
 	loadConfig()
 	loadKeyBindings()
