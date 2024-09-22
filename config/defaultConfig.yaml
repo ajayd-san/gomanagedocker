@@ -2,3 +2,53 @@ config:
   Polling-Time: 500
   Tab-Order: [images, containers, volumes]
   Notification-Timeout: 2000
+keybindings:
+  navigation:
+    Enter: [enter]
+    Back: [esc]
+    Quit: [q, ctrl+c]
+    Select: [" "]
+    NextTab: [right, tab, l]
+    PrevTab: [left, shift+tab, h]
+    NextItem: [down, j]
+    PrevItem: [up, k]
+    PrevPage: ["["]
+    NextPage: ["]"]
+  image:
+    Run: [r]
+    Rename: [R]
+    Build: [b]
+    Scout: [s]
+    Prune: [p]
+    Delete: [d]
+    DeleteForce: [D]
+    CopyId: [c]
+    RunAndExec: [x]
+    DeleteForceBulk: [D]
+    ExitSelectionMode: [esc]
+  container:
+    ToggleListAll: [a]
+    ToggleStartStop: [s]
+    TogglePause: [t]
+    Restart: [r]
+    Delete: [d]
+    DeleteForce: [D]
+    Exec: [x]
+    Prune: [p]
+    CopyId: [c]
+    ShowLogs: [L]
+  containerBulk:
+    ToggleListAll: [a]
+    ToggleStartStop: [s]
+    TogglePause: [t]
+    Restart: [r]
+    DeleteForce: [D]
+    ExitSelectionMode: [esc]
+  volume:
+    Delete: [d]
+    DeleteForce: [D]
+    Prune: [p]
+    CopyId: [c]
+  volumeBulk:
+    DeleteForce: [D]
+    ExitSelectionMode: [esc]

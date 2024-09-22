@@ -27,6 +27,12 @@ func TestNotifyList(t *testing.T) {
 
 	mockcli := dockercmd.NewMockCli(&api)
 
+	readConfig()
+	loadConfig()
+	keybinds := initKeyBindingsConstant()
+	NavKeymap = keybinds.initNavigationKeys()
+	ContainerKeymap = keybinds.initContainerKeys()
+	ContainerKeymapBulk = keybinds.initContainerKeysBulk()
 	CONTAINERS = 0
 	model := MainModel{
 		dockerClient: mockcli,
