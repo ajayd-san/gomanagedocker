@@ -37,7 +37,7 @@ if [[ "$arch" == "x86_64" ]]; then
 elif [[ "$arch" == "arm"* ]]; then
     arch="arm64"
 else
-    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unsupported architecture${nc}"
+    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unsupported architecture: $arch${nc}"
     exit 1
 fi
 
