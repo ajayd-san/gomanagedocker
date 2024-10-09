@@ -34,10 +34,10 @@ os=$(uname -s)
 
 if [[ "$arch" == "x86_64" ]]; then
     arch="amd64"
-elif [[ "$arch" == "arm"* ]]; then
+elif [[ "$arch" == "arm"* || "$arch" == "aarch64" ]]; then
     arch="arm64"
 else
-    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unsupported architecture${nc}"
+    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unsupported architecture: ${nc}${arch}"
     exit 1
 fi
 
@@ -46,7 +46,7 @@ if [[ "$os" == "Linux" ]]; then
 elif [[ "$os" == "Darwin" ]]; then
     os="darwin"
 else
-    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unsupported operating system${nc}"
+    echo -e "${red}❌ Fail install goManageDocker: ${yellow}Unsupported operating system${nc}${arch}"
     exit 1
 fi
 
