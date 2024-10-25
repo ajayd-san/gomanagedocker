@@ -22,8 +22,8 @@ import (
 type PodmanAPI interface {
 	//images
 	ImageList(opts *images.ListOptions) ([]*tf.ImageSummary, error)
-	Remove(image_ids []string, opts *images.RemoveOptions) (*tf.ImageRemoveReport, []error)
-	Prune(opts *images.PruneOptions) ([]*reports.PruneReport, error)
+	ImageRemove(image_ids []string, opts *images.RemoveOptions) (*tf.ImageRemoveReport, []error)
+	ImagePrune(opts *images.PruneOptions) ([]*reports.PruneReport, error)
 	ImageBuild(containerFiles []string, opts types.BuildOptions) (*tf.BuildReport, error)
 
 	// containers

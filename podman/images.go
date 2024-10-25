@@ -11,11 +11,11 @@ func (p *PodmanClient) ImageList(opts *images.ListOptions) ([]*tf.ImageSummary, 
 	return images.List(p.ctx, opts)
 }
 
-func (pc *PodmanClient) Remove(image_ids []string, opts *images.RemoveOptions) (*tf.ImageRemoveReport, []error) {
+func (pc *PodmanClient) ImageRemove(image_ids []string, opts *images.RemoveOptions) (*tf.ImageRemoveReport, []error) {
 	return images.Remove(pc.ctx, image_ids, opts)
 }
 
-func (pc *PodmanClient) Prune(opts *images.PruneOptions) ([]*reports.PruneReport, error) {
+func (pc *PodmanClient) ImagePrune(opts *images.PruneOptions) ([]*reports.PruneReport, error) {
 	return images.Prune(pc.ctx, opts)
 }
 

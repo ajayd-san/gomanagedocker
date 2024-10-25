@@ -9,7 +9,6 @@ import (
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/containers/buildah/define"
-	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/containers/podman/v5/pkg/domain/entities/types"
 	"github.com/containers/podman/v5/pkg/specgen"
@@ -72,7 +71,7 @@ func (pc *PodmanClient) BuildImage(buildContext string, options it.ImageBuildOpt
 
 	go func() {
 		//TODO: registry option
-		_, err := images.Build(pc.cli, []string{options.Dockerfile}, types.BuildOptions{
+		_, err := pc.cli.ImageBuild([]string{options.Dockerfile}, types.BuildOptions{
 			BuildOptions: define.BuildOptions{
 				// Labels:         []string{"teststr"},
 				// Registry:       "regname",
@@ -94,7 +93,7 @@ func (pc *PodmanClient) BuildImage(buildContext string, options it.ImageBuildOpt
 }
 
 func (pc *PodmanClient) ListImages() []it.ImageSummary {
-	raw, err := images.List(pc.cli, nil)
+	raw, err := pc.cli.ImageList(nil)
 
 	if err != nil {
 		panic(err)
@@ -133,13 +132,13 @@ func (pc *PodmanClient) RunImage(config it.ContainerCreateConfig) (*string, erro
 		NSMode: specgen.Bridge,
 	}
 
-	res, err := containers.CreateWithSpec(pc.cli, spec, nil)
+	res, err := pc.cli.ContainerCreateWithSpec(spec, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = containers.Start(pc.cli, res.ID, nil)
+	err = pc.cli.ContainerStart(res.ID)
 
 	if err != nil {
 		return nil, err
@@ -149,7 +148,7 @@ func (pc *PodmanClient) RunImage(config it.ContainerCreateConfig) (*string, erro
 }
 
 func (pc *PodmanClient) DeleteImage(id string, opts it.RemoveImageOptions) error {
-	_, errs := images.Remove(pc.cli, []string{id}, &images.RemoveOptions{
+	_, errs := pc.cli.ImageRemove([]string{id}, &images.RemoveOptions{
 		All:            &opts.All,
 		Force:          &opts.Force,
 		Ignore:         &opts.Ignore,
@@ -166,7 +165,7 @@ func (pc *PodmanClient) DeleteImage(id string, opts it.RemoveImageOptions) error
 
 func (pc *PodmanClient) PruneImages() (it.ImagePruneReport, error) {
 	t := true
-	reports, err := images.Prune(pc.cli, &images.PruneOptions{
+	reports, err := pc.cli.ImagePrune(&images.PruneOptions{
 		All: &t,
 	})
 
