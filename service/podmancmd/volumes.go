@@ -2,11 +2,10 @@ package podmancmd
 
 import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
-	"github.com/containers/podman/v5/pkg/bindings/volumes"
 )
 
 func (pc *PodmanClient) ListVolumes() ([]it.VolumeSummary, error) {
-	res, err := volumes.List(pc.cli, nil)
+	res, err := pc.cli.VolumesList(nil)
 
 	if err != nil {
 		return nil, err
@@ -16,7 +15,7 @@ func (pc *PodmanClient) ListVolumes() ([]it.VolumeSummary, error) {
 }
 
 func (pc *PodmanClient) PruneVolumes() (*it.VolumePruneReport, error) {
-	report, err := volumes.Prune(pc.cli, nil)
+	report, err := pc.cli.VolumesPrune(nil)
 
 	if err != nil {
 		return nil, err
@@ -35,7 +34,5 @@ func (pc *PodmanClient) PruneVolumes() (*it.VolumePruneReport, error) {
 }
 
 func (pc *PodmanClient) DeleteVolume(id string, force bool) error {
-	opts := &volumes.RemoveOptions{}
-	opts = opts.WithForce(force)
-	return volumes.Remove(pc.cli, id, opts)
+	return pc.cli.VolumesRemove(id, force)
 }
