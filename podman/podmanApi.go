@@ -27,7 +27,7 @@ type PodmanAPI interface {
 	ImageBuild(containerFiles []string, opts types.BuildOptions) (*tf.BuildReport, error)
 
 	// containers
-	ContainerList(showContainerSize bool) ([]types.ListContainer, error)
+	ContainerList(opts *containers.ListOptions) ([]types.ListContainer, error)
 	ContainerInspect(id string, size bool) (*define.InspectContainerData, error)
 	ContainerStart(id string) error
 	ContainerStop(id string) error

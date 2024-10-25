@@ -2,6 +2,7 @@ package podmancmd
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
@@ -29,6 +30,7 @@ func toImageSummaryArr(summary []*et.ImageSummary) []it.ImageSummary {
 
 func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
 	res := make([]it.ContainerSummary, len(summary))
+	log.Printf("%#v", summary)
 
 	for index, entry := range summary {
 		res[index] = it.ContainerSummary{
@@ -42,10 +44,10 @@ func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
 			Ports:   toPort(entry.Ports),
 		}
 
-		if entry.Size != nil {
-			res[index].Size.Rw = entry.Size.RwSize
-			res[index].Size.RootFs = entry.Size.RootFsSize
-		}
+		// if entry.Size != nil {
+		// 	res[index].Size.Rw = entry.Size.RwSize
+		// 	res[index].Size.RootFs = entry.Size.RootFsSize
+		// }
 	}
 
 	return res

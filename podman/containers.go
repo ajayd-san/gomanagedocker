@@ -8,9 +8,8 @@ import (
 	"github.com/containers/podman/v5/pkg/specgen"
 )
 
-func (p *PodmanClient) ContainerList(showContainerSize bool) ([]types.ListContainer, error) {
-	opts := containers.ListOptions{}
-	return containers.List(p.ctx, opts.WithSize(showContainerSize))
+func (p *PodmanClient) ContainerList(opts *containers.ListOptions) ([]types.ListContainer, error) {
+	return containers.List(p.ctx, opts)
 }
 
 func (p *PodmanClient) ContainerInspect(id string, size bool) (*define.InspectContainerData, error) {

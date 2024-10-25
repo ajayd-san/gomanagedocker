@@ -6,6 +6,7 @@ import (
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 )
 
+// TODO: investigate why we have two different containerListopts
 type PodmanClient struct {
 	cli               podman.PodmanAPI
 	containerListOpts types.ContainerListOptions
