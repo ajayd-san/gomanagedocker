@@ -10,7 +10,7 @@ import (
 )
 
 func (pc *PodmanClient) ListPods() ([]*types.ListPodsReport, error) {
-	pods, err := pods.List(pc.cli, nil)
+	pods, err := pc.cli.PodsList(nil)
 
 	if err != nil {
 		return nil, err
@@ -20,22 +20,22 @@ func (pc *PodmanClient) ListPods() ([]*types.ListPodsReport, error) {
 }
 
 func (pc *PodmanClient) PausePods(id string) error {
-	_, err := pods.Pause(pc.cli, id, nil)
+	_, err := pc.cli.PodsPause(id, nil)
 	return err
 }
 
 func (pc *PodmanClient) ResumePods(id string) error {
-	_, err := pods.Unpause(pc.cli, id, nil)
+	_, err := pc.cli.PodsUnpause(id, nil)
 	return err
 }
 
 func (pc *PodmanClient) RestartPod(id string) error {
-	_, err := pods.Restart(pc.cli, id, nil)
+	_, err := pc.cli.PodsRestart(id, nil)
 	return err
 }
 
 func (pc *PodmanClient) PrunePods() (*it.PodsPruneReport, error) {
-	reports, err := pods.Prune(pc.cli, nil)
+	reports, err := pc.cli.PodsPrune(nil)
 
 	if err != nil {
 		return nil, err
@@ -56,9 +56,9 @@ func (pc *PodmanClient) PrunePods() (*it.PodsPruneReport, error) {
 func (pc *PodmanClient) ToggleStartStopPod(id string, isRunning bool) error {
 	var err error
 	if isRunning {
-		_, err = pods.Stop(pc.cli, id, nil)
+		_, err = pc.cli.PodsStop(id, nil)
 	} else {
-		_, err = pods.Start(pc.cli, id, nil)
+		_, err = pc.cli.PodsStart(id, nil)
 	}
 	return err
 }
@@ -66,9 +66,9 @@ func (pc *PodmanClient) ToggleStartStopPod(id string, isRunning bool) error {
 func (pc *PodmanClient) TogglePauseResumePod(id string, state string) error {
 	var err error
 	if state == "paused" {
-		_, err = pods.Unpause(pc.cli, id, nil)
+		_, err = pc.cli.PodsUnpause(id, nil)
 	} else if state == "running" {
-		_, err = pods.Pause(pc.cli, id, nil)
+		_, err = pc.cli.PodsPause(id, nil)
 	} else {
 		err = fmt.Errorf("Cannot Pause/unPause a %s Pod.", state)
 	}
@@ -83,7 +83,7 @@ func (pc *PodmanClient) DeletePod(id string, force bool) (*it.PodsRemoveReport, 
 		opts.WithForce(true)
 	}
 
-	report, err := pods.Remove(pc.cli, id, &opts)
+	report, err := pc.cli.PodsRemove(id, &opts)
 
 	if err != nil {
 		return nil, err
