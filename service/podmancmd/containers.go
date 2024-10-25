@@ -10,9 +10,7 @@ import (
 
 func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, error) {
 	// TODO: refactor this, using `With` methods
-	raw, err := containers.Inspect(pc.cli, id, &containers.InspectOptions{
-		Size: boolPtr(true),
-	})
+	raw, err := pc.cli.ContainerInspect(id, true)
 
 	if err != nil {
 		return nil, err
@@ -25,8 +23,7 @@ func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, e
 }
 
 func (pc *PodmanClient) ListContainers(showContainerSize bool) []it.ContainerSummary {
-	opts := pc.listOptions
-	raw, err := containers.List(pc.cli, opts.WithSize(showContainerSize))
+	raw, err := pc.cli.ContainerList(showContainerSize)
 
 	if err != nil {
 		panic(err)
@@ -48,24 +45,24 @@ func (pc *PodmanClient) ToggleContainerListAll() {
 func (pc *PodmanClient) ToggleStartStopContainer(id string, isRunning bool) error {
 	var err error
 	if isRunning {
-		err = containers.Stop(pc.cli, id, nil)
+		err = pc.cli.ContainerStop(id)
 	} else {
-		err = containers.Start(pc.cli, id, nil)
+		err = pc.cli.ContainerStart(id)
 	}
 
 	return err
 }
 
 func (pc *PodmanClient) RestartContainer(id string) error {
-	return containers.Restart(pc.cli, id, nil)
+	return pc.cli.ContainerRestart(id)
 }
 
 func (pc *PodmanClient) TogglePauseResume(id string, state string) error {
 	var err error
 	if state == "paused" {
-		err = containers.Unpause(pc.cli, id, nil)
+		err = pc.cli.ContainerUnpause(id)
 	} else if state == "running" {
-		err = containers.Pause(pc.cli, id, nil)
+		err = pc.cli.ContainerPause(id)
 	} else {
 		err = fmt.Errorf("Cannot Pause/unPause a %s Process.", state)
 	}
@@ -84,12 +81,12 @@ func (pc *PodmanClient) DeleteContainer(id string, opts it.ContainerRemoveOpts) 
 		podmanOpts = podmanOpts.WithVolumes(true)
 	}
 
-	_, err := containers.Remove(pc.cli, id, podmanOpts)
+	_, err := pc.cli.ContainerRemove(id, podmanOpts)
 	return err
 }
 
 func (po *PodmanClient) PruneContainers() (it.ContainerPruneReport, error) {
-	report, err := containers.Prune(po.cli, nil)
+	report, err := po.cli.ContainerPrune()
 
 	// only count successfully deleted containers
 	containersDeleted := 0

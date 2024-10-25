@@ -35,7 +35,7 @@ type PodmanAPI interface {
 	ContainerPause(id string) error
 	ContainerUnpause(id string) error
 	ContainerRemove(id string, removeOpts *containers.RemoveOptions) ([]*reports.RmReport, error)
-	ContainerPrune(id string, removeOpts *containers.RemoveOptions) ([]*reports.PruneReport, error)
+	ContainerPrune() ([]*reports.PruneReport, error)
 	ContainerCreateWithSpec(spec *specgen.SpecGenerator, opts *containers.CreateOptions) (types.ContainerCreateResponse, error)
 
 	// vols

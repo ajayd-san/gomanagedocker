@@ -43,7 +43,7 @@ func (p *PodmanClient) ContainerRemove(id string, removeOpts *containers.RemoveO
 	return containers.Remove(p.ctx, id, removeOpts)
 }
 
-func (p *PodmanClient) ContainerPrune(id string, removeOpts *containers.RemoveOptions) ([]*reports.PruneReport, error) {
+func (p *PodmanClient) ContainerPrune() ([]*reports.PruneReport, error) {
 	return containers.Prune(p.ctx, nil)
 }
 

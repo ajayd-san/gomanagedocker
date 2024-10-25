@@ -1,15 +1,13 @@
 package podmancmd
 
 import (
-	"context"
-
+	"github.com/ajayd-san/gomanagedocker/podman"
 	"github.com/ajayd-san/gomanagedocker/service/types"
-	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 )
 
 type PodmanClient struct {
-	cli               context.Context
+	cli               podman.PodmanAPI
 	containerListOpts types.ContainerListOptions
 	// internal
 	listOptions containers.ListOptions
@@ -20,14 +18,14 @@ func (pc *PodmanClient) GetListOptions() types.ContainerListOptions {
 }
 
 func NewPodmanClient() (*PodmanClient, error) {
-	ctx, err := bindings.NewConnection(context.Background(), "unix:///run/user/1000/podman/podman.sock")
+	api, err := podman.NewPodmanClient()
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &PodmanClient{
-		ctx,
+		api,
 		types.ContainerListOptions{},
 		containers.ListOptions{
 			All: boolPtr(false),
