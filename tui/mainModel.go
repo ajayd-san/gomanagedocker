@@ -231,7 +231,6 @@ notificationLoop:
 		}
 
 	case TickMsg:
-		log.Println("Got tick mesage")
 		m = m.updateContent(m.activeTab, false)
 
 		cmds = append(cmds, doUpdateObjectsTick())
@@ -1166,25 +1165,25 @@ func copyToClipboard(str string) {
 func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
-	log.Println("prepopulate----------")
+	log.Println("\n\n\nprepopulate----------")
+	log.Println(containerInfoWithSize)
 	for _, info := range containerInfoWithSize {
-		log.Println(info.ID)
-		// m.containerSizeTracker.sizeMap[info.ID] = ContainerSize{
-		// 	sizeRw: info.Size.Rw,
-		// 	rootFs: info.Size.RootFs,
-		// }
+		m.containerSizeTracker.sizeMap[info.ID] = ContainerSize{
+			sizeRw: info.Size.Rw,
+			rootFs: info.Size.RootFs,
+		}
 	}
 
-	log.Println("prepopulate----------")
+	log.Println("\n\n\nprepopulate----------")
 }
 
 // Adds size info from containerInfo to containersizeTracker. Meant to be used on demand when new container gets added.
 func updateContainerSizeMap(containerInfo it.InspectContainerData, containerSizeTracker *ContainerSizeManager) {
 	log.Println("Resetting: ", containerInfo.ID, containerInfo.Size)
 	containerSizeTracker.mu.Lock()
-	// containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
-	// 	sizeRw: containerInfo.Size.Rw,
-	// 	rootFs: containerInfo.Size.RootFs,
-	// }
+	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
+		sizeRw: containerInfo.Size.Rw,
+		rootFs: containerInfo.Size.RootFs,
+	}
 	containerSizeTracker.mu.Unlock()
 }

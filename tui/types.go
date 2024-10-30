@@ -2,7 +2,6 @@ package tui
 
 import (
 	"cmp"
-	"log"
 	"slices"
 	"sort"
 	"strconv"
@@ -137,11 +136,11 @@ func makeContainerItems(
 		res[i] = newItem
 	}
 
-	log.Println("------------------------")
-	for _, items := range res {
-		log.Println(items.(containerItem).Size)
-	}
-	log.Println("------------------------")
+	// log.Println("------------------------")
+	// for _, items := range res {
+	// 	log.Println(items.(containerItem).Size)
+	// }
+	// log.Println("------------------------")
 
 	return res
 }
