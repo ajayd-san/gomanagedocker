@@ -44,10 +44,12 @@ func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
 			Ports:   toPort(entry.Ports),
 		}
 
-		// if entry.Size != nil {
-		// 	res[index].Size.Rw = entry.Size.RwSize
-		// 	res[index].Size.RootFs = entry.Size.RootFsSize
-		// }
+		if entry.Size != nil {
+			res[index].Size = &it.SizeInfo{
+				Rw:     entry.Size.RwSize,
+				RootFs: entry.Size.RootFsSize,
+			}
+		}
 	}
 
 	return res
