@@ -113,14 +113,14 @@ func TestFetchNewData(t *testing.T) {
 			InitList(0, keymap.container, keymap.container),
 		},
 		containerSizeTracker: ContainerSizeManager{
-			sizeMap: make(map[string]ContainerSize),
+			sizeMap: make(map[string]it.SizeInfo),
 			mu:      &sync.Mutex{},
 		},
 		imageIdToNameMap: map[string]string{},
 	}
 
 	wg := sync.WaitGroup{}
-	newlist := model.fetchNewData(0, &wg)
+	newlist := model.fetchNewData(0, true, &wg)
 	wg.Wait()
 
 	t.Run("Containers", func(t *testing.T) {
@@ -135,21 +135,21 @@ func TestFetchNewData(t *testing.T) {
 		})
 
 		t.Run("Assert containerSizeMaps", func(t *testing.T) {
-			want := map[string]ContainerSize{
+			want := map[string]it.SizeInfo{
 				"1": {1e+9, 2e+9},
 				"2": {201, 401},
 				"3": {202, 402},
 				"4": {203, 403},
 			}
 
-			assert.DeepEqual(t, model.containerSizeTracker.sizeMap, want, cmpopts.EquateComparable(ContainerSize{}))
+			assert.DeepEqual(t, model.containerSizeTracker.sizeMap, want, cmpopts.EquateComparable(it.SizeInfo{}))
 		})
 	})
 
 	t.Run("Images", func(t *testing.T) {
 		model.nextTab()
 		assert.Equal(t, model.activeTab, IMAGES)
-		newlist := model.fetchNewData(IMAGES, &wg)
+		newlist := model.fetchNewData(IMAGES, true, &wg)
 		wg.Wait()
 		t.Run("Assert images", func(t *testing.T) {
 

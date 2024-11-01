@@ -72,20 +72,24 @@ func TestListContainer(t *testing.T) {
 
 		want := []it.ContainerSummary{
 			{
-				ID:         "1",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "1",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "2",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "2",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 		}
 
@@ -108,36 +112,44 @@ func TestListContainer(t *testing.T) {
 
 		want := []it.ContainerSummary{
 			{
-				ID:         "1",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "1",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "2",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "2",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "3",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "created",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "3",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "created",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "4",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "stopped",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "4",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "stopped",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 		}
 
@@ -159,36 +171,44 @@ func TestListContainer(t *testing.T) {
 		got := dclient.ListContainers(true)
 		want := []it.ContainerSummary{
 			{
-				ID:         "1",
-				SizeRw:     200,
-				SizeRootFs: 400,
-				State:      "running",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "1",
+				Size: &it.SizeInfo{
+					Rw:     200,
+					RootFs: 400,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "2",
-				SizeRw:     201,
-				SizeRootFs: 401,
-				State:      "running",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "2",
+				Size: &it.SizeInfo{
+					Rw:     201,
+					RootFs: 401,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "3",
-				SizeRw:     202,
-				SizeRootFs: 402,
-				State:      "created",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "3",
+				Size: &it.SizeInfo{
+					Rw:     202,
+					RootFs: 402,
+				},
+				State:  "created",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "4",
-				SizeRw:     203,
-				SizeRootFs: 403,
-				State:      "stopped",
-				Ports:      []it.Port{},
-				Mounts:     []string{},
+				ID: "4",
+				Size: &it.SizeInfo{
+					Rw:     203,
+					RootFs: 403,
+				},
+				State:  "stopped",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 		}
 

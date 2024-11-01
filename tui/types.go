@@ -102,7 +102,6 @@ type containerItem struct {
 func makeContainerItems(
 	dockerlist []it.ContainerSummary,
 	imageIdToNameMap map[string]string,
-	containerSizeTracker ContainerSizeManager,
 ) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
@@ -123,16 +122,6 @@ func makeContainerItems(
 			ContainerSummary: dockerlist[i],
 		}
 		newItem.ImageName = imageIdToNameMap[newItem.ImageID]
-		if containerSizeTracker.mu.TryLock() {
-			if containerSizeInfo, ok := containerSizeTracker.sizeMap[newItem.ID]; ok {
-				newItem.Size = &it.SizeInfo{
-					Rw:     containerSizeInfo.sizeRw,
-					RootFs: containerSizeInfo.rootFs,
-				}
-			}
-			containerSizeTracker.mu.Unlock()
-		}
-
 		res[i] = newItem
 	}
 

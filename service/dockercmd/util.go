@@ -64,6 +64,7 @@ func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 			Command: entry.Command,
 			Mounts:  getMounts(entry.Mounts),
 			Ports:   toPort(entry.Ports),
+			//BUG: this should be set to null if entry.SizeRw are 0
 			Size: &types.SizeInfo{
 				Rw:     entry.SizeRw,
 				RootFs: entry.SizeRootFs,

@@ -103,21 +103,27 @@ func TestToggleStartStopContainer(t *testing.T) {
 			containers: []dockerRes{
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"a"},
-						ID:         "1aaaaaaaa",
-						SizeRw:     1e+9,
-						SizeRootFs: 2e+9,
-						State:      "running",
+						Names: []string{"a"},
+						ID:    "1aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     1e+9,
+							RootFs: 2e+9,
+						},
+						State: "running",
 					},
+					"abc",
 				},
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "2aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "running",
+						Names: []string{"b"},
+						ID:    "2aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "running",
 					},
+					"idk",
 				},
 			},
 			wantState: []string{"stopped", "stopped"},
@@ -131,21 +137,29 @@ func TestToggleStartStopContainer(t *testing.T) {
 			containers: []dockerRes{
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "2aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "stopped",
+						Names: []string{"b"},
+						ID:    "2aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "stopped",
 					},
+
+					"idk",
 				},
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "3aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "running",
+						Names: []string{"b"},
+						ID:    "3aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "running",
 					},
+
+					"idk",
 				},
 			},
 			wantState: []string{"running", "stopped"},
@@ -203,23 +217,30 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 			containers: []dockerRes{
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"a"},
-						ID:         "1aaaaaaaa",
-						SizeRw:     1e+9,
-						SizeRootFs: 2e+9,
-						State:      "running",
+						Names: []string{"a"},
+						ID:    "1aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     1e+9,
+							RootFs: 2e+9,
+						},
+						State: "running",
 					},
+					"abc",
 				},
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "2aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "running",
+						Names: []string{"b"},
+						ID:    "2aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "running",
 					},
+					"idk",
 				},
 			},
+
 			wantState: []string{"paused", "paused"},
 			notifWant: []string{
 				listStatusMessageStyle.Render("Paused 1aaaaaaa"),
@@ -231,21 +252,27 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 			containers: []dockerRes{
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "2aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "paused",
+						Names: []string{"b"},
+						ID:    "2aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "paused",
 					},
+					"idk",
 				},
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "3aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "running",
+						Names: []string{"b"},
+						ID:    "3aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "running",
 					},
+					"idk",
 				},
 			},
 			wantState: []string{"running", "paused"},
@@ -307,21 +334,27 @@ func TestContainerDeleteBulk(t *testing.T) {
 			containers: []dockerRes{
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"a"},
-						ID:         "1aaaaaaaa",
-						SizeRw:     1e+9,
-						SizeRootFs: 2e+9,
-						State:      "running",
+						Names: []string{"a"},
+						ID:    "1aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     1e+9,
+							RootFs: 2e+9,
+						},
+						State: "running",
 					},
+					"abc",
 				},
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "2aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "running",
+						Names: []string{"b"},
+						ID:    "2aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "running",
 					},
+					"idk",
 				},
 			},
 			notifWant: []string{
@@ -334,12 +367,15 @@ func TestContainerDeleteBulk(t *testing.T) {
 			containers: []dockerRes{
 				containerItem{
 					it.ContainerSummary{
-						Names:      []string{"b"},
-						ID:         "2aaaaaaaa",
-						SizeRw:     201,
-						SizeRootFs: 401,
-						State:      "paused",
+						Names: []string{"b"},
+						ID:    "2aaaaaaaa",
+						Size: &it.SizeInfo{
+							Rw:     201,
+							RootFs: 401,
+						},
+						State: "paused",
 					},
+					"idk",
 				},
 			},
 			notifWant: []string{

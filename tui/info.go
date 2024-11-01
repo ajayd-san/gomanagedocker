@@ -14,7 +14,7 @@ type SimpleInfoBoxer interface {
 }
 
 type SizeInfoBoxer interface {
-	InfoBox(map[string]ContainerSize) string
+	InfoBox(map[string]it.SizeInfo) string
 }
 
 func (im imageItem) InfoBox() string {
@@ -32,7 +32,7 @@ func (im imageItem) InfoBox() string {
 	return res.String()
 }
 
-func (containerInfo containerItem) InfoBox(containerSizeInfo map[string]ContainerSize) string {
+func (containerInfo containerItem) InfoBox(containerSizeInfo map[string]it.SizeInfo) string {
 	var res strings.Builder
 
 	id := trimToLength(containerInfo.ID, moreInfoStyle.GetWidth())
@@ -42,8 +42,8 @@ func (containerInfo containerItem) InfoBox(containerSizeInfo map[string]Containe
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
 
 	if size, ok := containerSizeInfo[id]; ok {
-		rootSizeInGb := float64(size.rootFs) / float64(1e+9)
-		SizeRwInGb := float64(size.sizeRw) / float64(1e+9)
+		rootSizeInGb := float64(size.RootFs) / float64(1e+9)
+		SizeRwInGb := float64(size.Rw) / float64(1e+9)
 
 		addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
 		addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")

@@ -44,14 +44,9 @@ type preloadObjects int
 // instruction for preload contaienr sizes, when program starts.
 type preloadSizeMap struct{}
 
-type ContainerSize struct {
-	sizeRw int64
-	rootFs int64
-}
-
 // this type holds info about container sizes and is meant to be used concurrently.
 type ContainerSizeManager struct {
-	sizeMap map[string]ContainerSize
+	sizeMap map[string]it.SizeInfo
 	mu      *sync.Mutex
 }
 
@@ -164,7 +159,7 @@ func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 		navKeymap:                      NavKeymap,
 		activeTab:                      firstTab,
 		containerSizeTracker: ContainerSizeManager{
-			sizeMap: make(map[string]ContainerSize),
+			sizeMap: make(map[string]it.SizeInfo),
 			mu:      &sync.Mutex{},
 		},
 		imageIdToNameMap: make(map[string]string),
@@ -1014,7 +1009,7 @@ func (m MainModel) View() string {
 
 /*
 Fetches new data from the docker api and returns []dockerRes, also updates other required fields depending on the tabId passed.
-Passing `wg` is optional and is add is added for the sole purpose of testing.
+`first` indicates if it is the first request when the TUI starts. Passing `wg` is optional and is add is added for the sole purpose of testing.
 */
 func (m MainModel) fetchNewData(tab tabId, first bool, wg *sync.WaitGroup) []dockerRes {
 	var newlist []dockerRes
@@ -1041,7 +1036,7 @@ func (m MainModel) fetchNewData(tab tabId, first bool, wg *sync.WaitGroup) []doc
 
 	case CONTAINERS:
 		newContainers := m.dockerClient.ListContainers(false)
-		newlist = makeContainerItems(newContainers, m.imageIdToNameMap, m.containerSizeTracker)
+		newlist = makeContainerItems(newContainers, m.imageIdToNameMap)
 
 		if !first {
 			go func() {
@@ -1173,9 +1168,9 @@ func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	log.Println("\n\n\nprepopulate----------")
 	log.Println(containerInfoWithSize)
 	for _, info := range containerInfoWithSize {
-		m.containerSizeTracker.sizeMap[info.ID] = ContainerSize{
-			sizeRw: info.Size.Rw,
-			rootFs: info.Size.RootFs,
+		m.containerSizeTracker.sizeMap[info.ID] = it.SizeInfo{
+			Rw:     info.Size.Rw,
+			RootFs: info.Size.RootFs,
 		}
 	}
 
@@ -1186,9 +1181,9 @@ func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 func updateContainerSizeMap(containerInfo it.InspectContainerData, containerSizeTracker *ContainerSizeManager) {
 	log.Println("Resetting: ", containerInfo.ID, containerInfo.Size)
 	containerSizeTracker.mu.Lock()
-	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
-		sizeRw: containerInfo.Size.Rw,
-		rootFs: containerInfo.Size.RootFs,
+	containerSizeTracker.sizeMap[containerInfo.ID] = it.SizeInfo{
+		Rw:     containerInfo.Size.Rw,
+		RootFs: containerInfo.Size.RootFs,
 	}
 	containerSizeTracker.mu.Unlock()
 }
