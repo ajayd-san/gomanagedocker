@@ -14,33 +14,41 @@ func TestUpdateExistingIds(t *testing.T) {
 
 	containers := []types.ContainerSummary{
 		{
-			Names:      []string{"a"},
-			ID:         "1",
-			SizeRw:     1e+9,
-			SizeRootFs: 2e+9,
-			State:      "running",
+			Names: []string{"a"},
+			ID:    "1",
+			Size: &it.SizeInfo{
+				Rw:     1e+9,
+				RootFs: 2e+9,
+			},
+			State: "running",
 		},
 		{
-			Names:      []string{"b"},
-			ID:         "2",
-			SizeRw:     201,
-			SizeRootFs: 401,
-			State:      "running",
+			Names: []string{"b"},
+			ID:    "2",
+			Size: &it.SizeInfo{
+				Rw:     201,
+				RootFs: 401,
+			},
+			State: "running",
 		},
 		{
-			Names:      []string{"c"},
-			ID:         "3",
-			SizeRw:     202,
-			SizeRootFs: 402,
-			State:      "running",
+			Names: []string{"c"},
+			ID:    "3",
+			Size: &it.SizeInfo{
+				Rw:     202,
+				RootFs: 403,
+			},
+			State: "running",
 		},
 		{
 
-			Names:      []string{"d"},
-			ID:         "4",
-			SizeRw:     203,
-			SizeRootFs: 403,
-			State:      "running",
+			Names: []string{"d"},
+			ID:    "4",
+			Size: &it.SizeInfo{
+				Rw:     203,
+				RootFs: 403,
+			},
+			State: "running",
 		},
 	}
 
@@ -74,7 +82,7 @@ func TestUpdateExistingIds(t *testing.T) {
 
 	t.Run("Assert container Ids", func(t *testing.T) {
 		contList := InitList(0, keymap.container, keymap.containerBulk)
-		dres := makeContainerItems(containers)
+		dres := makeContainerItems(containers, make(map[string]string))
 		contList.updateExistigIds(&dres)
 		want := map[string]struct{}{
 			"1": {},
