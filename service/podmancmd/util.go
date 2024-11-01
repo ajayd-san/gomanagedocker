@@ -94,6 +94,10 @@ func toContainerSummary(info *define.InspectContainerData) it.ContainerSummary {
 		Names:   []string{info.Name},
 		State:   info.State.Status,
 		// Command:    strings.Join(entry.Command, " "),
+		Size: &it.SizeInfo{
+			Rw:     *info.SizeRw,
+			RootFs: info.SizeRootFs,
+		},
 	}
 
 	return res

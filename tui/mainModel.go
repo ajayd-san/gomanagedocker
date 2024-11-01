@@ -967,7 +967,12 @@ func (m MainModel) View() string {
 
 	infobox := ""
 	if curItem != nil && m.displayInfoBox {
-		infobox = curItem.(InfoBoxer).InfoBox()
+		switch item := curItem.(type) {
+		case SimpleInfoBoxer:
+			infobox = item.InfoBox()
+		case SizeInfoBoxer:
+			infobox = item.InfoBox(m.containerSizeTracker.sizeMap)
+		}
 		infobox = moreInfoStyle.Render(infobox)
 	}
 

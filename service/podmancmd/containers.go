@@ -23,7 +23,7 @@ func (pc *PodmanClient) InspectContainer(id string) (*it.InspectContainerData, e
 }
 
 func (pc *PodmanClient) ListContainers(showContainerSize bool) []it.ContainerSummary {
-	opts := pc.listOptions.WithSize(showContainerSize).WithAll(true)
+	opts := pc.listOptions.WithSize(showContainerSize)
 	raw, err := pc.cli.ContainerList(opts)
 
 	// log.Panicln("---", showContainerSize, raw[0])

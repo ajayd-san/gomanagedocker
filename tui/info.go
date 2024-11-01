@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -10,8 +9,12 @@ import (
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 )
 
-type InfoBoxer interface {
+type SimpleInfoBoxer interface {
 	InfoBox() string
+}
+
+type SizeInfoBoxer interface {
+	InfoBox(map[string]ContainerSize) string
 }
 
 func (im imageItem) InfoBox() string {
@@ -29,7 +32,7 @@ func (im imageItem) InfoBox() string {
 	return res.String()
 }
 
-func (containerInfo containerItem) InfoBox() string {
+func (containerInfo containerItem) InfoBox(containerSizeInfo map[string]ContainerSize) string {
 	var res strings.Builder
 
 	id := trimToLength(containerInfo.ID, moreInfoStyle.GetWidth())
@@ -38,14 +41,14 @@ func (containerInfo containerItem) InfoBox() string {
 	addEntry(&res, "Image: ", containerInfo.ImageName)
 	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
 
-	if containerInfo.Size != nil {
-		log.Println("In infobox: ", containerInfo.Size)
-		rootSizeInGb := float64(containerInfo.Size.RootFs) / float64(1e+9)
-		SizeRwInGb := float64(containerInfo.Size.Rw) / float64(1e+9)
+	if size, ok := containerSizeInfo[id]; ok {
+		rootSizeInGb := float64(size.rootFs) / float64(1e+9)
+		SizeRwInGb := float64(size.sizeRw) / float64(1e+9)
 
 		addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
 		addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
 	} else {
+
 		addEntry(&res, "Root FS Size: ", "Calculating...")
 		addEntry(&res, "SizeRw: ", "Calculating...")
 	}
