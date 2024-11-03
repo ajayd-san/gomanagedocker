@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
-	"log"
 	"strconv"
 
 	it "github.com/ajayd-san/gomanagedocker/service/types"
@@ -46,9 +45,6 @@ func (pc *PodmanClient) BuildImage(buildContext string, options it.ImageBuildOpt
 			}
 			bytes, _ = json.Marshal(step)
 
-			if err != nil {
-				log.Printf("Marshalling Error: %s", err.Error())
-			}
 			reportPipeW.Write(bytes)
 		}
 

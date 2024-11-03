@@ -58,14 +58,14 @@ func TestSepPortMapping(t *testing.T) {
 				Proto:         "tcp",
 			},
 			{
-				"1123",
-				"112",
-				"tcp",
+				HostPort:      "1123",
+				ContainerPort: "112",
+				Proto:         "tcp",
 			},
 			{
-				"6969",
-				"9696",
-				"udp",
+				HostPort:      "6969",
+				ContainerPort: "9696",
+				Proto:         "udp",
 			},
 		}
 
