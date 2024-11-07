@@ -6,11 +6,19 @@ import (
 
 	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
 	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 	"gotest.tools/v3/assert"
+
+	// podman types
+
+	pt "github.com/containers/podman/v5/pkg/domain/entities/types"
+	defineSize "github.com/containers/podman/v5/pkg/ps/define"
+
+	"github.com/containers/podman/v5/libpod/define"
 )
 
 func setupMockDockerClient(t *testing.T) service.Service {
@@ -89,6 +97,123 @@ func setupMockDockerClient(t *testing.T) service.Service {
 	api.SetMockVolumes(vols)
 
 	mock := dockercmd.NewMockCli(&api)
+	return mock
+}
+func setupMockPodmanClient(t *testing.T) service.Service {
+	api := podmancmd.PodmanMockApi{}
+
+	containers := []pt.ListContainer{
+		{
+			Names: []string{"a"},
+			ID:    "1aaaaaaaa",
+			Size: &defineSize.ContainerSize{
+				RootFsSize: 2e+9,
+				RwSize:     1e+9,
+			},
+			State:  "running",
+			Status: "",
+		},
+		{
+			Names: []string{"b"},
+			ID:    "2aaaaaaaa",
+			Size: &defineSize.ContainerSize{
+				RootFsSize: 201,
+				RwSize:     401,
+			},
+			State: "running",
+		},
+		{
+			Names: []string{"c"},
+			ID:    "3aaaaaaaa",
+			Size: &defineSize.ContainerSize{
+				RootFsSize: 202,
+				RwSize:     402,
+			},
+			State: "running",
+		},
+		{
+			Names: []string{"d"},
+			ID:    "4aaaaaaaa",
+			Size: &defineSize.ContainerSize{
+				RootFsSize: 203,
+				RwSize:     403,
+			},
+			State: "stopped",
+		},
+	}
+
+	imgs := []*pt.ImageSummary{
+		{
+			Containers: 0,
+			ID:         "0bbbbbbbb",
+			RepoTags:   []string{"a"},
+		},
+
+		{
+			Containers: 0,
+			ID:         "1bbbbbbbb",
+			RepoTags:   []string{"b"},
+		},
+		{
+			Containers: 3,
+			ID:         "2bbbbbbbb",
+			RepoTags:   []string{"c"},
+		},
+		{
+			Containers: 0,
+			ID:         "3bbbbbbbb",
+			RepoTags:   []string{"d"},
+		},
+	}
+
+	vols := []*pt.VolumeListReport{
+		{
+			VolumeConfigResponse: pt.VolumeConfigResponse{
+				InspectVolumeData: define.InspectVolumeData{
+					Name: "1",
+				},
+			},
+		},
+		{
+			VolumeConfigResponse: pt.VolumeConfigResponse{
+				InspectVolumeData: define.InspectVolumeData{
+					Name: "2",
+				},
+			},
+		},
+		{
+			VolumeConfigResponse: pt.VolumeConfigResponse{
+				InspectVolumeData: define.InspectVolumeData{
+					Name: "3",
+				},
+			},
+		},
+	}
+
+	pods := []*pt.ListPodsReport{
+		{
+			Id:     "1",
+			Name:   "ippo",
+			Status: "running",
+		},
+		{
+			Id:     "2",
+			Name:   "zenitsu",
+			Status: "running",
+		},
+		{
+			Id:     "3",
+			Name:   "gojo",
+			Status: "stopped",
+		},
+	}
+
+	api.SetMockContainers(containers)
+	api.SetMockImages(imgs)
+	api.SetMockVolumes(vols)
+	api.SetMockPods(pods)
+
+	mock := podmancmd.NewMockCli(&api)
 	return mock
 }
 
@@ -171,43 +296,54 @@ func TestToggleStartStopContainer(t *testing.T) {
 		},
 	}
 
-	mock := setupMockDockerClient(t)
-	mock.ToggleContainerListAll()
+	test := func(t *testing.T, mock service.Service) {
+		for _, testCase := range tests {
+			t.Run("Test for existing container", func(t *testing.T) {
 
-	for _, testCase := range tests {
-		t.Run("Test for existing container", func(t *testing.T) {
+				notifChan := make(chan notificationMetadata, 10)
+				errChan := make(chan error, 10)
+				op := toggleStartStopContainer(mock, testCase.containers, 1, notifChan, errChan)
 
-			notifChan := make(chan notificationMetadata, 10)
-			errChan := make(chan error, 10)
-			op := toggleStartStopContainer(mock, testCase.containers, 1, notifChan, errChan)
+				op()
 
-			op()
+				t.Run("Test Stopping", func(t *testing.T) {
+					updatedContainers := mock.ListContainers(false)
+					for i, container := range testCase.containers {
+						id := container.GetId()
 
-			t.Run("Test Stopping", func(t *testing.T) {
-				updatedContainers := mock.ListContainers(false)
-				for i, container := range testCase.containers {
-					id := container.GetId()
+						index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
+							return elem.ID == id
+						})
 
-					index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
-						return elem.ID == id
-					})
+						assert.Equal(t, updatedContainers[index].State, testCase.wantState[i])
+					}
+				})
 
-					assert.Equal(t, updatedContainers[index].State, testCase.wantState[i])
-				}
+				t.Run("Assert Notification", func(t *testing.T) {
+					// ik this is not a complete test but it's just easier.
+					// TODO: assert each notification
+					assert.Equal(t, len(testCase.notifWant), len(notifChan))
+				})
 			})
-
-			t.Run("Assert Notification", func(t *testing.T) {
-				// ik this is not a complete test but it's just easier.
-				// TODO: assert each notification
-				assert.Equal(t, len(testCase.notifWant), len(notifChan))
-			})
-		})
+		}
 	}
+
+	t.Run("docker", func(t *testing.T) {
+		mock := setupMockDockerClient(t)
+		mock.ToggleContainerListAll()
+
+		test(t, mock)
+	})
+
+	t.Run("podman", func(t *testing.T) {
+		mock := setupMockPodmanClient(t)
+		mock.ToggleContainerListAll()
+
+		test(t, mock)
+	})
 }
 
 func TestTogglePauseResumeContainer(t *testing.T) {
-	mock := setupMockDockerClient(t)
-
 	tests := []struct {
 		containers []dockerRes
 		wantState  []string
@@ -284,45 +420,56 @@ func TestTogglePauseResumeContainer(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range tests {
+	test := func(t *testing.T, mock service.Service) {
+		for _, testCase := range tests {
+			t.Run("Test for Existing Container", func(t *testing.T) {
+				notifChan := make(chan notificationMetadata, 10)
+				errChan := make(chan error, 10)
+				op := togglePauseResumeContainer(mock, testCase.containers, 2, notifChan, errChan)
 
-		t.Run("Test for Existing Container", func(t *testing.T) {
+				op()
 
-			notifChan := make(chan notificationMetadata, 10)
-			errChan := make(chan error, 10)
-			op := togglePauseResumeContainer(mock, testCase.containers, 2, notifChan, errChan)
+				t.Run("Assert Paused State", func(t *testing.T) {
+					updatedContainers := mock.ListContainers(false)
+					for i, container := range testCase.containers {
+						id := container.GetId()
 
-			op()
+						index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
+							return elem.ID == id
+						})
 
-			t.Run("Assert Paused State", func(t *testing.T) {
-				updatedContainers := mock.ListContainers(false)
-				for i, container := range testCase.containers {
-					id := container.GetId()
+						assert.Equal(t, updatedContainers[index].State, testCase.wantState[i])
+					}
+				})
 
-					index := slices.IndexFunc(updatedContainers, func(elem it.ContainerSummary) bool {
-						return elem.ID == id
-					})
+				t.Run("Assert Notification", func(t *testing.T) {
+					assert.Equal(t, len(testCase.notifWant), len(notifChan))
+					// select {
+					// case notif := <-notifChan:
+					// 	assert.Equal(t, notif, notificationMetadata{
+					// 		listId: 2,
+					// 		msg:    testCase.notifWant,
+					// 	})
+					// default:
+					// 	t.Errorf("No notification received")
+					// }
+				})
 
-					assert.Equal(t, updatedContainers[index].State, testCase.wantState[i])
-				}
 			})
 
-			t.Run("Assert Notification", func(t *testing.T) {
-				assert.Equal(t, len(testCase.notifWant), len(notifChan))
-				// select {
-				// case notif := <-notifChan:
-				// 	assert.Equal(t, notif, notificationMetadata{
-				// 		listId: 2,
-				// 		msg:    testCase.notifWant,
-				// 	})
-				// default:
-				// 	t.Errorf("No notification received")
-				// }
-			})
-
-		})
-
+		}
 	}
+
+	t.Run("docker", func(t *testing.T) {
+		mock := setupMockDockerClient(t)
+		test(t, mock)
+
+	})
+	t.Run("podman", func(t *testing.T) {
+		mock := setupMockPodmanClient(t)
+		test(t, mock)
+	})
+
 }
 
 func TestContainerDeleteBulk(t *testing.T) {
@@ -390,10 +537,10 @@ func TestContainerDeleteBulk(t *testing.T) {
 		Force:         true,
 	}
 
-	for _, testCase := range tests {
-		mock := setupMockDockerClient(t)
-		mock.ToggleContainerListAll()
-
+	test := func(t *testing.T, mock service.Service, testCase struct {
+		containers []dockerRes
+		notifWant  []string
+	}) {
 		t.Run("Force Delete Exising Container", func(t *testing.T) {
 
 			notifChan := make(chan notificationMetadata, 10)
@@ -433,6 +580,25 @@ func TestContainerDeleteBulk(t *testing.T) {
 			})
 		})
 	}
+
+	t.Run("docker", func(t *testing.T) {
+		for _, testCase := range tests {
+			mock := setupMockDockerClient(t)
+			mock.ToggleContainerListAll()
+
+			test(t, mock, testCase)
+		}
+
+	})
+
+	t.Run("podman", func(t *testing.T) {
+		for _, testCase := range tests {
+			mock := setupMockPodmanClient(t)
+			mock.ToggleContainerListAll()
+			test(t, mock, testCase)
+		}
+	})
+
 }
 
 func TestContainerDelete(t *testing.T) {
@@ -467,50 +633,63 @@ func TestContainerDelete(t *testing.T) {
 		},
 	}
 
-	mock := setupMockDockerClient(t)
-	mock.ToggleContainerListAll()
+	test := func(t *testing.T, mock service.Service) {
+		for _, testCase := range tests {
+			t.Run("Force Delete Exising Container", func(t *testing.T) {
 
-	for _, testCase := range tests {
-		t.Run("Force Delete Exising Container", func(t *testing.T) {
+				notifChan := make(chan notificationMetadata, 10)
+				t.Log(testCase.ID)
+				op := containerDelete(mock, testCase.ID, testCase.opts, 2, notifChan)
 
-			notifChan := make(chan notificationMetadata, 10)
-			op := containerDelete(mock, testCase.ID, testCase.opts, 2, notifChan)
+				err := op()
 
-			err := op()
+				// test for error
+				if testCase.errorStr != "" {
+					assert.ErrorContains(t, err, testCase.errorStr)
+					// if there is an error, return early so that we do not perform other subtests
+					return
+				}
 
-			// test for error
-			if testCase.errorStr != "" {
-				assert.ErrorContains(t, err, testCase.errorStr)
-				// if there is an error, return early so that we do not perform other subtests
-				return
-			}
+				t.Run("Confirm container deleted", func(t *testing.T) {
+					containers := mock.ListContainers(false)
 
-			t.Run("Confirm container deleted", func(t *testing.T) {
-				containers := mock.ListContainers(false)
+					exists := slices.ContainsFunc(containers, func(elem it.ContainerSummary) bool {
+						if elem.ID == testCase.ID {
+							return true
+						}
+						return false
+					})
 
-				exists := slices.ContainsFunc(containers, func(elem it.ContainerSummary) bool {
-					if elem.ID == testCase.ID {
-						return true
-					}
-					return false
+					assert.Assert(t, !exists)
 				})
 
-				assert.Assert(t, !exists)
+				t.Run("Assert Notification", func(t *testing.T) {
+					select {
+					case notif := <-notifChan:
+						assert.Equal(t, notif, notificationMetadata{
+							listId: 2,
+							msg:    testCase.notifWant,
+						})
+					default:
+						t.Errorf("No notification received")
+					}
+				})
 			})
-
-			t.Run("Assert Notification", func(t *testing.T) {
-				select {
-				case notif := <-notifChan:
-					assert.Equal(t, notif, notificationMetadata{
-						listId: 2,
-						msg:    testCase.notifWant,
-					})
-				default:
-					t.Errorf("No notification received")
-				}
-			})
-		})
+		}
 	}
+
+	t.Run("docker", func(t *testing.T) {
+		mock := setupMockDockerClient(t)
+		mock.ToggleContainerListAll()
+		test(t, mock)
+	})
+
+	t.Run("podman", func(t *testing.T) {
+		mock := setupMockPodmanClient(t)
+		mock.ToggleContainerListAll()
+		test(t, mock)
+	})
+
 }
 
 // this works but doesn't work on CI even with libx11-dev
@@ -561,50 +740,62 @@ func TestImageDelete(t *testing.T) {
 		},
 	}
 
-	mock := setupMockDockerClient(t)
-	mock.ToggleContainerListAll()
+	test := func(t *testing.T, mock service.Service) {
+		for _, testCase := range tests {
+			t.Run("Force Delete Exising image", func(t *testing.T) {
 
-	for _, testCase := range tests {
-		t.Run("Force Delete Exising image", func(t *testing.T) {
+				notifChan := make(chan notificationMetadata, 10)
+				op := imageDelete(mock, testCase.ID, testCase.opts, 2, notifChan)
 
-			notifChan := make(chan notificationMetadata, 10)
-			op := imageDelete(mock, testCase.ID, testCase.opts, 2, notifChan)
+				err := op()
 
-			err := op()
+				// test for error
+				if testCase.errorStr != "" {
+					assert.ErrorContains(t, err, testCase.errorStr)
+					// if there is an error, return early so that we do not perform other subtests
+					return
+				}
 
-			// test for error
-			if testCase.errorStr != "" {
-				assert.ErrorContains(t, err, testCase.errorStr)
-				// if there is an error, return early so that we do not perform other subtests
-				return
-			}
+				t.Run("Confirm image deleted", func(t *testing.T) {
+					images := mock.ListImages()
 
-			t.Run("Confirm image deleted", func(t *testing.T) {
-				images := mock.ListImages()
+					exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
+						if elem.ID == testCase.ID {
+							return true
+						}
+						return false
+					})
 
-				exists := slices.ContainsFunc(images, func(elem it.ImageSummary) bool {
-					if elem.ID == testCase.ID {
-						return true
-					}
-					return false
+					assert.Assert(t, !exists)
 				})
 
-				assert.Assert(t, !exists)
+				t.Run("Assert Notification", func(t *testing.T) {
+					select {
+					case notif := <-notifChan:
+						assert.Equal(t, notif, notificationMetadata{
+							listId: 2,
+							msg:    testCase.notifWant,
+						})
+					default:
+						t.Errorf("No notification received")
+					}
+				})
 			})
-
-			t.Run("Assert Notification", func(t *testing.T) {
-				select {
-				case notif := <-notifChan:
-					assert.Equal(t, notif, notificationMetadata{
-						listId: 2,
-						msg:    testCase.notifWant,
-					})
-				default:
-					t.Errorf("No notification received")
-				}
-			})
-		})
+		}
 	}
+
+	t.Run("docker", func(t *testing.T) {
+		mock := setupMockDockerClient(t)
+		mock.ToggleContainerListAll()
+		test(t, mock)
+	})
+
+	t.Run("podman", func(t *testing.T) {
+		mock := setupMockPodmanClient(t)
+		mock.ToggleContainerListAll()
+		test(t, mock)
+	})
+
 }
 func TestImageDeleteBulk(t *testing.T) {
 	tests := []struct {
@@ -803,5 +994,11 @@ func TestToggleListAll(t *testing.T) {
 		assert.Assert(t, dockerClient.GetListOptions().All)
 	})
 
-	//TODO: test for podman
+	t.Run("Podman", func(t *testing.T) {
+		podmanClient := setupMockDockerClient(t)
+		assert.Assert(t, !podmanClient.GetListOptions().All)
+		podmanClient.ToggleContainerListAll()
+		t.Log(podmanClient.GetListOptions().All)
+		assert.Assert(t, podmanClient.GetListOptions().All)
+	})
 }

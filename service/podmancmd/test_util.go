@@ -2,6 +2,7 @@ package podmancmd
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/containers/podman/v5/libpod/define"
@@ -62,12 +63,14 @@ func (m *PodmanMockApi) ImageRemove(image_ids []string, opts *images.RemoveOptio
 			errs = append(errs, errors.New("No such image:"))
 		}
 
-		if m.mockImages[index].Containers > 0 {
-			errs = append(errs, errors.New("image is in use by a container"))
+		if index != -1 && m.mockImages[index].Containers > 0 {
+			errs = append(errs, errors.New("unable to delete, image is in use by a container"))
 
 		}
 
-		m.mockImages = slices.Delete(m.mockImages, index, index+1)
+		if index != -1 {
+			m.mockImages = slices.Delete(m.mockImages, index, index+1)
+		}
 		deleted = append(deleted, image)
 	}
 
@@ -232,7 +235,30 @@ func (mo *PodmanMockApi) ContainerUnpause(id string) error {
 }
 
 func (mo *PodmanMockApi) ContainerRemove(id string, removeOpts *containers.RemoveOptions) ([]*reports.RmReport, error) {
-	panic("not implemented") // TODO: Implement
+	index := slices.IndexFunc(mo.mockContainers, func(cont types.ListContainer) bool {
+		if cont.ID == id {
+			return true
+		}
+
+		return false
+	})
+
+	if index == -1 {
+		return nil, errors.New(fmt.Sprintf("No such container: %s", id))
+	}
+
+	if mo.mockContainers[index].State == "running" && !(removeOpts.Force != nil && *removeOpts.Force) {
+
+		return nil, errors.New(fmt.Sprintf(
+			"cannot remove container \"%s\": container is running: stop the container before removing or force remove",
+			mo.mockContainers[index].Names[0],
+		))
+		//not exact error but works for now
+	}
+
+	mo.mockContainers = slices.Delete(mo.mockContainers, index, index+1)
+
+	return []*reports.RmReport{{Id: id}}, nil
 }
 
 // Deletes stopped containers and returns nil, nil all the time (for now)

@@ -38,3 +38,13 @@ func NewPodmanClient() (*PodmanClient, error) {
 func (pc *PodmanClient) Ping() error {
 	return nil
 }
+
+func NewMockCli(cli *PodmanMockApi) *PodmanClient {
+	return &PodmanClient{
+		cli:               cli,
+		containerListOpts: types.ContainerListOptions{},
+		listOptions: containers.ListOptions{
+			All: boolPtr(false),
+		},
+	}
+}
