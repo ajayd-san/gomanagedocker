@@ -1,4 +1,6 @@
 config:
   Polling-Time: 500
-  Tab-Order: [images, containers, volumes]
+  Tab-Order:
+    Docker: [images, containers, volumes]
+    Podman: [images, containers, volumes, pods]
   Notification-Timeout: 2000

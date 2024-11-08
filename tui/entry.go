@@ -8,6 +8,10 @@ import (
 	"time"
 
 	config "github.com/ajayd-san/gomanagedocker/config"
+	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/knadh/koanf/v2"
 )
@@ -20,6 +24,7 @@ var (
 	IMAGES     tabId
 	CONTAINERS tabId
 	VOLUMES    tabId
+	PODS       tabId
 )
 
 var CONFIG_POLLING_TIME time.Duration
@@ -34,7 +39,7 @@ I dont think there is a native way that bubble tea lets you do it for now
 */
 var earlyExitErr error
 
-func StartTUI(debug bool) error {
+func StartTUI(debug bool, serviceKind types.ServiceType) error {
 	if debug {
 		f, _ := tea.LogToFile("gmd_debug.log", "debug")
 		defer f.Close()
@@ -43,9 +48,16 @@ func StartTUI(debug bool) error {
 	}
 
 	readConfig()
-	loadConfig()
+	loadConfig(serviceKind)
 
-	m := NewModel()
+	var client service.Service
+	if serviceKind == types.Docker {
+		client = dockercmd.NewDockerClient()
+	} else {
+		client, _ = podmancmd.NewPodmanClient()
+	}
+
+	m := NewModel(client, serviceKind)
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		return err
@@ -72,11 +84,17 @@ func readConfig() {
 	config.ReadConfig(globalConfig, configPath+xdgPathTail)
 }
 
-func loadConfig() {
+func loadConfig(serviceKind types.ServiceType) {
 	CONFIG_POLLING_TIME = globalConfig.Duration("config.Polling-Time") * time.Millisecond
 	CONFIG_NOTIFICATION_TIMEOUT = globalConfig.Duration("config.Notification-Timeout") * time.Millisecond
 	// I have no idea how I made this work this late in the dev process, need a reliable way to test this
-	CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order")
+
+	switch serviceKind {
+	case types.Docker:
+		CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order.Docker")
+	case types.Podman:
+		CONFIG_TAB_ORDERING = globalConfig.Strings("config.Tab-Order.Podman")
+	}
 	setTabConstants(CONFIG_TAB_ORDERING)
 }
 
@@ -104,6 +122,12 @@ func setTabConstants(configOrder []string) TabOrderingMap {
 		VOLUMES = index
 	} else {
 		VOLUMES = 999
+	}
+
+	if index, ok := tabIndexMap["pods"]; ok {
+		PODS = index
+	} else {
+		PODS = 999
 	}
 	return tabIndexMap
 }

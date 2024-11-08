@@ -4,6 +4,7 @@
 name: Go
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
@@ -14,9 +15,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-12]
+        os: [ubuntu-20.04, macos-12]
     steps:
     - uses: actions/checkout@v4
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
+      with:
+        packages: dia libbtrfs-dev libgpgme-dev
+        version: 1.0
+
+    - name: install mac os deps
+      if: ${{ matrix.os == 'macos-12' }}
+      run: brew install gpgme
 
     - name: Set up Go
       uses: actions/setup-go@v4

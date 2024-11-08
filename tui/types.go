@@ -7,11 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/volume"
+	"github.com/containers/podman/v5/pkg/domain/entities/types"
 )
 
 type status int
@@ -45,10 +44,10 @@ type dockerRes interface {
 }
 
 type imageItem struct {
-	image.Summary
+	it.ImageSummary
 }
 
-func makeImageItems(dockerlist []image.Summary) []dockerRes {
+func makeImageItems(dockerlist []it.ImageSummary) []dockerRes {
 	res := make([]dockerRes, 0)
 
 	for i := range dockerlist {
@@ -56,7 +55,7 @@ func makeImageItems(dockerlist []image.Summary) []dockerRes {
 			continue
 		}
 
-		res = append(res, imageItem{Summary: dockerlist[i]})
+		res = append(res, imageItem{dockerlist[i]})
 	}
 
 	return res
@@ -96,13 +95,17 @@ func (i imageItem) Description() string {
 func (i imageItem) FilterValue() string { return i.getName() }
 
 type containerItem struct {
-	types.Container
+	it.ContainerSummary
+	ImageName string
 }
 
-func makeContainerItems(dockerlist []types.Container) []dockerRes {
+func makeContainerItems(
+	dockerlist []it.ContainerSummary,
+	imageIdToNameMap map[string]string,
+) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
-	slices.SortFunc(dockerlist, func(a types.Container, b types.Container) int {
+	slices.SortFunc(dockerlist, func(a it.ContainerSummary, b it.ContainerSummary) int {
 
 		if statusMap[a.State] < statusMap[b.State] {
 			return -1
@@ -115,8 +118,18 @@ func makeContainerItems(dockerlist []types.Container) []dockerRes {
 	})
 
 	for i := range dockerlist {
-		res[i] = containerItem{Container: dockerlist[i]}
+		newItem := containerItem{
+			ContainerSummary: dockerlist[i],
+		}
+		newItem.ImageName = imageIdToNameMap[newItem.ImageID]
+		res[i] = newItem
 	}
+
+	// log.Println("------------------------")
+	// for _, items := range res {
+	// 	log.Println(items.(containerItem).Size)
+	// }
+	// log.Println("------------------------")
 
 	return res
 }
@@ -127,7 +140,7 @@ func (c containerItem) GetId() string {
 }
 
 func (c containerItem) getSize() float64 {
-	return float64(c.SizeRw) / float64(1e+9)
+	panic("unimplemented")
 }
 
 func (c containerItem) getLabel() string {
@@ -171,7 +184,7 @@ func (i containerItem) Description() string {
 func (i containerItem) FilterValue() string { return i.getLabel() }
 
 type VolumeItem struct {
-	volume.Volume
+	it.VolumeSummary
 }
 
 func (v VolumeItem) FilterValue() string {
@@ -192,27 +205,100 @@ func (v VolumeItem) getName() string {
 }
 
 func (v VolumeItem) getSize() float64 {
-	if v.UsageData == nil {
-		return -1
-	}
-	return float64(v.UsageData.Size)
+	return float64(v.UsageData)
 }
 
 func (i VolumeItem) Title() string { return i.getName() }
 
 func (i VolumeItem) Description() string { return "" }
 
-func makeVolumeItem(dockerlist []*volume.Volume) []dockerRes {
+func makeVolumeItem(dockerlist []it.VolumeSummary) []dockerRes {
 	res := make([]dockerRes, len(dockerlist))
 
 	for i, volume := range dockerlist {
-		res[i] = VolumeItem{Volume: *volume}
+		res[i] = VolumeItem{VolumeSummary: volume}
 	}
 
 	sort.Slice(res, func(i, j int) bool {
 		return res[i].getName() < res[j].getName()
 	})
 
+	return res
+}
+
+type PodItem struct {
+	types.ListPodsReport
+}
+
+func (po PodItem) getSize() float64 {
+	return 0
+}
+
+func (po PodItem) getLabel() string {
+	return po.Name
+}
+
+func (po PodItem) getName() string {
+	return po.Name
+}
+
+func (po PodItem) GetId() string {
+	return po.Id
+}
+
+func (po PodItem) Title() string {
+	return po.Name
+}
+
+func (po PodItem) getState() string {
+	return strings.ToLower(po.Status)
+}
+
+// returns count of running container
+func (po PodItem) getRunningContainers() int {
+	var counter int
+	for _, cont := range po.Containers {
+		if cont.Status == "running" {
+			counter += 1
+		}
+	}
+
+	return counter
+}
+
+func (po PodItem) Description() string {
+	state := po.Status
+	switch state {
+	case "running":
+		state = containerRunningStyle.Render(state)
+	case "exited":
+		state = containerExitedStyle.Render(state)
+	case "created":
+		state = containerCreatedStyle.Render(state)
+	case "restarting":
+		state = containerRestartingStyle.Render(state)
+	case "dead":
+		state = containerDeadStyle.Render(state)
+	}
+	return makeDescriptionString(po.Id[:15], state, len(po.Id[:15]))
+}
+
+// FilterValue is the value we use when filtering against this item when
+// we're filtering the list.
+func (po PodItem) FilterValue() string {
+	return po.Name
+}
+
+func makePodItem(dockerlist []*types.ListPodsReport) []dockerRes {
+	res := make([]dockerRes, len(dockerlist))
+
+	for i, item := range dockerlist {
+		// cuz we use lower case version of status
+		item.Status = strings.ToLower(item.Status)
+		res[i] = PodItem{
+			ListPodsReport: *item,
+		}
+	}
 	return res
 }
 

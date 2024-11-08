@@ -16,19 +16,35 @@ func TestReadConfig(t *testing.T) {
 	}{
 		{
 			UserConfig: "",
-			Want:       map[string]any{"config.Polling-Time": 500, "config.Tab-Order": []any{"images", "containers", "volumes"}, "config.Notification-Timeout": 2000},
+			Want: map[string]any{
+				"config.Polling-Time":         500,
+				"config.Tab-Order.Docker":     []any{"images", "containers", "volumes"},
+				"config.Tab-Order.Podman":     []any{"images", "containers", "volumes", "pods"},
+				"config.Notification-Timeout": 2000,
+			},
 		},
 		{
 			UserConfig: `config:
   Polling-Time: 100`,
-			Want: map[string]any{"config.Polling-Time": 100, "config.Tab-Order": []any{"images", "containers", "volumes"}, "config.Notification-Timeout": 2000},
+			Want: map[string]any{
+				"config.Polling-Time":         100,
+				"config.Tab-Order.Docker":     []any{"images", "containers", "volumes"},
+				"config.Tab-Order.Podman":     []any{"images", "containers", "volumes", "pods"},
+				"config.Notification-Timeout": 2000,
+			},
 		},
 		{
 			UserConfig: `config:
   Polling-Time: 200
-  Tab-Order: [containers, volumes]
+  Tab-Order:
+    Docker: [containers, volumes]
   Notification-Timeout: 10000`,
-			Want: map[string]any{"config.Polling-Time": 200, "config.Tab-Order": []any{"containers", "volumes"}, "config.Notification-Timeout": 10000},
+			Want: map[string]any{
+				"config.Polling-Time":         200,
+				"config.Tab-Order.Docker":     []any{"containers", "volumes"},
+				"config.Tab-Order.Podman":     []any{"images", "containers", "volumes", "pods"},
+				"config.Notification-Timeout": 10000,
+			},
 		},
 	}
 

@@ -1,24 +1,35 @@
 package tui
 
 import (
+	"fmt"
 	"regexp"
+	"slices"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 )
 
 const (
+	// containers
 	dialogRemoveContainer teadialog.DialogType = iota
 	dialogPruneContainers
+
+	// images
 	dialogRemoveImage
 	dialogPruneImages
 	dialogRunImage
-	dialogPruneVolumes
-	dialogRemoveVolumes
 	dialogImageScout
 	dialogImageBuild
 	dialogImageBuildProgress
+
+	// volumes
+	dialogPruneVolumes
+	dialogRemoveVolumes
+
+	// pods
+	dialogPrunePods
+	dialogDeletePod
 )
 
 func getRunImageDialog(storage map[string]string) teadialog.Dialog {
@@ -137,7 +148,7 @@ func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 		teadialog.WithMinWidth(100),
 	)
 
-	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+	reg := regexp.MustCompile(`(?i)Step\s(\d+)\/(\d+)\s?:\s(.*)`)
 
 	return buildProgressModel{
 		progressChan: make(chan string, 10),
@@ -145,4 +156,32 @@ func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 		progressBar:  progressBar,
 		inner:        &infoCard,
 	}
+}
+
+// PODS
+func getPrunePodsDialog(storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeOptionPrompt("confirmPrunePods", "This will remove all stopped pods, are your sure?", []string{"Yes", "No"}),
+	}
+
+	return teadialog.InitDialogWithPrompt("Prune Pods: ", prompts, dialogPrunePods, storage)
+}
+
+func getRemovePodDialog(running int, storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeTogglePrompt("force", "Force?"),
+	}
+
+	if running > 0 {
+		runningContainersString := containerCountForeground.Render(fmt.Sprintf("%d running", running))
+		confirmPrompt := teadialog.MakeOptionPrompt(
+			"confirm",
+			fmt.Sprintf(
+				"Are you sure? This pod has %s containers.",
+				runningContainersString,
+			),
+			[]string{"Yes", "No"})
+		prompts = slices.Insert(prompts, 0, confirmPrompt)
+	}
+	return teadialog.InitDialogWithPrompt("Remove Pod Options:", prompts, dialogDeletePod, storage)
 }
