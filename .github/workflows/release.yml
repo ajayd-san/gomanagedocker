@@ -1,0 +1,86 @@
+name: create draft release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: 
+      - closed
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-20.04 
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: install linux deps
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: dia libbtrfs-dev libgpgme-dev
+        version: 1.0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Build artifact
+      run: go build -o gmd_linux_amd64 .
+
+    - name: Tar artifact
+      run: tar czf gmd_linux_amd64.tar.gz gmd_linux_amd64
+
+    - name: Upload linux assets
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux_artifacts
+        path: gmd_linux*.tar.gz
+
+  build-darwin:
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: install mac os deps
+      run: brew install gpgme
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Build artifact amd64
+      run: go build -o gmd_darwin_amd64 .
+
+    - name: Build artifact arm64
+      run: env GOOS=darwin GOARCH=amd64 go build -o gmd_darwin_arm64 .
+
+    - name: Tar artifact
+      run: | 
+        tar czf gmd_darwin_amd64.tar.gz gmd_darwin_amd64
+        tar czf gmd_darwin_arm64.tar.gz gmd_darwin_arm64
+
+    - name: Upload darwin assets
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos_artifacts
+        path: gmd_darwin*.tar.gz
+
+  create-release:
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-darwin]
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            linux_artifacts/*
+            macos_artifacts/*
