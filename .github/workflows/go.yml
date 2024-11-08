@@ -21,7 +21,7 @@ jobs:
     - uses: awalsh128/cache-apt-pkgs-action@latest
       if: ${{ matrix.os == 'ubuntu-20.04' }}
       with:
-        packages: dia libbtrfs-dev
+        packages: dia libbtrfs-dev php-gnupg 
         version: 1.0
 
     - name: Set up Go
