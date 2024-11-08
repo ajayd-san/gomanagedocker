@@ -24,6 +24,10 @@ jobs:
         packages: dia libbtrfs-dev libgpgme-dev
         version: 1.0
 
+    - name: install mac os deps
+      if: ${{ matrix.os == 'macos-12' }}
+      run: brew install gpgme
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
