@@ -307,10 +307,12 @@ notificationLoop:
 							m.activeDialog = getRunImageDialogDocker(storage)
 						case it.Podman:
 							podItems := m.getList(int(PODS)).Items()
-							pods := make([]string, len(podItems))
+							pods := make([]*PodItem, len(podItems))
 
 							for i, item := range podItems {
-								pods[i] = item.FilterValue()
+								if pod, ok := item.(PodItem); ok {
+									pods[i] = &pod
+								}
 							}
 							m.activeDialog = getRunImageDialogPodman(storage, pods)
 						}
@@ -765,6 +767,13 @@ notificationLoop:
 				PortBindings: portMappings,
 				Name:         userChoices["name"].(string),
 			}
+
+			// add pod info only if the current service is Podman
+			if m.serviceKind == it.Podman {
+				config.Pod = userChoices["pod"].(teadialog.PopupListItem).AdditionalData.(string)
+			}
+
+			log.Println("config is", config)
 
 			op := runImage(m.dockerClient, config, m.activeTab, m.notificationChan)
 

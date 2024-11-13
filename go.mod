@@ -1,6 +1,6 @@
 module github.com/ajayd-san/gomanagedocker
 
-// replace github.com/ajayd-san/teaDialog => /mnt/devenv/go/teaDialog
+replace github.com/ajayd-san/teaDialog => /mnt/devenv/go/teaDialog
 
 go 1.22.2
 
@@ -54,6 +54,7 @@ require (
 	github.com/disiqueira/gotree/v3 v3.0.2 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect

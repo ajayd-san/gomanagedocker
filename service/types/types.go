@@ -129,6 +129,8 @@ type ContainerCreateConfig struct {
 	// ID of image
 	ImageId      string
 	PortBindings []PortBinding
+	// only for it.Podman
+	Pod string
 }
 
 type PortBinding struct {

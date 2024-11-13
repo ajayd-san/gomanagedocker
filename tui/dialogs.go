@@ -66,9 +66,16 @@ func getRunImageDialogDocker(storage map[string]string) teadialog.Dialog {
 	)
 }
 
-func getRunImageDialogPodman(storage map[string]string, pods []string) teadialog.Dialog {
+func getRunImageDialogPodman(storage map[string]string, pods []*PodItem) teadialog.Dialog {
+	final := make([]teadialog.PopupListItem, len(pods))
+	for i, pod := range pods {
+		final[i] = teadialog.PopupListItem{
+			Name:           pod.Name,
+			AdditionalData: pod.Id,
+		}
+	}
 	// button that opens nested dialog to select the pod to run the container in
-	PodButton := teadialog.Default_list(pods, "select pod", 30, 15)
+	PodButton := teadialog.Default_list("pod", final, "select pod", 30, 15)
 
 	prompt := []teadialog.Prompt{
 		teadialog.MakeTextInputPrompt(

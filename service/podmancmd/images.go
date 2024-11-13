@@ -127,6 +127,7 @@ func (pc *PodmanClient) RunImage(config it.ContainerCreateConfig) (*string, erro
 	spec.NetNS = specgen.Namespace{
 		NSMode: specgen.Bridge,
 	}
+	spec.Pod = config.Pod
 
 	res, err := pc.cli.ContainerCreateWithSpec(spec, nil)
 
