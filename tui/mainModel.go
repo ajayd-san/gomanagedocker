@@ -301,11 +301,21 @@ notificationLoop:
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						imageInfo := curItem.(imageItem)
 						storage := map[string]string{"ID": imageInfo.GetId()}
-						m.activeDialog = getRunImageDialog(storage)
+
+						switch m.serviceKind {
+						case it.Docker:
+							m.activeDialog = getRunImageDialogDocker(storage)
+						case it.Podman:
+							podItems := m.getList(int(PODS)).Items()
+							pods := make([]string, len(podItems))
+
+							for i, item := range podItems {
+								pods[i] = item.FilterValue()
+							}
+							m.activeDialog = getRunImageDialogPodman(storage, pods)
+						}
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
-						// op := runImage(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
-						// go m.runBackground(op)
 					}
 
 				case key.Matches(assertedMsg, m.keymap.image.Delete):

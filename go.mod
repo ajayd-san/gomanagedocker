@@ -5,7 +5,7 @@ module github.com/ajayd-san/gomanagedocker
 go 1.22.2
 
 require (
-	github.com/ajayd-san/teaDialog v1.1.9
+	github.com/ajayd-san/teaDialog v1.1.10
 	github.com/containers/buildah v1.37.1
 	github.com/containers/common v0.60.1
 	github.com/containers/podman/v5 v5.2.1
@@ -33,10 +33,9 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.1.2 // indirect
-	github.com/charmbracelet/x/input v0.1.2 // indirect
+	github.com/charmbracelet/x/ansi v0.4.5 // indirect
+	github.com/charmbracelet/x/input v0.2.0 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
-	github.com/charmbracelet/x/windows v0.1.2 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cilium/ebpf v0.11.0 // indirect
 	github.com/containerd/cgroups/v3 v3.0.3 // indirect
@@ -160,7 +159,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.4
-	github.com/charmbracelet/lipgloss v0.11.0
+	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.5.0
@@ -183,6 +182,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.25.0 // indirect
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
 	golang.design/x/clipboard v0.7.0
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 	gotest.tools/v3 v3.5.1
 )

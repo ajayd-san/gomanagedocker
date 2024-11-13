@@ -19,6 +19,7 @@ const (
 	dialogRemoveImage
 	dialogPruneImages
 	dialogRunImage
+
 	dialogImageScout
 	dialogImageBuild
 	dialogImageBuildProgress
@@ -32,7 +33,7 @@ const (
 	dialogDeletePod
 )
 
-func getRunImageDialog(storage map[string]string) teadialog.Dialog {
+func getRunImageDialogDocker(storage map[string]string) teadialog.Dialog {
 	// MGS nerds will prolly like this
 	prompt := []teadialog.Prompt{
 		teadialog.MakeTextInputPrompt(
@@ -56,7 +57,49 @@ func getRunImageDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	title := "Run Image\n(Leave inputs blank for defaults)"
-	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage, teadialog.WithShowFullHelp(true))
+	return teadialog.InitDialogWithPrompt(
+		title,
+		prompt,
+		dialogRunImage,
+		storage,
+		teadialog.WithShowFullHelp(true),
+	)
+}
+
+func getRunImageDialogPodman(storage map[string]string, pods []string) teadialog.Dialog {
+	// button that opens nested dialog to select the pod to run the container in
+	PodButton := teadialog.Default_list(pods, "select pod", 30, 15)
+
+	prompt := []teadialog.Prompt{
+		teadialog.MakeTextInputPrompt(
+			"port",
+			"Port mappings",
+			teadialog.WithPlaceHolder("Ex: 1011:2016,226:1984/udp"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"name",
+			"Name",
+			teadialog.WithPlaceHolder("prologueAwakening"),
+			teadialog.WithTextWidth(30),
+		),
+		&PodButton,
+		teadialog.MakeTextInputPrompt(
+			"env",
+			"Environment variables",
+			teadialog.WithPlaceHolder("VENOM=AHAB,DD=goodDoggo"),
+			teadialog.WithTextWidth(30),
+		),
+	}
+
+	title := "Run Image\n(Leave inputs blank for defaults)"
+	return teadialog.InitDialogWithPrompt(
+		title,
+		prompt,
+		dialogRunImage,
+		storage,
+		teadialog.WithShowFullHelp(true),
+	)
 }
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) DockerScoutInfoCard {
