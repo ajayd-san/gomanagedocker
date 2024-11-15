@@ -771,8 +771,12 @@ notificationLoop:
 			// add pod info only if the current service is Podman
 			if m.serviceKind == it.Podman {
 				if userChoices["pod"] != nil {
-					if podId, ok := userChoices["pod"].(*teadialog.PopupListItem).AdditionalData.(string); ok {
-						config.Pod = podId
+					if pod, ok := userChoices["pod"].(*teadialog.PopupListItem); ok {
+						if pod != nil {
+							if podId, ok := pod.AdditionalData.(string); ok {
+								config.Pod = podId
+							}
+						}
 					}
 				}
 			}
