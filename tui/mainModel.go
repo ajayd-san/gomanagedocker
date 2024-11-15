@@ -781,8 +781,6 @@ notificationLoop:
 				}
 			}
 
-			log.Println("config is", config)
-
 			op := runImage(m.dockerClient, config, m.activeTab, m.notificationChan)
 
 			go m.runBackground(op)

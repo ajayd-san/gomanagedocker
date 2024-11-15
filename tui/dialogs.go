@@ -78,6 +78,7 @@ func getRunImageDialogPodman(storage map[string]string, pods []*PodItem) teadial
 	PodButton := teadialog.Default_list("pod", "pod", final, "select pod", 30, 15)
 
 	prompt := []teadialog.Prompt{
+		&PodButton,
 		teadialog.MakeTextInputPrompt(
 			"port",
 			"Port mappings",
@@ -90,7 +91,6 @@ func getRunImageDialogPodman(storage map[string]string, pods []*PodItem) teadial
 			teadialog.WithPlaceHolder("prologueAwakening"),
 			teadialog.WithTextWidth(30),
 		),
-		&PodButton,
 		teadialog.MakeTextInputPrompt(
 			"env",
 			"Environment variables",
