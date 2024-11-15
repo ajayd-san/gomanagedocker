@@ -75,7 +75,7 @@ func getRunImageDialogPodman(storage map[string]string, pods []*PodItem) teadial
 		}
 	}
 	// button that opens nested dialog to select the pod to run the container in
-	PodButton := teadialog.Default_list("pod", final, "select pod", 30, 15)
+	PodButton := teadialog.Default_list("pod", "pod", final, "select pod", 30, 15)
 
 	prompt := []teadialog.Prompt{
 		teadialog.MakeTextInputPrompt(

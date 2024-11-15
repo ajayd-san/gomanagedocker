@@ -199,16 +199,6 @@ notificationLoop:
 		update, cmd := m.activeDialog.Update(msg)
 		m.activeDialog = update
 
-		// if keymsg is <Esc> then close dialog
-		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, m.keymap.navigation.Back) {
-			if m.dialogOpCancel != nil {
-				m.dialogOpCancel()
-				// this might be required, in the future
-				// m.dialogOpCancel = nil
-			}
-			m.showDialog = false
-		}
-
 		cmds = append(cmds, cmd)
 	}
 
@@ -693,6 +683,16 @@ notificationLoop:
 
 		}
 
+	// this just closes the dialog, when the user hits <Esc>
+	case teadialog.QuitDialog:
+		if m.dialogOpCancel != nil {
+			m.dialogOpCancel()
+			// this might be required, in the future
+			// m.dialogOpCancel = nil
+		}
+		m.showDialog = false
+
+	// this is for when user submits the dialog
 	case teadialog.CloseDialog:
 		m.showDialog = false
 		dialog, ok := m.activeDialog.(teadialog.Dialog)
@@ -770,7 +770,11 @@ notificationLoop:
 
 			// add pod info only if the current service is Podman
 			if m.serviceKind == it.Podman {
-				config.Pod = userChoices["pod"].(teadialog.PopupListItem).AdditionalData.(string)
+				if userChoices["pod"] != nil {
+					if podId, ok := userChoices["pod"].(*teadialog.PopupListItem).AdditionalData.(string); ok {
+						config.Pod = podId
+					}
+				}
 			}
 
 			log.Println("config is", config)

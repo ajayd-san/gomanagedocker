@@ -56,14 +56,15 @@ func toContainerSummaryArr(summary []et.Container) []types.ContainerSummary {
 
 	for i, entry := range summary {
 		item := types.ContainerSummary{
-			ID:      entry.ID,
-			ImageID: entry.ImageID,
-			Created: entry.Created,
-			Names:   entry.Names,
-			State:   entry.State,
-			Command: entry.Command,
-			Mounts:  getMounts(entry.Mounts),
-			Ports:   toPort(entry.Ports),
+			ServiceKind: types.Docker,
+			ID:          entry.ID,
+			ImageID:     entry.ImageID,
+			Created:     entry.Created,
+			Names:       entry.Names,
+			State:       entry.State,
+			Command:     entry.Command,
+			Mounts:      getMounts(entry.Mounts),
+			Ports:       toPort(entry.Ports),
 			//BUG: this should be set to null if entry.SizeRw are 0
 			Size: &types.SizeInfo{
 				Rw:     entry.SizeRw,
@@ -125,8 +126,9 @@ func getMounts(mounts []et.MountPoint) []string {
 
 func toContainerInspectData(info *et.ContainerJSON) *types.InspectContainerData {
 	res := types.ContainerSummary{
-		ID:      info.ID,
-		ImageID: info.Image,
+		ServiceKind: types.Docker,
+		ID:          info.ID,
+		ImageID:     info.Image,
 		// TODO: figure out created
 		// Created:    info.Created,
 		Names: []string{info.Name},

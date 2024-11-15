@@ -34,14 +34,16 @@ func toContainerSummaryArr(summary []et.ListContainer) []it.ContainerSummary {
 
 	for index, entry := range summary {
 		res[index] = it.ContainerSummary{
-			ID:      entry.ID,
-			ImageID: entry.ImageID,
-			Created: entry.Created.Unix(),
-			Names:   entry.Names,
-			State:   entry.State,
-			Command: strings.Join(entry.Command, " "),
-			Mounts:  entry.Mounts,
-			Ports:   toPort(entry.Ports),
+			ServiceKind: it.Podman,
+			ID:          entry.ID,
+			ImageID:     entry.ImageID,
+			Created:     entry.Created.Unix(),
+			Names:       entry.Names,
+			State:       entry.State,
+			Command:     strings.Join(entry.Command, " "),
+			Mounts:      entry.Mounts,
+			Ports:       toPort(entry.Ports),
+			Pod:         entry.PodName,
 		}
 
 		if entry.Size != nil {
@@ -88,11 +90,13 @@ func toContainerSummary(info *define.InspectContainerData) it.ContainerSummary {
 	// jcart, _ := json.MarshalIndent(info, "", "\t")
 	// log.Println(string(jcart))
 	res := it.ContainerSummary{
-		ID:      info.ID,
-		ImageID: info.Image,
-		Created: info.Created.Unix(),
-		Names:   []string{info.Name},
-		State:   info.State.Status,
+		ServiceKind: it.Podman,
+		ID:          info.ID,
+		ImageID:     info.Image,
+		Created:     info.Created.Unix(),
+		Names:       []string{info.Name},
+		State:       info.State.Status,
+		Pod:         info.Pod,
 		// Command:    strings.Join(entry.Command, " "),
 		Size: &it.SizeInfo{
 			Rw:     *info.SizeRw,

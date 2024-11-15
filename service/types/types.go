@@ -53,16 +53,20 @@ type JSONError struct {
 }
 
 type ContainerSummary struct {
-	ID      string
-	ImageID string
-	Created int64
-	Names   []string
-	State   string
-	Command string
+	// podman or docker
+	ServiceKind ServiceType
+	ID          string
+	ImageID     string
+	Created     int64
+	Names       []string
+	State       string
+	Command     string
 	// Status     string
 	Size   *SizeInfo
 	Mounts []string
 	Ports  []Port
+	// only for podman
+	Pod string
 }
 
 type SizeInfo struct {

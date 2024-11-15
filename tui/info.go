@@ -55,6 +55,9 @@ func (containerInfo containerItem) InfoBox(containerSizeInfo map[string]it.SizeI
 
 	addEntry(&res, "Command: ", containerInfo.Command)
 	addEntry(&res, "State: ", containerInfo.State)
+	if containerInfo.ServiceKind == it.Podman {
+		addEntry(&res, "Pod: ", containerInfo.Pod)
+	}
 
 	// TODO: figure ports and mount points out
 	if len(containerInfo.Mounts) > 0 {
