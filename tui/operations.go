@@ -459,6 +459,28 @@ func volumePrune(client service.Service, activeTab tabId, notificationChan chan 
 }
 
 // Pods
+
+func createPod(
+	name string,
+	client podmancmd.PodmanClient,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+) Operation {
+	return func() error {
+		res, err := client.CreatePod(name)
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Created %s", res.Id[:8])
+		notificationChan <- notificationMetadata{
+			listId: activeTab,
+			msg:    listStatusMessageStyle.Render(msg),
+		}
+
+		return nil
+	}
+}
 func ToggleStartStopPods(
 	client podmancmd.PodmanClient,
 	selectedPods []dockerRes,

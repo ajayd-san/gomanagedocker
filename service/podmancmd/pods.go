@@ -19,6 +19,10 @@ func (pc *PodmanClient) ListPods() ([]*types.ListPodsReport, error) {
 	return pods, nil
 }
 
+func (pc *PodmanClient) CreatePod(name string) (*types.PodCreateReport, error) {
+	return pc.cli.PodsCreate(name)
+}
+
 func (pc *PodmanClient) PausePods(id string) error {
 	_, err := pc.cli.PodsPause(id, nil)
 	return err

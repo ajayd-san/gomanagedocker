@@ -1,11 +1,11 @@
 module github.com/ajayd-san/gomanagedocker
 
-replace github.com/ajayd-san/teaDialog => /mnt/devenv/go/teaDialog
+// replace github.com/ajayd-san/teaDialog => /mnt/devenv/go/teaDialog
 
 go 1.22.2
 
 require (
-	github.com/ajayd-san/teaDialog v1.1.10
+	github.com/ajayd-san/teaDialog v1.1.11
 	github.com/containers/buildah v1.37.1
 	github.com/containers/common v0.60.1
 	github.com/containers/podman/v5 v5.2.1

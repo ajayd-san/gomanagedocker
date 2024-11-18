@@ -222,6 +222,10 @@ func NewKeyMap(session it.ServiceType) KeyMap {
 	}
 
 	podsKeymap := podsKeymap{
+		Create: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "create new pod"),
+		),
 		ToggleStartStop: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "toggle Start/Stop"),
@@ -475,6 +479,7 @@ func (vo volKeymapBulk) FullHelp() [][]key.Binding {
 
 type podsKeymap struct {
 	// ToggleListAll   key.Binding
+	Create          key.Binding
 	ToggleStartStop key.Binding
 	TogglePause     key.Binding
 	Restart         key.Binding
@@ -487,6 +492,7 @@ type podsKeymap struct {
 
 func (m podsKeymap) FullHelp() [][]key.Binding {
 	bindings := []key.Binding{
+		m.Create,
 		m.ToggleStartStop,
 		m.Restart,
 		m.TogglePause,

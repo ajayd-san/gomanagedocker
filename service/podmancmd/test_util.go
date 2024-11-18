@@ -308,6 +308,10 @@ func (mo *PodmanMockApi) VolumesPrune(opts *volumes.PruneOptions) ([]*reports.Pr
 }
 
 // pods
+func (po *PodmanMockApi) PodsCreate(name string) (*types.PodCreateReport, error) {
+	panic("not implemented")
+}
+
 func (m *PodmanMockApi) PodsList(opts *pods.ListOptions) ([]*types.ListPodsReport, error) {
 	return m.mockPods, nil
 }

@@ -588,6 +588,13 @@ notificationLoop:
 				}
 			} else if m.activeTab == PODS {
 				switch {
+				case key.Matches(assertedMsg, m.keymap.pods.Create):
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getCreatePodDialog()
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
+
 				case key.Matches(assertedMsg, m.keymap.pods.ToggleStartStop):
 					selectedItems := m.getSelectedItems()
 
@@ -885,6 +892,15 @@ notificationLoop:
 			}
 
 			go m.runBackground(op)
+
+		case dialogCreatePod:
+			userChoices := dialogRes.UserChoices
+
+			podName := userChoices["podName"].(string)
+			if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+				op := createPod(podName, *podmanClient, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
+			}
 
 		case dialogPrunePods:
 			userChoices := dialogRes.UserChoices

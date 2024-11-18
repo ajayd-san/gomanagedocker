@@ -31,6 +31,7 @@ const (
 	// pods
 	dialogPrunePods
 	dialogDeletePod
+	dialogCreatePod
 )
 
 func getRunImageDialogDocker(storage map[string]string) teadialog.Dialog {
@@ -234,4 +235,17 @@ func getRemovePodDialog(running int, storage map[string]string) teadialog.Dialog
 		prompts = slices.Insert(prompts, 0, confirmPrompt)
 	}
 	return teadialog.InitDialogWithPrompt("Remove Pod Options:", prompts, dialogDeletePod, storage)
+}
+
+func getCreatePodDialog() teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeTextInputPrompt(
+			"podName",
+			"Name: ",
+			teadialog.WithTextWidth(30),
+			teadialog.WithPlaceHolder("enter Pod name"),
+		),
+	}
+
+	return teadialog.InitDialogWithPrompt("Create Pod: ", prompts, dialogCreatePod, nil)
 }

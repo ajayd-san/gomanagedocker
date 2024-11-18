@@ -45,6 +45,7 @@ type PodmanAPI interface {
 
 	//pods
 	PodsList(opts *pods.ListOptions) ([]*types.ListPodsReport, error)
+	PodsCreate(name string) (*types.PodCreateReport, error)
 	PodsRestart(id string, opts *pods.RestartOptions) (*types.PodRestartReport, error)
 	PodsPrune(opts *pods.PruneOptions) ([]*types.PodPruneReport, error)
 	PodsStop(id string, opts *pods.StopOptions) (*types.PodStopReport, error)
