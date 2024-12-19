@@ -8,7 +8,8 @@ var (
 )
 
 var (
-	successForeground = lipgloss.NewStyle().Foreground(statusGreen)
+	successForeground        = lipgloss.NewStyle().Foreground(statusGreen)
+	containerCountForeground = successForeground.Bold(true)
 )
 
 var (

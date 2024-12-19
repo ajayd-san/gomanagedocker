@@ -4,7 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types/image"
+	"github.com/ajayd-san/gomanagedocker/service/types"
+	podmanTypes "github.com/containers/podman/v5/pkg/domain/entities/types"
 	"gotest.tools/v3/assert"
 )
 
@@ -19,7 +20,7 @@ func TestMakeDescriptionString(t *testing.T) {
 }
 
 func TestMakeImageItems(t *testing.T) {
-	dockerList := []image.Summary{
+	dockerList := []types.ImageSummary{
 		{
 			ID:       "#1",
 			RepoTags: []string{"latest", "tag1", "tag2"},
@@ -95,4 +96,37 @@ func TestTransformListNames(t *testing.T) {
 		// should not panic
 		transformListNames(names)
 	})
+}
+
+func TestGetRunningContainers(t *testing.T) {
+	item := PodItem{
+		ListPodsReport: podmanTypes.ListPodsReport{
+			Containers: []*podmanTypes.ListPodContainer{
+				{
+					Id:     "a",
+					Status: "running",
+				},
+				{
+					Id:     "b",
+					Status: "running",
+				},
+				{
+					Id:     "c",
+					Status: "running",
+				},
+				{
+					Id:     "d",
+					Status: "exited",
+				},
+			},
+			Id:     "1234",
+			Name:   "mario",
+			Status: "running",
+		},
+	}
+
+	got := item.getRunningContainers()
+	want := 3
+
+	assert.Equal(t, got, want)
 }

@@ -1,27 +1,40 @@
 package tui
 
 import (
+	"fmt"
 	"regexp"
+	"slices"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 	teadialog "github.com/ajayd-san/teaDialog"
 )
 
 const (
+	// containers
 	dialogRemoveContainer teadialog.DialogType = iota
 	dialogPruneContainers
+
+	// images
 	dialogRemoveImage
 	dialogPruneImages
 	dialogRunImage
-	dialogPruneVolumes
-	dialogRemoveVolumes
+
 	dialogImageScout
 	dialogImageBuild
 	dialogImageBuildProgress
+
+	// volumes
+	dialogPruneVolumes
+	dialogRemoveVolumes
+
+	// pods
+	dialogPrunePods
+	dialogDeletePod
+	dialogCreatePod
 )
 
-func getRunImageDialog(storage map[string]string) teadialog.Dialog {
+func getRunImageDialogDocker(storage map[string]string) teadialog.Dialog {
 	// MGS nerds will prolly like this
 	prompt := []teadialog.Prompt{
 		teadialog.MakeTextInputPrompt(
@@ -45,7 +58,56 @@ func getRunImageDialog(storage map[string]string) teadialog.Dialog {
 	}
 
 	title := "Run Image\n(Leave inputs blank for defaults)"
-	return teadialog.InitDialogWithPrompt(title, prompt, dialogRunImage, storage, teadialog.WithShowFullHelp(true))
+	return teadialog.InitDialogWithPrompt(
+		title,
+		prompt,
+		dialogRunImage,
+		storage,
+		teadialog.WithShowFullHelp(true),
+	)
+}
+
+func getRunImageDialogPodman(storage map[string]string, pods []*PodItem) teadialog.Dialog {
+	final := make([]teadialog.PopupListItem, len(pods))
+	for i, pod := range pods {
+		final[i] = teadialog.PopupListItem{
+			Name:           pod.Name,
+			AdditionalData: pod.Id,
+		}
+	}
+	// button that opens nested dialog to select the pod to run the container in
+	PodButton := teadialog.Default_list("pod", "pod", final, "select pod", 30, 15)
+
+	prompt := []teadialog.Prompt{
+		&PodButton,
+		teadialog.MakeTextInputPrompt(
+			"port",
+			"Port mappings",
+			teadialog.WithPlaceHolder("Ex: 1011:2016,226:1984/udp"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"name",
+			"Name",
+			teadialog.WithPlaceHolder("prologueAwakening"),
+			teadialog.WithTextWidth(30),
+		),
+		teadialog.MakeTextInputPrompt(
+			"env",
+			"Environment variables",
+			teadialog.WithPlaceHolder("VENOM=AHAB,DD=goodDoggo"),
+			teadialog.WithTextWidth(30),
+		),
+	}
+
+	title := "Run Image\n(Leave inputs blank for defaults)"
+	return teadialog.InitDialogWithPrompt(
+		title,
+		prompt,
+		dialogRunImage,
+		storage,
+		teadialog.WithShowFullHelp(true),
+	)
 }
 
 func getImageScoutDialog(f func() (*dockercmd.ScoutData, error)) DockerScoutInfoCard {
@@ -137,7 +199,7 @@ func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 		teadialog.WithMinWidth(100),
 	)
 
-	reg := regexp.MustCompile(`Step\s(\d+)\/(\d+)\s:\s(.*)`)
+	reg := regexp.MustCompile(`(?i)Step\s(\d+)\/(\d+)\s?:\s(.*)`)
 
 	return buildProgressModel{
 		progressChan: make(chan string, 10),
@@ -145,4 +207,45 @@ func getBuildProgress(progressBar components.ProgressBar) buildProgressModel {
 		progressBar:  progressBar,
 		inner:        &infoCard,
 	}
+}
+
+// PODS
+func getPrunePodsDialog(storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeOptionPrompt("confirmPrunePods", "This will remove all stopped pods, are your sure?", []string{"Yes", "No"}),
+	}
+
+	return teadialog.InitDialogWithPrompt("Prune Pods: ", prompts, dialogPrunePods, storage)
+}
+
+func getRemovePodDialog(running int, storage map[string]string) teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeTogglePrompt("force", "Force?"),
+	}
+
+	if running > 0 {
+		runningContainersString := containerCountForeground.Render(fmt.Sprintf("%d running", running))
+		confirmPrompt := teadialog.MakeOptionPrompt(
+			"confirm",
+			fmt.Sprintf(
+				"Are you sure? This pod has %s containers.",
+				runningContainersString,
+			),
+			[]string{"Yes", "No"})
+		prompts = slices.Insert(prompts, 0, confirmPrompt)
+	}
+	return teadialog.InitDialogWithPrompt("Remove Pod Options:", prompts, dialogDeletePod, storage)
+}
+
+func getCreatePodDialog() teadialog.Dialog {
+	prompts := []teadialog.Prompt{
+		teadialog.MakeTextInputPrompt(
+			"podName",
+			"Name: ",
+			teadialog.WithTextWidth(30),
+			teadialog.WithPlaceHolder("enter Pod name"),
+		),
+	}
+
+	return teadialog.InitDialogWithPrompt("Create Pod: ", prompts, dialogCreatePod, nil)
 }

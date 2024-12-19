@@ -4,48 +4,55 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ajayd-san/gomanagedocker/service/types"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
 	"gotest.tools/v3/assert"
 )
 
 func TestUpdateExistingIds(t *testing.T) {
 
-	containers := []types.Container{
+	containers := []types.ContainerSummary{
 		{
-			Names:      []string{"a"},
-			ID:         "1",
-			SizeRw:     1e+9,
-			SizeRootFs: 2e+9,
-			State:      "running",
-			Status:     "",
+			Names: []string{"a"},
+			ID:    "1",
+			Size: &it.SizeInfo{
+				Rw:     1e+9,
+				RootFs: 2e+9,
+			},
+			State: "running",
 		},
 		{
-			Names:      []string{"b"},
-			ID:         "2",
-			SizeRw:     201,
-			SizeRootFs: 401,
-			State:      "running",
+			Names: []string{"b"},
+			ID:    "2",
+			Size: &it.SizeInfo{
+				Rw:     201,
+				RootFs: 401,
+			},
+			State: "running",
 		},
 		{
-			Names:      []string{"c"},
-			ID:         "3",
-			SizeRw:     202,
-			SizeRootFs: 402,
-			State:      "running",
+			Names: []string{"c"},
+			ID:    "3",
+			Size: &it.SizeInfo{
+				Rw:     202,
+				RootFs: 403,
+			},
+			State: "running",
 		},
 		{
 
-			Names:      []string{"d"},
-			ID:         "4",
-			SizeRw:     203,
-			SizeRootFs: 403,
-			State:      "running",
+			Names: []string{"d"},
+			ID:    "4",
+			Size: &it.SizeInfo{
+				Rw:     203,
+				RootFs: 403,
+			},
+			State: "running",
 		},
 	}
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0",
@@ -71,9 +78,11 @@ func TestUpdateExistingIds(t *testing.T) {
 	CONTAINERS = 0
 	IMAGES = 1
 
+	keymap := NewKeyMap(it.Docker)
+
 	t.Run("Assert container Ids", func(t *testing.T) {
-		contList := InitList(0, ContainerKeymap, ContainerKeymapBulk)
-		dres := makeContainerItems(containers)
+		contList := InitList(0, keymap.container, keymap.containerBulk)
+		dres := makeContainerItems(containers, make(map[string]string))
 		contList.updateExistigIds(&dres)
 		want := map[string]struct{}{
 			"1": {},
@@ -86,7 +95,7 @@ func TestUpdateExistingIds(t *testing.T) {
 	})
 
 	t.Run("Assert image Ids", func(t *testing.T) {
-		imgsList := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+		imgsList := InitList(IMAGES, keymap.image, keymap.imageBulk)
 		dres := makeImageItems(imgs)
 		imgsList.updateExistigIds(&dres)
 		want := map[string]struct{}{
@@ -103,7 +112,7 @@ func TestUpdateTab(t *testing.T) {
 	IMAGES = 0
 	CONTAINERS = 1
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0",
@@ -127,7 +136,9 @@ func TestUpdateTab(t *testing.T) {
 		},
 	}
 
-	list := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+	keymap := NewKeyMap(it.Docker)
+
+	list := InitList(IMAGES, keymap.image, keymap.imageBulk)
 	t.Run("Assert Images subset", func(t *testing.T) {
 		subset := imgs[:2]
 		dres := makeImageItems(subset)
@@ -139,7 +150,7 @@ func TestUpdateTab(t *testing.T) {
 			got := liItems[i].(imageItem)
 			want := subset[i]
 
-			assert.DeepEqual(t, got.Summary, want)
+			assert.DeepEqual(t, got.ImageSummary, want)
 		}
 	})
 
@@ -153,7 +164,7 @@ func TestUpdateTab(t *testing.T) {
 			got := liItems[i].(imageItem)
 			want := imgs[i]
 
-			assert.DeepEqual(t, got.Summary, want)
+			assert.DeepEqual(t, got.ImageSummary, want)
 		}
 	})
 
@@ -163,7 +174,7 @@ func TestUpdate(t *testing.T) {
 	IMAGES = 0
 	CONTAINERS = 1
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0",
@@ -187,7 +198,8 @@ func TestUpdate(t *testing.T) {
 		},
 	}
 
-	imgList := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+	keymap := NewKeyMap(it.Docker)
+	imgList := InitList(IMAGES, keymap.image, keymap.imageBulk)
 
 	t.Run("Update images", func(t *testing.T) {
 		dres := makeImageItems(imgs)
@@ -200,7 +212,7 @@ func TestUpdate(t *testing.T) {
 			got := listItems[i].(imageItem)
 			want := imgs[i]
 
-			assert.DeepEqual(t, got.Summary, want)
+			assert.DeepEqual(t, got.ImageSummary, want)
 		}
 	})
 
@@ -218,7 +230,7 @@ func TestEmptyList(t *testing.T) {
 	IMAGES = 0
 	CONTAINERS = 1
 
-	imgs := []image.Summary{
+	imgs := []it.ImageSummary{
 		{
 			Containers: 0,
 			ID:         "0as;dkfjasdfasdfasdfaasdf",
@@ -242,7 +254,8 @@ func TestEmptyList(t *testing.T) {
 		},
 	}
 
-	imgList := InitList(IMAGES, ImageKeymap, imageKeymapBulk)
+	keymap := NewKeyMap(it.Docker)
+	imgList := InitList(IMAGES, keymap.image, keymap.imageBulk)
 
 	t.Run("List with items", func(t *testing.T) {
 		dres := makeImageItems(imgs)

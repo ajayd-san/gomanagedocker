@@ -1,42 +1,86 @@
 package tui
 
 import (
-	"cmp"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 )
 
-func populateImageInfoBox(imageinfo imageItem) string {
+type SimpleInfoBoxer interface {
+	InfoBox() string
+}
+
+type SizeInfoBoxer interface {
+	InfoBox(map[string]it.SizeInfo) string
+}
+
+func (im imageItem) InfoBox() string {
 	var res strings.Builder
-	id := strings.TrimPrefix(imageinfo.ID, "sha256:")
+	id := strings.TrimPrefix(im.ID, "sha256:")
 	id = trimToLength(id, moreInfoStyle.GetWidth())
 	addEntry(&res, "id: ", id)
-	addEntry(&res, "Name: ", imageinfo.getName())
-	sizeInGb := float64(imageinfo.getSize())
+	addEntry(&res, "Name: ", im.getName())
+	sizeInGb := float64(im.getSize())
 	addEntry(&res, "Size: ", strconv.FormatFloat(sizeInGb, 'f', 2, 64)+"GB")
-	if imageinfo.Containers != -1 {
-		addEntry(&res, "Containers: ", strconv.Itoa(int(imageinfo.Containers)))
+	if im.Containers != -1 {
+		addEntry(&res, "Containers: ", strconv.Itoa(int(im.Containers)))
 	}
-	addEntry(&res, "Created: ", time.Unix(imageinfo.Created, 0).Format(time.UnixDate))
+	addEntry(&res, "Created: ", time.Unix(im.Created, 0).Format(time.UnixDate))
 	return res.String()
 }
 
-func populateVolumeInfoBox(volumeInfo VolumeItem) string {
+func (containerInfo containerItem) InfoBox(containerSizeInfo map[string]it.SizeInfo) string {
 	var res strings.Builder
 
-	addEntry(&res, "Name: ", volumeInfo.getName())
-	addEntry(&res, "Created: ", volumeInfo.CreatedAt)
-	addEntry(&res, "Driver: ", volumeInfo.Driver)
+	id := trimToLength(containerInfo.ID, moreInfoStyle.GetWidth())
+	addEntry(&res, "ID: ", id)
+	addEntry(&res, "Name: ", containerInfo.getName())
+	addEntry(&res, "Image: ", containerInfo.ImageName)
 
-	mntPt := trimToLength(volumeInfo.Mountpoint, moreInfoStyle.GetWidth())
+	if containerInfo.ServiceKind == it.Podman && containerInfo.Pod != "" {
+		addEntry(&res, "Pod: ", containerInfo.Pod)
+	}
+	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
+
+	if size, ok := containerSizeInfo[id]; ok {
+		rootSizeInGb := float64(size.RootFs) / float64(1e+9)
+		SizeRwInGb := float64(size.Rw) / float64(1e+9)
+
+		addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
+		addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
+	} else {
+
+		addEntry(&res, "Root FS Size: ", "Calculating...")
+		addEntry(&res, "SizeRw: ", "Calculating...")
+	}
+
+	addEntry(&res, "Command: ", containerInfo.Command)
+	addEntry(&res, "State: ", containerInfo.State)
+
+	// TODO: figure ports and mount points out
+	if len(containerInfo.Mounts) > 0 {
+		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
+	}
+	if len(containerInfo.Ports) > 0 {
+		addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
+	}
+	return res.String()
+}
+
+func (vi VolumeItem) InfoBox() string {
+	var res strings.Builder
+
+	addEntry(&res, "Name: ", vi.getName())
+	addEntry(&res, "Created: ", vi.CreatedAt)
+	addEntry(&res, "Driver: ", vi.Driver)
+
+	mntPt := trimToLength(vi.Mountpoint, moreInfoStyle.GetWidth())
 	addEntry(&res, "Mount Point: ", mntPt)
 
-	if size := volumeInfo.getSize(); size != -1 {
+	if size := vi.getSize(); size != -1 {
 		addEntry(&res, "Size: ", fmt.Sprintf("%f", size))
 	} else {
 		addEntry(&res, "Size: ", "Not Available")
@@ -45,44 +89,13 @@ func populateVolumeInfoBox(volumeInfo VolumeItem) string {
 	return res.String()
 }
 
-func populateContainerInfoBox(containerInfo containerItem, containerSizeTracker *ContainerSizeManager, imageIdToNameMap map[string]string) string {
+func (pi PodItem) InfoBox() string {
 	var res strings.Builder
+	addEntry(&res, "Name: ", pi.Name)
+	addEntry(&res, "ID:", pi.Id)
+	addEntry(&res, "Status: ", pi.Status)
+	addEntry(&res, "Containers: ", strconv.Itoa(len(pi.Containers)))
 
-	id := trimToLength(containerInfo.ID, moreInfoStyle.GetWidth())
-	addEntry(&res, "ID: ", id)
-	addEntry(&res, "Name: ", containerInfo.getName())
-	addEntry(&res, "Image: ", imageIdToNameMap[containerInfo.ImageID])
-	addEntry(&res, "Created: ", time.Unix(containerInfo.Created, 0).Format(time.UnixDate))
-
-	//this is a pretty trivial refactor to make this look cleaner, but I'm too lazy to do this
-	// whoever completes this bounty will win......nothing (except my heart)
-	if mutexok := containerSizeTracker.mu.TryLock(); mutexok {
-		if containerSizeInfo, ok := containerSizeTracker.sizeMap[containerInfo.ID]; ok {
-			rootSizeInGb := float64(containerSizeInfo.rootFs) / float64(1e+9)
-			SizeRwInGb := float64(containerSizeInfo.sizeRw) / float64(1e+9)
-
-			addEntry(&res, "Root FS Size: ", strconv.FormatFloat(rootSizeInGb, 'f', 2, 64)+"GB")
-			addEntry(&res, "SizeRw: ", strconv.FormatFloat(SizeRwInGb, 'f', 2, 64)+"GB")
-		} else {
-			addEntry(&res, "Root FS Size: ", "Calculating...")
-			addEntry(&res, "SizeRw: ", "Calculating...")
-		}
-
-		containerSizeTracker.mu.Unlock()
-	} else {
-		addEntry(&res, "Root FS Size: ", "Calculating...")
-		addEntry(&res, "SizeRw: ", "Calculating...")
-	}
-
-	addEntry(&res, "Command: ", containerInfo.Command)
-	addEntry(&res, "State: ", containerInfo.State)
-
-	if len(containerInfo.Mounts) > 0 {
-		addEntry(&res, "Mounts: ", mountPointString(containerInfo.Mounts))
-	}
-	if len(containerInfo.Ports) > 0 {
-		addEntry(&res, "Ports: ", portsString(containerInfo.Ports))
-	}
 	return res.String()
 }
 
@@ -93,15 +106,15 @@ func addEntry(res *strings.Builder, label string, val string) {
 	res.WriteString(entry)
 }
 
-func mountPointString(mounts []types.MountPoint) string {
+func mountPointString(mounts []string) string {
 	var res strings.Builder
 
-	slices.SortStableFunc(mounts, func(a types.MountPoint, b types.MountPoint) int {
-		return cmp.Compare(a.Source, b.Source)
-	})
+	// slices.SortStableFunc(mounts, func(a types.MountPoint, b types.MountPoint) int {
+	// 	return cmp.Compare(a.Source, b.Source)
+	// })
 
 	for i, mount := range mounts {
-		res.WriteString(mount.Source)
+		res.WriteString(mount)
 
 		if i < len(mounts)-1 {
 			res.WriteString(", ")
@@ -112,15 +125,15 @@ func mountPointString(mounts []types.MountPoint) string {
 }
 
 // converts []types.Port to human readable string
-func portsString(ports []types.Port) string {
+func portsString(ports []it.Port) string {
 	var res strings.Builder
 
 	for _, port := range ports {
 		var str string
-		if port.PublicPort == 0 {
-			str = fmt.Sprintf("%d/%s, ", port.PrivatePort, port.Type)
+		if port.HostPort == 0 {
+			str = fmt.Sprintf("%d/%s, ", port.ContainerPort, port.Proto)
 		} else {
-			str = fmt.Sprintf("%d -> %d/%s, ", port.PublicPort, port.PrivatePort, port.Type)
+			str = fmt.Sprintf("%d -> %d/%s, ", port.HostPort, port.ContainerPort, port.Proto)
 		}
 		res.WriteString(str)
 	}

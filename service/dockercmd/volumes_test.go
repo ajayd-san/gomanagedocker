@@ -3,13 +3,28 @@ package dockercmd
 import (
 	"testing"
 
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/volume"
 	"gotest.tools/v3/assert"
 )
 
 func TestListVolumes(t *testing.T) {
-	want := []*volume.Volume{
+	want := []types.VolumeSummary{
+		{
+			Name: "1",
+		},
+		{
+			Name: "2",
+		},
+		{
+			Name: "3",
+		},
+		{
+			Name: "4",
+		},
+	}
+	vols := []*volume.Volume{
 		{
 			Name: "1",
 		},
@@ -26,7 +41,7 @@ func TestListVolumes(t *testing.T) {
 
 	dclient := DockerClient{
 		cli: &MockApi{
-			mockVolumes:     want,
+			mockVolumes:     vols,
 			CommonAPIClient: nil,
 		},
 		containerListArgs: container.ListOptions{},

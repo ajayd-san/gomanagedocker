@@ -3,6 +3,7 @@ package dockercmd
 import (
 	"testing"
 
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"gotest.tools/v3/assert"
@@ -69,18 +70,26 @@ func TestListContainer(t *testing.T) {
 
 		got := dclient.ListContainers(false)
 
-		want := []types.Container{
+		want := []it.ContainerSummary{
 			{
-				ID:         "1",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
+				ID: "1",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "2",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
+				ID: "2",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 		}
 
@@ -101,31 +110,46 @@ func TestListContainer(t *testing.T) {
 
 		got := dclient.ListContainers(false)
 
-		want := []types.Container{
+		want := []it.ContainerSummary{
 			{
-				ID:         "1",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
-				Status:     "",
+				ID: "1",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "2",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "running",
+				ID: "2",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "3",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "created",
+				ID: "3",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "created",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 			{
-				ID:         "4",
-				SizeRw:     -1,
-				SizeRootFs: -1,
-				State:      "stopped",
+				ID: "4",
+				Size: &it.SizeInfo{
+					Rw:     -1,
+					RootFs: -1,
+				},
+				State:  "stopped",
+				Ports:  []it.Port{},
+				Mounts: []string{},
 			},
 		}
 
@@ -145,7 +169,48 @@ func TestListContainer(t *testing.T) {
 		dclient.ToggleContainerListAll()
 
 		got := dclient.ListContainers(true)
-		want := containers
+		want := []it.ContainerSummary{
+			{
+				ID: "1",
+				Size: &it.SizeInfo{
+					Rw:     200,
+					RootFs: 400,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
+			},
+			{
+				ID: "2",
+				Size: &it.SizeInfo{
+					Rw:     201,
+					RootFs: 401,
+				},
+				State:  "running",
+				Ports:  []it.Port{},
+				Mounts: []string{},
+			},
+			{
+				ID: "3",
+				Size: &it.SizeInfo{
+					Rw:     202,
+					RootFs: 402,
+				},
+				State:  "created",
+				Ports:  []it.Port{},
+				Mounts: []string{},
+			},
+			{
+				ID: "4",
+				Size: &it.SizeInfo{
+					Rw:     203,
+					RootFs: 403,
+				},
+				State:  "stopped",
+				Ports:  []it.Port{},
+				Mounts: []string{},
+			},
+		}
 
 		assert.DeepEqual(t, got, want)
 	})
@@ -161,8 +226,10 @@ func TestContainerToggleListAll(t *testing.T) {
 	}
 
 	assert.Assert(t, !dclient.containerListArgs.All)
+	assert.Assert(t, !dclient.containerListOpts.All)
 	dclient.ToggleContainerListAll()
 	assert.Assert(t, dclient.containerListArgs.All)
+	assert.Assert(t, dclient.containerListOpts.All)
 }
 
 func TestToggleStartStopContainer(t *testing.T) {
@@ -191,7 +258,8 @@ func TestToggleStartStopContainer(t *testing.T) {
 	}
 
 	t.Run("Stopping container test", func(t *testing.T) {
-		dclient.ToggleStartStopContainer("2")
+		isRunning := true
+		dclient.ToggleStartStopContainer("2", isRunning)
 
 		state := dclient.cli.(*MockApi).mockContainers
 
@@ -199,7 +267,8 @@ func TestToggleStartStopContainer(t *testing.T) {
 	})
 
 	t.Run("Start container test", func(t *testing.T) {
-		dclient.ToggleStartStopContainer("2")
+		isRunning := false
+		dclient.ToggleStartStopContainer("2", isRunning)
 
 		state := dclient.cli.(*MockApi).mockContainers
 
@@ -229,7 +298,7 @@ func TestPauseUnpauseContainer(t *testing.T) {
 
 	t.Run("Pause running container", func(t *testing.T) {
 		id := "1"
-		err := dclient.TogglePauseResume(id)
+		err := dclient.TogglePauseResume(id, "running")
 		assert.NilError(t, err)
 		containers := dclient.cli.(*MockApi).mockContainers
 
@@ -239,7 +308,7 @@ func TestPauseUnpauseContainer(t *testing.T) {
 	t.Run("unpause running container", func(t *testing.T) {
 		id := "1"
 
-		err := dclient.TogglePauseResume(id)
+		err := dclient.TogglePauseResume(id, "paused")
 		assert.NilError(t, err)
 
 		containers := dclient.cli.(*MockApi).mockContainers
@@ -249,7 +318,7 @@ func TestPauseUnpauseContainer(t *testing.T) {
 
 	t.Run("unpause stopped container(should throw error)", func(t *testing.T) {
 		id := "2"
-		err := dclient.TogglePauseResume(id)
+		err := dclient.TogglePauseResume(id, "exited")
 		assert.ErrorContains(t, err, "Cannot Pause/unPause a")
 	})
 }
@@ -278,13 +347,13 @@ func TestDeleteContainer(t *testing.T) {
 
 	t.Run("Delete stopped container", func(t *testing.T) {
 		id := "2"
-		err := dclient.DeleteContainer(id, container.RemoveOptions{})
+		err := dclient.DeleteContainer(id, it.ContainerRemoveOpts{})
 		assert.NilError(t, err)
 	})
 
 	t.Run("Try delete runing container(fails)", func(t *testing.T) {
 		id := "1"
-		err := dclient.DeleteContainer(id, container.RemoveOptions{})
+		err := dclient.DeleteContainer(id, it.ContainerRemoveOpts{})
 		assert.ErrorContains(t, err, "container is running")
 	})
 }
