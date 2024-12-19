@@ -1187,7 +1187,11 @@ func (m MainModel) getSelectedItems() []dockerRes {
 
 		return vals
 	} else {
-		return []dockerRes{activeTab.list.SelectedItem().(dockerRes)}
+		if dres, ok := activeTab.list.SelectedItem().(dockerRes); ok {
+			return []dockerRes{dres}
+		} else {
+			return nil
+		}
 	}
 }
 
