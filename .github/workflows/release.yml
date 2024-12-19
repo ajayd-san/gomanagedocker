@@ -31,10 +31,10 @@ jobs:
       run: go build -o gmd_linux_amd64 .
 
     - name: Store version info
-      run: echo "version=$(./gmd_linux_amd64 -v | cut --delimiter ' ' --fields 3)" >> $GITHUB_ENV
+      run: echo "version=v$(./gmd_linux_amd64 -v | cut --delimiter ' ' --fields 3)" >> $GITHUB_ENV
 
     - name: Tar artifact
-      run: tar czf gmd_linux_amd64_${version}.tar.gz gmd_linux_amd64
+      run: tar czf gomanagedocker_linux_amd64_${version}.tar.gz gmd_linux_amd64
 
     - name: Upload linux assets
       uses: actions/upload-artifact@v4
@@ -63,12 +63,12 @@ jobs:
       run: env GOOS=darwin GOARCH=amd64 go build -o gmd_darwin_arm64 .
 
     - name: Store version info
-      run: echo "version=$(./gmd_darwin_amd64 -v | cut --delimiter ' ' --fields 3)" >> $GITHUB_ENV
+      run: echo "version=v$(./gmd_darwin_amd64 -v | cut -d ' ' -f 3)" >> $GITHUB_ENV
 
     - name: Tar artifact
       run: | 
-        tar czf gmd_darwin_amd64_${version}.tar.gz gmd_darwin_amd64
-        tar czf gmd_darwin_arm64_${version}.tar.gz gmd_darwin_arm64
+        tar czf gomanagedocker_darwin_amd64_${version}.tar.gz gmd_darwin_amd64
+        tar czf gomanagedocker_darwin_arm64_${version}.tar.gz gmd_darwin_arm64
 
     - name: Upload darwin assets
       uses: actions/upload-artifact@v4
