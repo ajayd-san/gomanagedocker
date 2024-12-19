@@ -57,13 +57,12 @@ GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.
 FILE_NAME=${package}_${os}_${arch}_${GITHUB_LATEST_VERSION}
 GITHUB_URL="https://github.com/ajayd-san/gomanagedocker/releases/download/${GITHUB_LATEST_VERSION}/${FILE_NAME}.tar.gz"
 
-PARENT_FOLDER="${os}_${arch}_${GITHUB_LATEST_VERSION}"
 # install/update the local binary
 echo -e "${bright_yellow}Downloading ${cyan}${package} v${version} for ${os} (${arch})...${nc}"
 curl -L -o gomanagedocker.tar.gz $GITHUB_URL
 
 echo -e "${bright_yellow}Extracting ${cyan}${package}...${nc}"
-tar xzvf gomanagedocker.tar.gz "${PARENT_FOLDER}/gmd" -O >gmd
+tar xzvf gomanagedocker.tar.gz -O >gmd
 
 if install -Dm 755 gmd -t "$DIR" && rm gmd gomanagedocker.tar.gz; then
     echo -e "🎉 ${bright_green}Installation complete!${nc}"
