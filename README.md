@@ -7,6 +7,7 @@ Introducing **goManageDocker** (get it?)! This blazing fast TUI, made using Go a
 ## Contents
 
 1. [Install Instructions](#install-instructions)
+2. [Quick Start](#quick-start)
 2. [Features](#features)
 3. [Keybinds](#keybinds)
 4. [Configuration](#configuration)
@@ -48,29 +49,62 @@ Now, **goManageDocker 😏!!**
 ### Docker
 Want to try this without installing a binary? I gotchu!
 
+Docker:
+
 ```
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock kakshipth/gomanagedocker:latest
 ```
 
+Podman:
+
+```
+docker run -it -v /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock kakshipth/gomanagedocker:latest p
+```
+
 Alias it to something quicker (unless you like typing a lot 🙄)
+
+## Quick Start
+
+### docker
+
+To connect to the docker service: 
+```
+gmd 
+```
+
+
+### podman
+
+First start the podman service: 
+
+```
+systemctl --user start podman.socket
+```
+
+(replace `start` with `enable` if you'd like to start it during every boot)
+
+To connect to the podman service: 
+
+```
+gmd p 
+```
+
+(Issuing the subcommand `p` connects to the podman socket)
+
+> [!NOTE]
+> The command to invoke the TUI changes depending on the install method, if you installed from source you would be typing `gomanagedocker` instead of `gmd` (unless you aliased it to `gmd`).
+
+
 ## Features
 
-### **New in v1.4:**
+### **New in v1.5:**
 
-1. Global notification system
-	![notificationSystem](vhs/gifs/notifications.gif)
-	
-2. Bulk operation mode: select multiple objects before performing an operations (saves so much time!!)
-	![bulkDelete](vhs/gifs/bulkDelete.gif)
-	
-3. Build image from Dockerfile using `b`
-	![build](vhs/gifs/build.gif)
-	
-4. View live logs from a container using `L`
- 	![runImage](vhs/gifs/logs.gif)
+1. goManageDocker now has first class support for Podman!! (who doesn't like more secure containers 😉). You can now manage podman images, container, volumes and even pods from the TUI!
 
-5. Run image now takes arguments for port, name and env vars. 
- 	![runImage](vhs/gifs/runImage.gif)
+	![podmanRun](vhs/gifs/podmanRun.gif)
+
+
+
 
 ### **Previous release features:**
 
@@ -101,8 +135,24 @@ Alias it to something quicker (unless you like typing a lot 🙄)
    
 9. You can directly copy the ID to your clipboard of an object by pressing `c`.
    ![copyId](vhs/gifs/copyId.gif)
+   
 10. You can now run and exec into an image directly from the images tab with  `x`
     ![runAndExec](vhs/gifs/execFromImgs.gif)
+
+11. Global notification system
+![notificationSystem](vhs/gifs/notifications.gif)
+	
+12. Bulk operation mode: select multiple objects before performing an operations (saves so much time!!)
+	![bulkDelete](vhs/gifs/bulkDelete.gif)
+	
+13. Build image from Dockerfile using `b`
+	![build](vhs/gifs/build.gif)
+	
+14. View live logs from a container using `L`
+ 	![runImage](vhs/gifs/logs.gif)
+
+15. Run image now takes arguments for port, name and env vars. 
+ 	![runImage](vhs/gifs/runImage.gif)
 
 ## Keybinds
 
@@ -152,6 +202,20 @@ Alias it to something quicker (unless you like typing a lot 🙄)
 | Prune             | <kbd>p</kbd>                                                  |
 | Copy Volume Name  | <kbd>c</kbd>                                                  |
 
+
+### Pods
+| Operation         | Key                                                           |
+|-------------------|---------------------------------------------------------------|
+| Create New Pod    | <kbd>n</kbd>                                                  |
+| Toggle Start/Stop | <kbd>s</kbd>                                                  |
+| Toggle Pause      | <kbd>t</kbd>                                                  |
+| Restart           | <kbd>r</kbd>                                                  |
+| Delete            | <kbd>d</kbd>                                                  |
+| Delete (Force)    | <kbd>D</kbd>                                                  |
+| Prune             | <kbd>p</kbd>                                                  |
+| Copy ID           | <kbd>c</kbd>                                                  |
+| Show Logs         | <kbd>L</kbd>                                                  |
+
 ## Configuration
 
 I've added support for config files from V1.2.
@@ -163,12 +227,15 @@ Default Configuration:
 ```
 config:
   Polling-Time: 500
-  Tab-Order: [images, containers, volumes]
-  Notification-timeout: 2000
+  Tab-Order:
+    Docker: [images, containers, volumes]
+    Podman: [images, containers, volumes, pods]
+  Notification-Timeout: 2000
+
 ```
 
 - Polling-Time: Set how frequently the program calls the docker API (measured in milliseconds, default: 500ms)
-- Tab-Order: Set the order of tabs displayed, the keys must be `images`, `containers` and `volumes`. You can omit the names of the tabs you do not wish to see as well. Say I want to see `containers` tab first and do not want to see the `volumes` tab, I can set `Tab-Order: [containers, images]`
+- Tab-Order: Define the order of tabs displayed for Docker and Podman. Each key specifies the tab order for its respective environment. Valid tabs include `images`, `containers`, `volumes`, and `pods` (for Podman only). You can omit tabs you don’t wish to display.
 - Notification-Timeout: Set how long a status message sticks around for (measured in milliseconds, default: 2000ms)
 
 ## Roadmap
