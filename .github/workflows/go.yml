@@ -1,21 +1,15 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+name: Build and test on ubuntu and mac
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-12]
+        os: [ubuntu-20.04, macos-13]
     steps:
     - uses: actions/checkout@v4
     - uses: awalsh128/cache-apt-pkgs-action@latest
@@ -25,7 +19,7 @@ jobs:
         version: 1.0
 
     - name: install mac os deps
-      if: ${{ matrix.os == 'macos-12' }}
+      if: ${{ matrix.os == 'macos-13' }}
       run: brew install gpgme
 
     - name: Set up Go
