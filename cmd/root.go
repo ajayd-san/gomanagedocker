@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"os"
 
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui"
 	"github.com/spf13/cobra"
 )
@@ -17,9 +18,9 @@ var (
 		Use:     "gmd",
 		Short:   "TUI to manage docker objects",
 		Long:    `The Definitive TUI to manage docker objects with ease.`,
-		Version: "1.4",
+		Version: "1.5",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return tui.StartTUI(debug)
+			return tui.StartTUI(debug, types.Docker)
 		},
 	}
 )
@@ -32,5 +33,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolVar(&debug, "debug", false, "Send logs to ./gmd_debug.log")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Send logs to ./gmd_debug.log")
 }

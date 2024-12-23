@@ -137,6 +137,17 @@ func (m *listModel) updateTab(newlist []dockerRes) {
 		case VOLUMES:
 			// newA := a.(VolumeItem)
 			// newB := b.(VolumeItem)
+		case PODS:
+			newA := a.(PodItem)
+			newB := b.(PodItem)
+
+			if newA.Status != newB.Status {
+				return false
+			}
+
+			if len(newA.Containers) != len(newB.Containers) {
+				return false
+			}
 		}
 
 		return true
@@ -152,7 +163,9 @@ func (m *listModel) updateTab(newlist []dockerRes) {
 
 func (m *listModel) updateExistigIds(newlistItems *[]dockerRes) {
 	for _, item := range *newlistItems {
-		m.ExistingIds[item.GetId()] = struct{}{}
+		if _, ok := m.ExistingIds[item.GetId()]; !ok {
+			m.ExistingIds[item.GetId()] = struct{}{}
+		}
 	}
 }
 

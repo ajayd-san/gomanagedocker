@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -16,17 +16,15 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 
+	"github.com/ajayd-san/gomanagedocker/service"
 	"github.com/ajayd-san/gomanagedocker/tui/components/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/go-connections/nat"
 	"golang.design/x/clipboard"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	it "github.com/ajayd-san/gomanagedocker/service/types"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 
@@ -46,19 +44,15 @@ type preloadObjects int
 // instruction for preload contaienr sizes, when program starts.
 type preloadSizeMap struct{}
 
-type ContainerSize struct {
-	sizeRw int64
-	rootFs int64
-}
-
 // this type holds info about container sizes and is meant to be used concurrently.
 type ContainerSizeManager struct {
-	sizeMap map[string]ContainerSize
+	sizeMap map[string]it.SizeInfo
 	mu      *sync.Mutex
 }
 
 type MainModel struct {
-	dockerClient        dockercmd.DockerClient
+	serviceKind         it.ServiceType
+	dockerClient        service.Service
 	Tabs                []string
 	TabContent          []listModel
 	activeTab           tabId
@@ -67,6 +61,7 @@ type MainModel struct {
 	windowTooSmall      bool
 	displayInfoBox      bool
 	windowtoosmallModel WindowTooSmallModel
+	keymap              KeyMap
 	//  handles navigation keymap generation
 	navKeymap help.Model
 	// handles tab specific keymap generation, i have no idea why I named it `helpGen`
@@ -96,7 +91,7 @@ func doUpdateObjectsTick() tea.Cmd {
 
 func (m MainModel) Init() tea.Cmd {
 	// check if Docker is alive, if not, exit
-	err := m.dockerClient.PingDocker()
+	err := m.dockerClient.Ping()
 	if err != nil {
 		earlyExitErr = fmt.Errorf("Error connecting to Docker daemon.\nInfo: %w\n", err)
 		return tea.Quit
@@ -107,12 +102,18 @@ func (m MainModel) Init() tea.Cmd {
 	clipboard.Init()
 	// this command enables loading tab contents a head of time, so there is no load time while switching tabs
 	preloadCmd := func() tea.Msg { return preloadObjects(0) }
-	return tea.Batch(preloadCmd, doUpdateObjectsTick())
+	preloadSize := func() tea.Msg { return preloadSizeMap{} }
+	delayedInitialTick := func() tea.Msg {
+		time.Sleep(2 * time.Second)
+		return TickMsg{}
+	}
+	return tea.Batch(preloadCmd, preloadSize, delayedInitialTick)
 }
 
 // Initializes and returns a new Model instance.
-func NewModel() MainModel {
+func NewModel(client service.Service, serviceType it.ServiceType) MainModel {
 	contents := make([]listModel, len(CONFIG_TAB_ORDERING))
+	keymap := NewKeyMap(serviceType)
 
 	for tabid, tabName := range CONFIG_TAB_ORDERING {
 		var objectHelp help.KeyMap
@@ -120,15 +121,17 @@ func NewModel() MainModel {
 
 		switch tabName {
 		case "images":
-			objectHelp = ImageKeymap
-			objectHelpBulk = imageKeymapBulk
+			objectHelp = keymap.image
+			objectHelpBulk = keymap.imageBulk
 		case "containers":
-			objectHelp = ContainerKeymap
-			objectHelpBulk = ContainerKeymapBulk
-
+			objectHelp = keymap.container
+			objectHelpBulk = keymap.containerBulk
 		case "volumes":
-			objectHelp = VolumeKeymap
-			objectHelpBulk = volumeKeymapBulk
+			objectHelp = keymap.volume
+			objectHelpBulk = keymap.volumeBulk
+		case "pods":
+			objectHelp = keymap.pods
+			objectHelpBulk = keymap.podsBulk
 		}
 		contents[tabid] = InitList(tabId(tabid), objectHelp, objectHelpBulk)
 	}
@@ -144,17 +147,19 @@ func NewModel() MainModel {
 	NavKeymap.ShowAll = true
 
 	return MainModel{
-		dockerClient:                   dockercmd.NewDockerClient(),
+		serviceKind:                    serviceType,
+		dockerClient:                   client,
 		Tabs:                           CONFIG_TAB_ORDERING,
 		TabContent:                     contents,
 		displayInfoBox:                 true,
 		windowtoosmallModel:            MakeNewWindowTooSmallModel(),
 		possibleLongRunningOpErrorChan: make(chan error, 10),
+		keymap:                         keymap,
 		helpGen:                        helper,
 		navKeymap:                      NavKeymap,
 		activeTab:                      firstTab,
 		containerSizeTracker: ContainerSizeManager{
-			sizeMap: make(map[string]ContainerSize),
+			sizeMap: make(map[string]it.SizeInfo),
 			mu:      &sync.Mutex{},
 		},
 		imageIdToNameMap: make(map[string]string),
@@ -194,16 +199,6 @@ notificationLoop:
 		update, cmd := m.activeDialog.Update(msg)
 		m.activeDialog = update
 
-		// if keymsg is <Esc> then close dialog
-		if msg, ok := msg.(tea.KeyMsg); ok && key.Matches(msg, NavKeymap.Back) {
-			if m.dialogOpCancel != nil {
-				m.dialogOpCancel()
-				// this might be required, in the future
-				// m.dialogOpCancel = nil
-			}
-			m.showDialog = false
-		}
-
 		cmds = append(cmds, cmd)
 	}
 
@@ -217,11 +212,11 @@ notificationLoop:
 		//FIXME: use a range on TAB_ORDERING to preload lists
 
 		for tabid := range CONFIG_TAB_ORDERING {
-			m = m.updateContent(tabId(tabid))
+			m = m.updateContent(tabId(tabid), true)
 		}
 
 	case TickMsg:
-		m = m.updateContent(m.activeTab)
+		m = m.updateContent(m.activeTab, false)
 
 		cmds = append(cmds, doUpdateObjectsTick())
 
@@ -272,16 +267,16 @@ notificationLoop:
 	case tea.KeyMsg:
 		if !m.getActiveList().SettingFilter() && !m.showDialog {
 			switch {
-			case key.Matches(assertedMsg, NavKeymap.Quit):
+			case key.Matches(assertedMsg, m.keymap.navigation.Quit):
 				return m, tea.Quit
-			case key.Matches(assertedMsg, NavKeymap.NextTab):
+			case key.Matches(assertedMsg, m.keymap.navigation.NextTab):
 				m.nextTab()
-			case key.Matches(assertedMsg, NavKeymap.PrevTab):
+			case key.Matches(assertedMsg, m.keymap.navigation.PrevTab):
 				m.prevTab()
-			case key.Matches(assertedMsg, NavKeymap.Select):
+			case key.Matches(assertedMsg, m.keymap.navigation.Select):
 				msg = itemSelect{}
 				break
-			case key.Matches(assertedMsg, NavKeymap.Back):
+			case key.Matches(assertedMsg, m.keymap.navigation.Back):
 				if m.getActiveTab().inBulkMode() {
 					msg = clearSelection{}
 					break
@@ -290,20 +285,32 @@ notificationLoop:
 
 			if m.activeTab == IMAGES {
 				switch {
-				case key.Matches(assertedMsg, ImageKeymap.Run):
+				case key.Matches(assertedMsg, m.keymap.image.Run):
 					curItem := m.getSelectedItem()
 
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						imageInfo := curItem.(imageItem)
 						storage := map[string]string{"ID": imageInfo.GetId()}
-						m.activeDialog = getRunImageDialog(storage)
+
+						switch m.serviceKind {
+						case it.Docker:
+							m.activeDialog = getRunImageDialogDocker(storage)
+						case it.Podman:
+							podItems := m.getList(int(PODS)).Items()
+							pods := make([]*PodItem, len(podItems))
+
+							for i, item := range podItems {
+								if pod, ok := item.(PodItem); ok {
+									pods[i] = &pod
+								}
+							}
+							m.activeDialog = getRunImageDialogPodman(storage, pods)
+						}
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
-						// op := runImage(m.dockerClient, imageInfo, m.activeTab, m.notificationChan)
-						// go m.runBackground(op)
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.Delete):
+				case key.Matches(assertedMsg, m.keymap.image.Delete):
 					curItem := m.getSelectedItem()
 
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
@@ -315,26 +322,33 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.DeleteForce):
+				case key.Matches(assertedMsg, m.keymap.image.DeleteForce):
 					items := m.getSelectedItems()
 
-					deleteOpts := image.RemoveOptions{
-						Force:         true,
-						PruneChildren: false,
+					deleteOpts := it.RemoveImageOptions{
+						Force:   true,
+						NoPrune: true,
 					}
-					op := imageDeleteBulk(m.dockerClient, items, deleteOpts, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+					op := imageDeleteBulk(
+						m.dockerClient,
+						items,
+						deleteOpts,
+						m.activeTab,
+						m.notificationChan,
+						m.possibleLongRunningOpErrorChan,
+					)
 					go m.runBackground(op)
 
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ImageKeymap.Prune):
+				case key.Matches(assertedMsg, m.keymap.image.Prune):
 					if !m.isCurrentTabInBulkMode() {
 						m.activeDialog = getPruneImagesDialog(make(map[string]string))
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.Scout):
+				case key.Matches(assertedMsg, m.keymap.image.Scout):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						dockerRes := curItem.(dockerRes)
@@ -346,7 +360,8 @@ notificationLoop:
 
 						f := func() (*dockercmd.ScoutData, error) {
 
-							scoutData, err := m.dockerClient.ScoutImage(ctx, imageName)
+							dockerClient := m.dockerClient.(*dockercmd.DockerClient)
+							scoutData, err := dockerClient.ScoutImage(ctx, imageName)
 
 							if err != nil {
 								m.possibleLongRunningOpErrorChan <- err
@@ -359,7 +374,7 @@ notificationLoop:
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
-				case key.Matches(assertedMsg, ImageKeymap.CopyId):
+				case key.Matches(assertedMsg, m.keymap.image.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -368,35 +383,39 @@ notificationLoop:
 						op()
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.RunAndExec):
+				case key.Matches(assertedMsg, m.keymap.image.RunAndExec):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						dres := currentItem.(dockerRes)
 						id := dres.GetId()
 
-						config := container.Config{
-							AttachStdin:  true,
-							AttachStdout: true,
-							AttachStderr: true,
-							Tty:          true,
-							Image:        id,
+						// config := container.Config{
+						// 	AttachStdin:  true,
+						// 	AttachStdout: true,
+						// 	AttachStderr: true,
+						// 	Tty:          true,
+						// 	Image:        id,
+						// }
+
+						config := it.ContainerCreateConfig{
+							ImageId: id,
 						}
 
-						containerId, err := m.dockerClient.RunImage(&config, nil, "")
+						containerId, err := m.dockerClient.RunImage(config)
 						if err != nil {
 							m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
 							m.showDialog = true
 						}
 
-						cmd := exec.Command("docker", "exec", "-it", *containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
+						cmd := m.dockerClient.ExecCmd(*containerId)
 						cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 							m.possibleLongRunningOpErrorChan <- err
 							return nil
 						}))
 					}
 
-				case key.Matches(assertedMsg, ImageKeymap.Build):
+				case key.Matches(assertedMsg, m.keymap.image.Build):
 					if !m.isCurrentTabInBulkMode() {
 						m.activeDialog = getBuildImageDialog(make(map[string]string))
 						m.showDialog = true
@@ -406,31 +425,31 @@ notificationLoop:
 
 			} else if m.activeTab == CONTAINERS {
 				switch {
-				case key.Matches(assertedMsg, ContainerKeymap.ToggleListAll):
-					toggleListAllContainers(&m.dockerClient, m.activeTab, m.notificationChan)
+				case key.Matches(assertedMsg, m.keymap.container.ToggleListAll):
+					toggleListAllContainers(m.dockerClient, m.activeTab, m.notificationChan)
 
-				case key.Matches(assertedMsg, ContainerKeymap.ToggleStartStop):
+				case key.Matches(assertedMsg, m.keymap.container.ToggleStartStop):
 					selectedItems := m.getSelectedItems()
 
 					op := toggleStartStopContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
 					go m.runBackground(op)
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.TogglePause):
+				case key.Matches(assertedMsg, m.keymap.container.TogglePause):
 					selectedItems := m.getSelectedItems()
 
 					op := togglePauseResumeContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
 					go m.runBackground(op)
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.Restart):
+				case key.Matches(assertedMsg, m.keymap.container.Restart):
 					selectedItems := m.getSelectedItems()
 
 					op := toggleRestartContainer(m.dockerClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
 					go m.runBackground(op)
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.Delete):
+				case key.Matches(assertedMsg, m.keymap.container.Delete):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						containerInfo := curItem.(dockerRes)
@@ -440,10 +459,10 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.DeleteForce):
+				case key.Matches(assertedMsg, m.keymap.container.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
-					deleteOpts := container.RemoveOptions{
+					deleteOpts := it.ContainerRemoveOpts{
 						RemoveVolumes: false,
 						RemoveLinks:   false,
 						Force:         true,
@@ -461,14 +480,14 @@ notificationLoop:
 
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, ContainerKeymap.Prune):
+				case key.Matches(assertedMsg, m.keymap.container.Prune):
 					if !m.isCurrentTabInBulkMode() {
 						m.activeDialog = getPruneContainersDialog(make(map[string]string))
 						m.showDialog = true
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.Exec):
+				case key.Matches(assertedMsg, m.keymap.container.Exec):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						container := curItem.(containerItem)
@@ -491,7 +510,7 @@ notificationLoop:
 						} else {
 							containerId := container.GetId()
 							// execs into the default shell of the container (got from lazydocker)
-							cmd := exec.Command("docker", "exec", "-it", containerId, "/bin/sh", "-c", "eval $(grep ^$(id -un): /etc/passwd | cut -d : -f 7-)")
+							cmd := m.dockerClient.ExecCmd(containerId)
 
 							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 								m.possibleLongRunningOpErrorChan <- err
@@ -500,7 +519,7 @@ notificationLoop:
 						}
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.CopyId):
+				case key.Matches(assertedMsg, m.keymap.container.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -510,14 +529,14 @@ notificationLoop:
 						op()
 					}
 
-				case key.Matches(assertedMsg, ContainerKeymap.ShowLogs):
+				case key.Matches(assertedMsg, m.keymap.container.ShowLogs):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
 						dres := currentItem.(containerItem)
 						if dres.State == "running" {
 							id := dres.GetId()
-							cmd := exec.Command("docker", "logs", "--follow", id)
+							cmd := m.dockerClient.LogsCmd(id)
 							cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 								if err.Error() != "exit status 1" {
 									m.possibleLongRunningOpErrorChan <- err
@@ -530,7 +549,7 @@ notificationLoop:
 
 			} else if m.activeTab == VOLUMES {
 				switch {
-				case key.Matches(assertedMsg, VolumeKeymap.Prune):
+				case key.Matches(assertedMsg, m.keymap.volume.Prune):
 					curItem := m.getSelectedItem()
 					if curItem != nil && !m.isCurrentTabInBulkMode() {
 						volumeId := curItem.(dockerRes).GetId()
@@ -539,7 +558,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, VolumeKeymap.Delete):
+				case key.Matches(assertedMsg, m.keymap.volume.Delete):
 
 					curItem := m.getSelectedItem()
 
@@ -550,7 +569,7 @@ notificationLoop:
 						cmds = append(cmds, m.activeDialog.Init())
 					}
 
-				case key.Matches(assertedMsg, VolumeKeymap.DeleteForce):
+				case key.Matches(assertedMsg, m.keymap.volume.DeleteForce):
 					selectedItems := m.getSelectedItems()
 
 					op := volumeDeleteBulk(m.dockerClient, selectedItems, true, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
@@ -558,7 +577,7 @@ notificationLoop:
 
 					cmds = append(cmds, clearSelectionCmd())
 
-				case key.Matches(assertedMsg, VolumeKeymap.CopyId):
+				case key.Matches(assertedMsg, m.keymap.volume.CopyId):
 					currentItem := m.getSelectedItem()
 
 					if currentItem != nil && !m.isCurrentTabInBulkMode() {
@@ -567,10 +586,120 @@ notificationLoop:
 						op()
 					}
 				}
+			} else if m.activeTab == PODS {
+				switch {
+				case key.Matches(assertedMsg, m.keymap.pods.Create):
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getCreatePodDialog()
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.ToggleStartStop):
+					selectedItems := m.getSelectedItems()
+
+					if client, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+						op := ToggleStartStopPods(*client, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+						go m.runBackground(op)
+						cmds = append(cmds, clearSelectionCmd())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.TogglePause):
+
+					if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+						selectedItems := m.getSelectedItems()
+						op := togglePauseResumePods(podmanClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+						go m.runBackground(op)
+						cmds = append(cmds, clearSelectionCmd())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.Restart):
+
+					if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+						selectedItems := m.getSelectedItems()
+						op := restartPods(podmanClient, selectedItems, m.activeTab, m.notificationChan, m.possibleLongRunningOpErrorChan)
+						go m.runBackground(op)
+						cmds = append(cmds, clearSelectionCmd())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.Delete):
+					curItem := m.getSelectedItem()
+					if curItem != nil && !m.isCurrentTabInBulkMode() {
+						podInfo := curItem.(PodItem)
+						running := podInfo.getRunningContainers()
+						dialog := getRemovePodDialog(running, map[string]string{"ID": podInfo.GetId()})
+						m.activeDialog = dialog
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.DeleteForce):
+
+					if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+						selectedItems := m.getSelectedItems()
+
+						op := PodsDeleteBulk(
+							podmanClient,
+							selectedItems,
+							m.activeTab,
+							m.notificationChan,
+							m.possibleLongRunningOpErrorChan,
+						)
+						go m.runBackground(op)
+
+						cmds = append(cmds, clearSelectionCmd())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.Prune):
+					if !m.isCurrentTabInBulkMode() {
+						m.activeDialog = getPrunePodsDialog(make(map[string]string))
+						m.showDialog = true
+						cmds = append(cmds, m.activeDialog.Init())
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.CopyId):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
+						object := currentItem.(dockerRes)
+						op := copyIdToClipboard(object, m.activeTab, m.notificationChan)
+						op()
+					}
+
+				case key.Matches(assertedMsg, m.keymap.pods.ShowLogs):
+					currentItem := m.getSelectedItem()
+
+					if currentItem != nil && !m.isCurrentTabInBulkMode() {
+						dres := currentItem.(PodItem)
+						if dres.getState() == "running" {
+							if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+								id := dres.GetId()
+								cmd := podmanClient.LogsCmdPods(id)
+								cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
+									if err.Error() != "exit status 1" {
+										m.possibleLongRunningOpErrorChan <- err
+									}
+									return nil
+								}))
+							}
+						}
+					}
+				}
+
 			}
 
 		}
 
+	// this just closes the dialog, when the user hits <Esc>
+	case teadialog.QuitDialog:
+		if m.dialogOpCancel != nil {
+			m.dialogOpCancel()
+			// this might be required, in the future
+			// m.dialogOpCancel = nil
+		}
+		m.showDialog = false
+
+	// this is for when user submits the dialog
 	case teadialog.CloseDialog:
 		m.showDialog = false
 		dialog, ok := m.activeDialog.(teadialog.Dialog)
@@ -586,7 +715,7 @@ notificationLoop:
 		case dialogRemoveContainer:
 			userChoice := dialogRes.UserChoices
 
-			opts := container.RemoveOptions{
+			opts := it.ContainerRemoveOpts{
 				RemoveVolumes: userChoice["remVols"].(bool),
 				RemoveLinks:   userChoice["remLinks"].(bool),
 				Force:         userChoice["force"].(bool),
@@ -612,7 +741,7 @@ notificationLoop:
 					}
 
 					// we send notification directly from go routine since the main goroutine does not have access to `report`
-					msg := fmt.Sprintf("Pruned %d containers", len(report.ContainersDeleted))
+					msg := fmt.Sprintf("Pruned %d containers", report.ContainersDeleted)
 					m.notificationChan <- NewNotification(m.activeTab, listStatusMessageStyle.Render(msg))
 
 					return nil
@@ -626,7 +755,7 @@ notificationLoop:
 			storage := dialogRes.UserStorage
 
 			portMappingStr := userChoices["port"]
-			portMappings, err := dockercmd.GetPortMappingFromStr(portMappingStr.(string))
+			portMappings, err := GetPortMappingFromStr(portMappingStr.(string))
 
 			if err != nil {
 				m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
@@ -634,46 +763,32 @@ notificationLoop:
 				break
 			}
 
-			// this is just a list of exposed ports and is used in containerConfig
-			exposedPortsContainer := make(map[nat.Port]struct{}, len(portMappings))
-			// this is a port mapping from host to container and is used in hostConfig
-			portBindings := make(nat.PortMap)
-
-			for _, portBind := range portMappings {
-				port, err := nat.NewPort(portBind.Proto, portBind.ContainerPort)
-				if err != nil {
-					m.activeDialog = teadialog.NewErrorDialog(err.Error(), m.width)
-					m.showDialog = true
-					break
-				}
-				exposedPortsContainer[port] = struct{}{}
-				portBindings[port] = []nat.PortBinding{
-					{
-						HostIP:   "::1",
-						HostPort: portBind.HostPort,
-					},
-				}
-			}
-
 			var envVars []string
 			if userChoices["env"].(string) != "" {
 				envVars = strings.Split(userChoices["env"].(string), ",")
 			}
 
-			config := container.Config{
-				ExposedPorts: exposedPortsContainer,
+			config := it.ContainerCreateConfig{
 				Env:          envVars,
-				Image:        storage["ID"],
-				Volumes:      map[string]struct{}{},
+				ImageId:      storage["ID"],
+				PortBindings: portMappings,
+				Name:         userChoices["name"].(string),
 			}
 
-			hostConfig := container.HostConfig{
-				PortBindings: portBindings,
+			// add pod info only if the current service is Podman
+			if m.serviceKind == it.Podman {
+				if userChoices["pod"] != nil {
+					if pod, ok := userChoices["pod"].(*teadialog.PopupListItem); ok {
+						if pod != nil {
+							if podId, ok := pod.AdditionalData.(string); ok {
+								config.Pod = podId
+							}
+						}
+					}
+				}
 			}
 
-			containerName := userChoices["name"].(string)
-
-			op := runImage(m.dockerClient, &config, &hostConfig, containerName, m.activeTab, m.notificationChan)
+			op := runImage(m.dockerClient, config, m.activeTab, m.notificationChan)
 
 			go m.runBackground(op)
 
@@ -709,9 +824,9 @@ notificationLoop:
 			imageId := dialogRes.UserStorage["ID"]
 
 			if imageId != "" {
-				opts := image.RemoveOptions{
-					Force:         userChoice["force"].(bool),
-					PruneChildren: userChoice["pruneChildren"].(bool),
+				opts := it.RemoveImageOptions{
+					Force:   userChoice["force"].(bool),
+					NoPrune: !userChoice["pruneChildren"].(bool),
 				}
 
 				op := imageDelete(m.dockerClient, imageId, opts, m.activeTab, m.notificationChan)
@@ -724,7 +839,7 @@ notificationLoop:
 			tags := strings.Split(tagsStr, ",")
 
 			buildContext, _ := os.Getwd()
-			options := types.ImageBuildOptions{
+			options := it.ImageBuildOptions{
 				Tags:       tags,
 				Dockerfile: "Dockerfile",
 			}
@@ -745,7 +860,7 @@ notificationLoop:
 
 				decoder := json.NewDecoder(res.Body)
 
-				var status jsonmessage.JSONMessage
+				var status it.ImageBuildJSON
 
 				for {
 					if err := decoder.Decode(&status); errors.Is(err, io.EOF) {
@@ -777,6 +892,37 @@ notificationLoop:
 			}
 
 			go m.runBackground(op)
+
+		case dialogCreatePod:
+			userChoices := dialogRes.UserChoices
+
+			podName := userChoices["podName"].(string)
+			if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+				op := createPod(podName, *podmanClient, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
+			}
+
+		case dialogPrunePods:
+			userChoices := dialogRes.UserChoices
+
+			if userChoices["confirmPrunePods"].(string) == "Yes" {
+				if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+					op := podsPrune(podmanClient, m.activeTab, m.notificationChan)
+					go m.runBackground(op)
+				}
+			}
+
+		case dialogDeletePod:
+			userChoices := dialogRes.UserChoices
+			storage := dialogRes.UserStorage
+
+			force := userChoices["force"].(bool)
+
+			if podmanClient, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+				op := podDelete(podmanClient, storage["ID"], force, m.activeTab, m.notificationChan)
+				go m.runBackground(op)
+
+			}
 		}
 
 	}
@@ -857,7 +1003,13 @@ func (m MainModel) View() string {
 
 	infobox := ""
 	if curItem != nil && m.displayInfoBox {
-		infobox = m.populateInfoBox(curItem)
+		switch item := curItem.(type) {
+		case SimpleInfoBoxer:
+			infobox = item.InfoBox()
+		case SizeInfoBoxer:
+			infobox = item.InfoBox(m.containerSizeTracker.sizeMap)
+		}
+		infobox = moreInfoStyle.Render(infobox)
 	}
 
 	// TODO: align info box to right edge of the window
@@ -879,7 +1031,7 @@ func (m MainModel) View() string {
 		return helpText
 	}
 
-	navKeyBinds := AlignHelpText(m.navKeymap.View(NavKeymap))
+	navKeyBinds := AlignHelpText(m.navKeymap.View(m.keymap.navigation))
 	tabKeyBindsStr = AlignHelpText(tabKeyBindsStr)
 
 	help := lipgloss.JoinVertical(lipgloss.Left, "  "+navKeyBinds, "  "+tabKeyBindsStr)
@@ -898,9 +1050,9 @@ func (m MainModel) View() string {
 
 /*
 Fetches new data from the docker api and returns []dockerRes, also updates other required fields depending on the tabId passed.
-Passing `wg` is optional and is add is added for the sole purpose of testing.
+`first` indicates if it is the first request when the TUI starts. Passing `wg` is optional and is add is added for the sole purpose of testing.
 */
-func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
+func (m MainModel) fetchNewData(tab tabId, first bool, wg *sync.WaitGroup) []dockerRes {
 	var newlist []dockerRes
 	switch tab {
 	case IMAGES:
@@ -925,71 +1077,53 @@ func (m MainModel) fetchNewData(tab tabId, wg *sync.WaitGroup) []dockerRes {
 
 	case CONTAINERS:
 		newContainers := m.dockerClient.ListContainers(false)
-		newlist = makeContainerItems(newContainers)
+		newlist = makeContainerItems(newContainers, m.imageIdToNameMap)
 
-		for _, newContainer := range newlist {
-			id := newContainer.GetId()
-			if _, ok := m.TabContent[CONTAINERS].ExistingIds[id]; !ok {
+		if !first {
+			go func() {
+				for _, newContainer := range newlist {
+					id := newContainer.GetId()
+					if _, ok := m.containerSizeTracker.sizeMap[id]; !ok {
+						if wg != nil {
+							wg.Add(1)
+						}
+						if wg != nil {
+							defer wg.Done()
+						}
+						containerInfo, err := m.dockerClient.InspectContainer(id)
 
-				if wg != nil {
-					wg.Add(1)
+						if err != nil {
+							panic(err)
+						}
+
+						updateContainerSizeMap(*containerInfo, &m.containerSizeTracker)
+					}
 				}
-				go func() {
-					if wg != nil {
-						defer wg.Done()
-					}
-					containerInfo, err := m.dockerClient.InspectContainer(id)
 
-					if err != nil {
-						panic(err)
-					}
-
-					updateContainerSizeMap(containerInfo, &m.containerSizeTracker)
-				}()
-			}
+			}()
 		}
 
 	case VOLUMES:
 		// TODO: handle errors
 		newVolumes, _ := m.dockerClient.ListVolumes()
 		newlist = makeVolumeItem(newVolumes)
+	case PODS:
+		if client, ok := m.dockerClient.(*podmancmd.PodmanClient); ok {
+			newPods, _ := client.ListPods()
+			newlist = makePodItem(newPods)
+		}
 	}
 
 	return newlist
 }
 
 // fetches new docker data and updates the list in the current tab.
-func (m MainModel) updateContent(tab tabId) MainModel {
-	newlist := m.fetchNewData(tab, nil)
+func (m MainModel) updateContent(tab tabId, first bool) MainModel {
+	newlist := m.fetchNewData(tab, first, nil)
 	// m.TabContent[tab] = m.TabContent[tab].updateTab(m.dockerClient)
 	listM, _ := m.TabContent[tab].Update(newlist)
 	m.TabContent[tab] = listM.(listModel)
 	return m
-}
-
-// Generates info box for the current list item
-func (m MainModel) populateInfoBox(item list.Item) string {
-	temp, _ := item.(dockerRes)
-	switch m.activeTab {
-	case IMAGES:
-		if it, ok := temp.(imageItem); ok {
-			info := populateImageInfoBox(it)
-			return moreInfoStyle.Render(info)
-		}
-
-	case CONTAINERS:
-		if ct, ok := temp.(containerItem); ok {
-			info := populateContainerInfoBox(ct, &m.containerSizeTracker, m.imageIdToNameMap)
-			return moreInfoStyle.Render(info)
-		}
-
-	case VOLUMES:
-		if vt, ok := temp.(VolumeItem); ok {
-			info := populateVolumeInfoBox(vt)
-			return moreInfoStyle.Render(info)
-		}
-	}
-	return ""
 }
 
 // Util
@@ -1053,7 +1187,11 @@ func (m MainModel) getSelectedItems() []dockerRes {
 
 		return vals
 	} else {
-		return []dockerRes{activeTab.list.SelectedItem().(dockerRes)}
+		if dres, ok := activeTab.list.SelectedItem().(dockerRes); ok {
+			return []dockerRes{dres}
+		} else {
+			return nil
+		}
 	}
 }
 
@@ -1072,20 +1210,25 @@ func copyToClipboard(str string) {
 func (m *MainModel) prepopulateContainerSizeMapConcurrently() {
 	containerInfoWithSize := m.dockerClient.ListContainers(true)
 
+	log.Println("\n\n\nprepopulate----------")
+	log.Println(containerInfoWithSize)
 	for _, info := range containerInfoWithSize {
-		m.containerSizeTracker.sizeMap[info.ID] = ContainerSize{
-			sizeRw: info.SizeRw,
-			rootFs: info.SizeRootFs,
+		m.containerSizeTracker.sizeMap[info.ID] = it.SizeInfo{
+			Rw:     info.Size.Rw,
+			RootFs: info.Size.RootFs,
 		}
 	}
+
+	log.Println("\n\n\nprepopulate----------")
 }
 
 // Adds size info from containerInfo to containersizeTracker. Meant to be used on demand when new container gets added.
-func updateContainerSizeMap(containerInfo *types.ContainerJSON, containerSizeTracker *ContainerSizeManager) {
+func updateContainerSizeMap(containerInfo it.InspectContainerData, containerSizeTracker *ContainerSizeManager) {
+	log.Println("Resetting: ", containerInfo.ID, containerInfo.Size)
 	containerSizeTracker.mu.Lock()
-	containerSizeTracker.sizeMap[containerInfo.ID] = ContainerSize{
-		sizeRw: *containerInfo.SizeRw,
-		rootFs: *containerInfo.SizeRootFs,
+	containerSizeTracker.sizeMap[containerInfo.ID] = it.SizeInfo{
+		Rw:     containerInfo.Size.Rw,
+		RootFs: containerInfo.Size.RootFs,
 	}
 	containerSizeTracker.mu.Unlock()
 }

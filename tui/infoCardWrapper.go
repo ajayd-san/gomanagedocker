@@ -7,7 +7,7 @@ import (
 	teadialog "github.com/ajayd-san/teaDialog"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
+	"github.com/ajayd-san/gomanagedocker/service/dockercmd"
 	"github.com/ajayd-san/gomanagedocker/tui/components"
 )
 

@@ -11,16 +11,16 @@ import (
 
 	"strings"
 
-	"github.com/ajayd-san/gomanagedocker/dockercmd"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
+	"github.com/ajayd-san/gomanagedocker/service"
+	"github.com/ajayd-san/gomanagedocker/service/podmancmd"
+	"github.com/ajayd-san/gomanagedocker/service/types"
 	"golang.design/x/clipboard"
 )
 
 type Operation func() error
 
 // Hides/shows existed containers and sends notification to `notificationChan`
-func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) {
+func toggleListAllContainers(client service.Service, activeTab tabId, notificationChan chan notificationMetadata) {
 	client.ToggleContainerListAll()
 	listOpts := client.GetListOptions()
 
@@ -36,7 +36,7 @@ func toggleListAllContainers(client *dockercmd.DockerClient, activeTab tabId, no
 
 // Returns func that calls dockercmd api to toggle start/stop container, and sends notification to `notificaitonChan`
 func toggleStartStopContainer(
-	cli dockercmd.DockerClient,
+	cli service.Service,
 	containers []dockerRes,
 	activeTab tabId,
 	notifcationChan chan notificationMetadata,
@@ -54,14 +54,21 @@ func toggleStartStopContainer(
 			go func() {
 				containerInfo := dRes.(containerItem)
 				containerId := containerInfo.GetId()
-				err := cli.ToggleStartStopContainer(containerId)
+
+				stateStr := containerInfo.getState()
+				var isRunning bool
+
+				if stateStr == "running" {
+					isRunning = true
+				}
+				err := cli.ToggleStartStopContainer(containerId, isRunning)
 
 				if err != nil {
 					errChan <- err
 				} else {
 					// send notification
 					msg := ""
-					if containerInfo.getState() == "running" {
+					if stateStr == "running" {
 						msg = fmt.Sprintf("Stopped %s", containerId[:8])
 						successCounterStopped.Add(1)
 					} else {
@@ -103,7 +110,7 @@ func toggleStartStopContainer(
 
 // Returns func that calls dockercmd api to toggle pause/resume container, and sends notification to `notificaitonChan`
 func togglePauseResumeContainer(
-	client dockercmd.DockerClient,
+	client service.Service,
 	containers []dockerRes,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
@@ -121,13 +128,14 @@ func togglePauseResumeContainer(
 			go func() {
 				containerInfo := container.(containerItem)
 				containerId := containerInfo.GetId()
-				err := client.TogglePauseResume(containerId)
+				state := containerInfo.getState()
+				err := client.TogglePauseResume(containerId, state)
 
 				if err != nil {
 					errChan <- err
 				} else {
 					msg := ""
-					if containerInfo.getState() == "running" {
+					if state == "running" {
 						msg = "Paused " + containerId[:8]
 						successCounterPaused.Add(1)
 					} else {
@@ -168,7 +176,7 @@ func togglePauseResumeContainer(
 
 // Returns func that calls dockercmd api to restart container and sends notification to notificationChan
 func toggleRestartContainer(
-	client dockercmd.DockerClient,
+	client service.Service,
 	containers []dockerRes,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
@@ -207,7 +215,13 @@ func toggleRestartContainer(
 }
 
 // Returns func that calls dockercmd api to deletes container using `opts` as options and sends notification to notificationChan
-func containerDelete(client dockercmd.DockerClient, containerId string, opts container.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func containerDelete(
+	client service.Service,
+	containerId string,
+	opts types.ContainerRemoveOpts,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+) Operation {
 	return func() error {
 		err := client.DeleteContainer(containerId, opts)
 
@@ -223,9 +237,9 @@ func containerDelete(client dockercmd.DockerClient, containerId string, opts con
 
 // bulk deletes `containers`
 func containerDeleteBulk(
-	client dockercmd.DockerClient,
+	client service.Service,
 	containers []dockerRes,
-	opts container.RemoveOptions,
+	opts types.ContainerRemoveOpts,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
 	errChan chan error,
@@ -279,15 +293,20 @@ func copyIdToClipboard(object dockerRes, activeTab tabId, notificationChan chan 
 }
 
 // Runs image and sends notification to `notificationChan`
-func runImage(client dockercmd.DockerClient, containerConfig *container.Config, hostConfig *container.HostConfig, containerName string, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func runImage(
+	client service.Service,
+	config types.ContainerCreateConfig,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+) Operation {
 	return func() error {
-		_, err := client.RunImage(containerConfig, hostConfig, containerName)
+		_, err := client.RunImage(config)
 
 		if err != nil {
 			return err
 		}
 
-		imageId := strings.TrimPrefix(containerConfig.Image, "sha256:")
+		imageId := strings.TrimPrefix(config.ImageId, "sha256:")
 		notificationMsg := listStatusMessageStyle.Render(fmt.Sprintf("Run %s", imageId[:8]))
 
 		notificationChan <- NewNotification(activeTab, notificationMsg)
@@ -297,7 +316,7 @@ func runImage(client dockercmd.DockerClient, containerConfig *container.Config, 
 }
 
 // Deletes image with `opts` and sends notification to `notificationChan`
-func imageDelete(client dockercmd.DockerClient, imageId string, opts image.RemoveOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func imageDelete(client service.Service, imageId string, opts types.RemoveImageOptions, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteImage(imageId, opts)
 
@@ -317,9 +336,9 @@ func imageDelete(client dockercmd.DockerClient, imageId string, opts image.Remov
 
 // Same as above but is a bulk operation
 func imageDeleteBulk(
-	client dockercmd.DockerClient,
+	client service.Service,
 	items []dockerRes,
-	opts image.RemoveOptions,
+	opts types.RemoveImageOptions,
 	activeTab tabId,
 	notificationChan chan notificationMetadata,
 	errorChan chan error,
@@ -363,7 +382,7 @@ func imageDeleteBulk(
 	}
 }
 
-func volumeDeleteBulk(client dockercmd.DockerClient, volumes []dockerRes, force bool, activeTab tabId, notificationChan chan notificationMetadata, errChan chan error) Operation {
+func volumeDeleteBulk(client service.Service, volumes []dockerRes, force bool, activeTab tabId, notificationChan chan notificationMetadata, errChan chan error) Operation {
 	return func() error {
 		var wg sync.WaitGroup
 		var successCounter atomic.Uint32
@@ -397,7 +416,7 @@ func volumeDeleteBulk(client dockercmd.DockerClient, volumes []dockerRes, force 
 	}
 }
 
-func volumeDelete(client dockercmd.DockerClient, volumeId string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func volumeDelete(client service.Service, volumeId string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		err := client.DeleteVolume(volumeId, force)
 
@@ -410,7 +429,7 @@ func volumeDelete(client dockercmd.DockerClient, volumeId string, force bool, ac
 	}
 }
 
-func imagePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func imagePrune(client service.Service, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 
 		report, err := client.PruneImages()
@@ -419,22 +438,289 @@ func imagePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan
 			return err
 		}
 
-		msg := fmt.Sprintf("Pruned %d images", len(report.ImagesDeleted))
+		msg := fmt.Sprintf("Pruned %d images", report.ImagesDeleted)
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 	}
 }
 
-func volumePrune(client dockercmd.DockerClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+func volumePrune(client service.Service, activeTab tabId, notificationChan chan notificationMetadata) Operation {
 	return func() error {
 		report, err := client.PruneVolumes()
 		if err != nil {
 			return err
 		}
 
-		msg := fmt.Sprintf("Pruned %d volumes", len(report.VolumesDeleted))
+		msg := fmt.Sprintf("Pruned %d volumes", report.VolumesPruned)
 		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
 		return nil
 
+	}
+}
+
+// Pods
+
+func createPod(
+	name string,
+	client podmancmd.PodmanClient,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+) Operation {
+	return func() error {
+		res, err := client.CreatePod(name)
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Created %s", res.Id[:8])
+		notificationChan <- notificationMetadata{
+			listId: activeTab,
+			msg:    listStatusMessageStyle.Render(msg),
+		}
+
+		return nil
+	}
+}
+func ToggleStartStopPods(
+	client podmancmd.PodmanClient,
+	selectedPods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+		var successCounterStarted atomic.Uint32
+		var successCounterStopped atomic.Uint32
+		var wg sync.WaitGroup
+
+		for _, dres := range selectedPods {
+			wg.Add(1)
+			go func() {
+				pod := dres.(PodItem)
+				isRunning := pod.Status == "running"
+				err := client.ToggleStartStopPod(pod.Id, isRunning)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					notifMsg := ""
+					if isRunning {
+						notifMsg = fmt.Sprintf("Stopped %s", pod.Id[:8])
+						successCounterStopped.Add(1)
+					} else {
+						notifMsg = fmt.Sprintf("Started %s", pod.Id[:8])
+						successCounterStarted.Add(1)
+					}
+					notificationChan <- notificationMetadata{
+						listId: activeTab,
+						msg:    listStatusMessageStyle.Render(notifMsg),
+					}
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		startedPods := successCounterStarted.Load()
+		stoppedPods := successCounterStopped.Load()
+
+		if startedPods+stoppedPods > 1 {
+			var msg string
+			if stoppedPods > 0 {
+				msg = fmt.Sprintf("Stopped: %d", stoppedPods)
+			}
+			if startedPods > 0 {
+				if msg == "" {
+					msg = fmt.Sprintf("Started: %d", startedPods)
+				} else {
+					msg = fmt.Sprintf("%s, Started: %d", msg, startedPods)
+				}
+			}
+			msg = fmt.Sprintf("%s containers", msg)
+			notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+			notificationChan <- notif
+		}
+		return nil
+	}
+}
+
+// Returns func that calls dockercmd api to toggle pause/resume container, and sends notification to `notificaitonChan`
+func togglePauseResumePods(
+	client *podmancmd.PodmanClient,
+	pods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounterPaused atomic.Uint32
+		var successCounterResumed atomic.Uint32
+
+		for _, pod := range pods {
+
+			wg.Add(1)
+			go func() {
+				podInfo := pod.(PodItem)
+				podId := podInfo.GetId()
+				state := strings.ToLower(podInfo.Status)
+				err := client.TogglePauseResumePod(podId, state)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := ""
+					if state == "running" {
+						msg = "Paused " + podId[:8]
+						successCounterPaused.Add(1)
+					} else {
+						msg = "Resumed " + podId[:8]
+						successCounterResumed.Add(1)
+					}
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+				}
+				wg.Done()
+			}()
+		}
+
+		// send notification
+		wg.Wait()
+
+		resumedPods := successCounterResumed.Load()
+		pausedPods := successCounterPaused.Load()
+
+		if resumedPods+pausedPods > 1 {
+			var msg string
+			if pausedPods > 0 {
+				msg = fmt.Sprintf("Paused: %d", pausedPods)
+			}
+			if resumedPods > 0 {
+				if msg == "" {
+					msg = fmt.Sprintf("Resumed: %d", resumedPods)
+				} else {
+					msg = fmt.Sprintf("%s, Resumed: %d", msg, resumedPods)
+				}
+			}
+			msg = fmt.Sprintf("%s containers", msg)
+			notif := NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+			notificationChan <- notif
+		}
+		return nil
+	}
+}
+
+func restartPods(
+	client *podmancmd.PodmanClient,
+	pods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, pod := range pods {
+			podId := pod.GetId()
+
+			wg.Add(1)
+			go func() {
+				err := client.RestartPod(podId)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Restarted %s", podId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		restartedPods := successCounter.Load()
+		if restartedPods > 1 {
+			msg := fmt.Sprintf("Restarted %d Pods", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
+		return nil
+	}
+}
+
+func PodsDeleteBulk(
+	client *podmancmd.PodmanClient,
+	pods []dockerRes,
+	activeTab tabId,
+	notificationChan chan notificationMetadata,
+	errChan chan error,
+) Operation {
+	return func() error {
+
+		var wg sync.WaitGroup
+		var successCounter atomic.Uint32
+
+		for _, podInfo := range pods {
+
+			wg.Add(1)
+			go func() {
+				containerId := podInfo.GetId()
+				//TODO: use report to display number of pods deleted
+				_, err := client.DeletePod(containerId, true)
+
+				if err != nil {
+					errChan <- err
+				} else {
+					msg := fmt.Sprintf("Deleted %s", containerId[:8])
+					notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+					successCounter.Add(1)
+				}
+
+				wg.Done()
+			}()
+		}
+
+		wg.Wait()
+
+		if successCounter.Load() > 1 {
+			msg := fmt.Sprintf("Deleted %d pods", successCounter.Load())
+			notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		}
+		return nil
+	}
+}
+
+func podsPrune(client *podmancmd.PodmanClient, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		pruneReport, err := client.PrunePods()
+
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Pruned %d pods", pruneReport.Removed)
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		return nil
+	}
+}
+
+func podDelete(client *podmancmd.PodmanClient, id string, force bool, activeTab tabId, notificationChan chan notificationMetadata) Operation {
+	return func() error {
+		//TODO: use the report to display notificaiton?
+		_, err := client.DeletePod(id, force)
+
+		if err != nil {
+			return err
+		}
+
+		msg := fmt.Sprintf("Deleted pod %s", id[:8])
+		notificationChan <- NewNotification(activeTab, listStatusMessageStyle.Render(msg))
+		return nil
 	}
 }
