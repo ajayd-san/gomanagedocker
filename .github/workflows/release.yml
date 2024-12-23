@@ -29,16 +29,11 @@ jobs:
     - name: Build artifact amd64
       run: go build -o gmd_linux_amd64 .
 
-    - name: Build artifact arm64
-      run: env GOOS=linux GOARCH=arm64 go build -o gmd_linux_arm64 .
-
     - name: Store version info
       run: echo "version=v$(./gmd_linux_amd64 -v | cut --delimiter ' ' --fields 3)" >> $GITHUB_ENV
 
     - name: Tar artifact
-      run: |
-        tar czf gomanagedocker_linux_amd64_${version}.tar.gz gmd_linux_amd64
-        tar czf gomanagedocker_linux_arm64_${version}.tar.gz gmd_linux_arm64
+      run: tar czf gomanagedocker_linux_amd64_${version}.tar.gz gmd_linux_amd64
 
     - name: Upload linux assets
       uses: actions/upload-artifact@v4
@@ -95,3 +90,4 @@ jobs:
           files: |
             linux_artifacts/*
             macos_artifacts/*
+
