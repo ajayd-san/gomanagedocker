@@ -25,11 +25,16 @@ You can install the latest release of goManageDocker on UNIX systems with a simp
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/ajayd-san/gomanagedocker/main/install.sh)"
 ```
 
+This is the recommended way to install on Linux(`amd64` only) and MacOS(both `intel` and `arm`) systems. 
 Start the program with `gmd`. 
+
+### Windows
+
+Building from source is currently the only way to install this on Windows. See next section. 
 
 ### Build from source
 
-Just build like any other Go binary: 
+Just build like any other Go binary, this is currently the only way to make goManageDocker work on Windows and arm64 chipsets running **Linux**: 
 
 ```
 go install github.com/ajayd-san/gomanagedocker@main
@@ -37,26 +42,25 @@ go install github.com/ajayd-san/gomanagedocker@main
 
 Start the program with `gomanagedocker` (Rename it to `gmd` if you'd like, the binary will be installed at your `$GOPATH`).
 
-### Windows
-
-You can get the latest precompiled binary from releases or you may build from source. 
-
-Now, **goManageDocker 😏!!**
-
-> [!NOTE]
-> goManageDocker runs best on terminals that support ANSI 256 colors and designed to run while the **terminal is maximized**.
 
 ### Docker
 Want to try this without installing a binary? I gotchu!
 
-Docker:
+**Docker:**
 
 ```
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock kakshipth/gomanagedocker:latest
 ```
 
-Podman:
+**Podman:**
 
+First start the podman service: 
+
+```
+systemctl --user start podman.socket
+```
+
+And then: 
 ```
 docker run -it -v /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock kakshipth/gomanagedocker:latest p
 ```
@@ -95,11 +99,16 @@ gmd p
 > The command to invoke the TUI changes depending on the install method, if you installed from source you would be typing `gomanagedocker` instead of `gmd` (unless you aliased it to `gmd`).
 
 
+Now, **goManageDocker 😏!!**
+
+> [!NOTE]
+> goManageDocker runs best on terminals that support ANSI 256 colors and designed to run while the **terminal is maximized**.
+
 ## Features
 
 ### **New in v1.5:**
 
-1. goManageDocker now has first class support for Podman!! (who doesn't like more secure containers 😉). You can now manage podman images, container, volumes and even pods from the TUI!
+1. goManageDocker now has first class support for Podman!! (who doesn't like more secure containers 😉). You can now manage podman images, containers, volumes and even pods from the TUI!
 
 	![podmanRun](vhs/gifs/podmanRun.gif)
 
@@ -241,7 +250,7 @@ config:
 ## Roadmap
 
 - Add a networks tab
-- Make compatible with podman 👀
+- ~~Make compatible with podman 👀~~
 
 ## Found an issue ?
 
