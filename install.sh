@@ -50,8 +50,8 @@ else
     exit 1
 fi
 
-# allow specifying different destination directory
-DIR="${DIR:-"$HOME/.local/bin"}"
+# allow specifying different destination directory in ENV
+DIR="${DIR:-"/usr/local/bin"}"
 
 GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/ajayd-san/gomanagedocker/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
 FILE_NAME=${package}_${os}_${arch}_${GITHUB_LATEST_VERSION}
@@ -64,7 +64,7 @@ curl -L -o gomanagedocker.tar.gz $GITHUB_URL
 echo -e "${bright_yellow}Extracting ${cyan}${package}...${nc}"
 tar xzvf gomanagedocker.tar.gz -O >gmd
 
-if install -Dm 755 gmd -t "$DIR" && rm gmd gomanagedocker.tar.gz; then
+if sudo install -Dm 755 gmd -t "$DIR" && rm gmd gomanagedocker.tar.gz; then
     echo -e "🎉 ${bright_green}Installation complete!${nc}"
     echo -e "${bright_cyan}You can type ${white}\"${bright_yellow}gmd${white}\" ${bright_cyan}to start!${nc}"
 else
